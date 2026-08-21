@@ -5,6 +5,7 @@
  *   2. initHeroBoxes      -> tilt 3D + paralaje de las cajas del hero
  *   3. initScrollReveal   -> animación de aparición al hacer scroll
  *   4. initContactForm    -> validación y feedback del formulario de contacto
+ *   5. initScrollSpy      -> resalta en el navbar la sección visible actual
  */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -12,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initHeroBoxes();
     initScrollReveal();
     initContactForm();
+    initScrollSpy();
 });
 
 /* --------------------------------------------------------------------
@@ -184,5 +186,56 @@ function initContactForm() {
         }
 
         form.reset();
+    });
+}
+
+/* --------------------------------------------------------------------
+ * 5. Scrollspy: marca en el navbar cuál sección se está viendo
+ *
+ * Observa cada sección que tiene un link correspondiente en el navbar
+ * (#caracteristicas, #como-funciona, #contacto) y le agrega .is-active
+ * al link cuando esa sección cruza una franja angosta cerca de la parte
+ * superior del viewport. El hero no tiene link propio, así que mientras
+ * se está ahí ningún link queda marcado (comportamiento esperado).
+ * ------------------------------------------------------------------ */
+function initScrollSpy() {
+    var navLinks = Array.prototype.slice.call(document.querySelectorAll('.navbar__link[href^="#"]'));
+
+    if (navLinks.length === 0 || !('IntersectionObserver' in window)) {
+        return;
+    }
+
+    var sections = navLinks
+        .map(function (link) {
+            return document.querySelector(link.getAttribute('href'));
+        })
+        .filter(Boolean);
+
+    if (sections.length === 0) {
+        return;
+    }
+
+    function setActiveLink(sectionId) {
+        navLinks.forEach(function (link) {
+            var isMatch = link.getAttribute('href') === '#' + sectionId;
+            link.classList.toggle('is-active', isMatch);
+        });
+    }
+
+    var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+                setActiveLink(entry.target.id);
+            }
+        });
+    }, {
+        // Franja angosta cerca del tope del viewport: la sección "activa"
+        // es la que la está cruzando en ese momento del scroll.
+        rootMargin: '-20% 0px -72% 0px',
+        threshold: 0
+    });
+
+    sections.forEach(function (section) {
+        observer.observe(section);
     });
 }
