@@ -1,0 +1,110 @@
+/* ==========================================================================
+   Stockly — Preloader (pantalla de carga inicial)
+
+   Concepto: revelación del nombre "Stockly" letra por letra (fade-in +
+   translateY, en cascada) sobre una línea de progreso delgada que se
+   llena de izquierda a derecha en ~3s. Sin elementos 3D ni íconos.
+   Depende de las variables de color/tipografía definidas en landing.css.
+   ========================================================================== */
+
+/* Mientras el preloader está activo, se bloquea el scroll de la página */
+body.is-preloading {
+    overflow: hidden;
+}
+
+.preloader {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-background);
+    transition: opacity 0.55s ease;
+}
+
+/* Estado final: el preloader se desvanece antes de que el JS lo elimine del DOM */
+.preloader.is-hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* ---------- Nombre "Stockly": cada letra se revela en cascada ---------- */
+.preloader__logo {
+    display: flex;
+    font-family: var(--font-display);
+    font-size: clamp(2.75rem, 6vw, 4.25rem);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--color-slate);
+}
+
+.preloader__letter {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/*
+ * Sin transition-delay fijo aquí: preloader.js agrega .is-visible letra
+ * por letra a medida que la línea de progreso cruza el porcentaje de esa
+ * letra (ver LETTER_THRESHOLDS), para que el texto y la barra avancen
+ * juntos en vez de ser dos animaciones independientes.
+ */
+.preloader__letter.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ---------- Línea de progreso + porcentaje ---------- */
+.preloader__line-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 30px;
+}
+
+.preloader__line-track {
+    width: 220px;
+    height: 3px;
+    border-radius: 999px;
+    /* Mist a baja opacidad: se distingue del fondo general sin competir
+       con el color de acción que lleva el relleno */
+    background-color: rgba(140, 155, 171, 0.25);
+    overflow: hidden;
+}
+
+.preloader__line-fill {
+    height: 100%;
+    width: 0%;
+    background-color: var(--color-sage);
+    /* El ancho lo actualiza preloader.js en cada frame (requestAnimationFrame) */
+}
+
+.preloader__percent {
+    min-width: 3ch;
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-slate);
+}
+
+/* ---------- Texto de estado ---------- */
+.preloader__label {
+    margin-top: 16px;
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    /*
+     * --color-mist puro sobre --color-background da ~2.5:1 de contraste,
+     * por debajo del 4.5:1 que exige WCAG AA. Se tiñe hacia --color-slate
+     * (el color de texto base) en vez de usar un gris nuevo: mantiene el
+     * aire "muted" pero pasa el mínimo de contraste (~5.3:1).
+     */
+    color: color-mix(in srgb, var(--color-slate) 55%, var(--color-mist) 45%);
+}
