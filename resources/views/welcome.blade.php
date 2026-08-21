@@ -53,6 +53,7 @@
             </a>
 
             <nav class="navbar__links" id="navbarLinks">
+                <a class="navbar__link" href="#hero">Inicio</a>
                 <a class="navbar__link" href="#caracteristicas">Características</a>
                 <a class="navbar__link" href="#como-funciona">Cómo funciona</a>
                 <a class="navbar__link" href="#contacto">Contacto</a>
@@ -438,7 +439,7 @@
             </div>
 
             <div class="contact-form reveal">
-                <h3 class="contact-form__title">Hablemos de tu inventario</h3>
+                <h3 class="contact-form__title">Contactanos</h3>
                 <p class="contact-form__subtitle">
                     Cuéntanos sobre tu negocio y te ayudamos a poner Stockly en marcha.
                 </p>

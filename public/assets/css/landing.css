@@ -77,6 +77,35 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
+/* ---------- Scrollbar con la paleta de la marca ---------- */
+html {
+    /* Firefox: thumb y track en una sola propiedad */
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-sage) var(--color-background);
+}
+
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background-color: var(--color-background);
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--color-sage);
+    border-radius: 999px;
+    /* El borde del mismo color que el track "recorta" el thumb, dejándolo
+       más angosto que el track y separado de los bordes (efecto píldora) */
+    border: 3px solid var(--color-background);
+    background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-sage-dark);
+}
+
 h1, h2, h3 {
     font-family: var(--font-display);
     font-weight: 600;
@@ -235,6 +264,16 @@ h1, h2, h3 {
 }
 
 .navbar__link:hover::after {
+    transform: scaleX(1);
+}
+
+/* Sección activa según el scroll (ver initScrollSpy en landing.js) */
+.navbar__link.is-active {
+    color: var(--color-sage-dark);
+    font-weight: 600;
+}
+
+.navbar__link.is-active::after {
     transform: scaleX(1);
 }
 
