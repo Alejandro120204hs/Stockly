@@ -1,0 +1,819 @@
+/* ==========================================================================
+   Stockly — Vistas de autenticación (login, registro, olvidé mi contraseña)
+
+   Archivo compartido por las 3 vistas: la card, el formulario y el fondo
+   animado (red de formas conectándose) viven todos aquí para no repetir
+   el mismo CSS tres veces. Es independiente de landing.css a propósito
+   (la autenticación es su propio subsistema, no depende del bundle del
+   marketing site) — por eso el bloque de variables se repite acá.
+
+   Estructura: tokens > fondo animado > layout/card > marca > formulario
+               > botones > links de pie > animaciones de entrada
+               > responsive > accesibilidad
+   ========================================================================== */
+
+:root {
+    --color-surface: #FFFFFF;
+    --color-background: #F2F0ED;
+    --color-slate: #1E2D3D;
+    --color-sage: #4A7C6F;
+    --color-sage-dark: #3C6459;
+    --color-sand: #C9B99A;
+    --color-sand-soft: #E4DBC8;
+    --color-mist: #8C9BAB;
+
+    /* El rojo de error no forma parte de la paleta de marca (todos sus
+       tonos son neutros/verdes/arena). Se eligió un terracota apagado
+       para que el estado de error siga sintiéndose "de esta marca". */
+    --color-error: #B3473C;
+
+    --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+    --font-body: 'Work Sans', 'Segoe UI', Arial, sans-serif;
+
+    --radius-sm: 8px;
+    --radius-lg: 26px;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+/* Sin este reset, todos los <a> (marca, "¿Olvidaste tu contraseña?",
+   "Regístrate", etc.) salen con el subrayado por defecto del navegador */
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+body.auth-body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--font-body);
+    color: var(--color-slate);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   FONDO ANIMADO (compartido por las 3 vistas)
+   ========================================================================== */
+.auth-background {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    /*
+     * Degradados anchos y muy tenues, centrados en los bordes (no en una
+     * esquina puntual): dan sensación de profundidad ambiental sin leerse
+     * como un brillo/mancha localizada. Una versión anterior los tenía
+     * concentrados cerca de una esquina con demasiada opacidad y se veía
+     * como un error visual.
+     */
+    background:
+        radial-gradient(ellipse 90% 60% at 50% -10%, rgba(74, 124, 111, 0.16), transparent 70%),
+        radial-gradient(ellipse 80% 60% at 100% 110%, rgba(74, 124, 111, 0.12), transparent 70%),
+        var(--color-slate);
+}
+
+.auth-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* ==========================================================================
+   LAYOUT: card centrada
+   ========================================================================== */
+.auth-page {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px;
+}
+
+.auth-card {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    padding: 44px 40px;
+    border-radius: var(--radius-lg);
+    /*
+     * Blanco con leve transparencia + blur: dejar que la red del fondo se
+     * insinúe detrás de la card (una unión visual entre card y fondo) sin
+     * sacrificar legibilidad. No es decoración porque el fondo SÍ está
+     * pensado para leerse un poco a través.
+     */
+    background-color: rgba(255, 255, 255, 0.94);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 30px 60px -24px rgba(0, 0, 0, 0.45);
+    /* Entrada suave de la card completa antes de que entren sus hijos */
+    animation: auth-card-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes auth-card-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ==========================================================================
+   MARCA / ENCABEZADO
+   ========================================================================== */
+.auth-card__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-slate);
+    margin-bottom: 28px;
+}
+
+.auth-card__brand-mark {
+    width: 28px;
+    height: 28px;
+}
+
+.auth-card__title {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3vw, 1.75rem);
+    font-weight: 600;
+    color: var(--color-slate);
+    margin: 0 0 8px;
+}
+
+.auth-card__subtitle {
+    color: var(--color-mist);
+    font-size: 0.92rem;
+    line-height: 1.55;
+    margin: 0 0 28px;
+}
+
+.auth-status {
+    margin-bottom: 22px;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-sand-soft);
+    color: var(--color-sage-dark);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   FORMULARIO (campos con floating label)
+   ========================================================================== */
+.auth-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-field {
+    position: relative;
+    margin-bottom: 18px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 19px 16px 9px;
+    border: 1.5px solid rgba(30, 45, 61, 0.16);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-surface);
+    font-family: var(--font-body);
+    font-size: 0.98rem;
+    color: var(--color-slate);
+    /* Transición sutil del borde/sombra al enfocar, en vez de un cambio
+       instantáneo de color */
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.form-input::placeholder {
+    color: transparent;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--color-sage);
+    box-shadow: 0 0 0 3px rgba(74, 124, 111, 0.16);
+}
+
+/*
+ * Floating label sin JS: el input usa placeholder=" " (un espacio, no
+ * vacío) para poder distinguir "vacío y sin foco" de "tiene contenido"
+ * con :placeholder-shown. La etiqueta empieza superpuesta al valor y
+ * sube/encoge al enfocar o cuando ya hay texto escrito.
+ */
+.form-label {
+    position: absolute;
+    left: 16px;
+    top: 18px;
+    font-size: 0.98rem;
+    color: var(--color-mist);
+    pointer-events: none;
+    transform-origin: left top;
+    transition: top 0.2s ease, transform 0.2s ease, color 0.2s ease;
+}
+
+.form-input:focus + .form-label,
+.form-input:not(:placeholder-shown) + .form-label {
+    top: 8px;
+    transform: scale(0.78);
+    color: var(--color-sage-dark);
+}
+
+/* Campo con botón de mostrar/ocultar contraseña: deja espacio a la derecha */
+.form-field--password .form-input {
+    padding-right: 46px;
+}
+
+.auth-form__toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--color-mist);
+    cursor: pointer;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.auth-form__toggle-password:hover {
+    color: var(--color-slate);
+    background-color: rgba(30, 45, 61, 0.06);
+}
+
+.auth-form__toggle-password svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Solo se muestra el ícono correspondiente al estado actual del campo */
+.auth-form__toggle-password .icon-eye-off {
+    display: none;
+}
+
+.auth-form__toggle-password.is-visible .icon-eye {
+    display: none;
+}
+
+.auth-form__toggle-password.is-visible .icon-eye-off {
+    display: block;
+}
+
+/* ---------- Estado de error: borde + mensaje + sacudida puntual ---------- */
+.form-field.has-error .form-input {
+    border-color: var(--color-error);
+    /* Se ejecuta una sola vez al cargar la página con errores de vuelta
+       del servidor (ver @keyframes auth-shake más abajo) */
+    animation: auth-shake 0.4s ease;
+}
+
+.form-field.has-error .form-input:focus {
+    box-shadow: 0 0 0 3px rgba(179, 71, 60, 0.16);
+}
+
+.form-error {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.8rem;
+    color: var(--color-error);
+}
+
+@keyframes auth-shake {
+    10%, 90% { transform: translateX(-1px); }
+    20%, 80% { transform: translateX(2px); }
+    30%, 50%, 70% { transform: translateX(-4px); }
+    40%, 60% { transform: translateX(4px); }
+}
+
+/* ---------- Fila recordarme / olvidé mi contraseña (solo login) ---------- */
+.auth-form__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 26px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.auth-form__remember {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 0.88rem;
+    color: var(--color-slate);
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Checkbox nativo: se mantiene accesible pero visualmente oculto; el
+   cuadro visible es el <span> siguiente, pintado a mano con la paleta */
+.auth-form__checkbox {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+.auth-form__checkbox-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    border-radius: 5px;
+    border: 1.5px solid rgba(30, 45, 61, 0.25);
+    background-color: var(--color-surface);
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.auth-form__checkbox-box::after {
+    content: '';
+    width: 5px;
+    height: 9px;
+    margin-top: -2px;
+    border: solid var(--color-surface);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg) scale(0);
+    transition: transform 0.15s ease;
+}
+
+.auth-form__checkbox:checked + .auth-form__checkbox-box {
+    background-color: var(--color-sage);
+    border-color: var(--color-sage);
+}
+
+.auth-form__checkbox:checked + .auth-form__checkbox-box::after {
+    transform: rotate(45deg) scale(1);
+}
+
+.auth-form__checkbox:focus-visible + .auth-form__checkbox-box {
+    box-shadow: 0 0 0 3px rgba(74, 124, 111, 0.25);
+}
+
+.auth-form__forgot {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--color-sage-dark);
+}
+
+.auth-form__forgot:hover {
+    color: var(--color-slate);
+}
+
+/* ==========================================================================
+   BOTONES (namespace propio: auth.css no depende de landing.css)
+   ========================================================================== */
+.auth-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 15px 24px;
+    border: none;
+    border-radius: 999px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.auth-button--primary {
+    background-color: var(--color-sage);
+    color: var(--color-surface);
+    box-shadow: 0 14px 30px -12px rgba(74, 124, 111, 0.55);
+    margin-bottom: 22px;
+}
+
+.auth-button--primary:hover {
+    background-color: var(--color-sage-dark);
+    transform: translateY(-2px);
+}
+
+/* Feedback de presión: el botón "cede" ligeramente al hacer click */
+.auth-button--primary:active {
+    transform: translateY(0) scale(0.97);
+    transition: transform 0.1s ease;
+}
+
+/* ==========================================================================
+   LINKS DE PIE (cambiar entre vistas)
+   ========================================================================== */
+.auth-card__switch {
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--color-mist);
+}
+
+.auth-card__switch a {
+    font-weight: 600;
+    color: var(--color-sage-dark);
+}
+
+.auth-card__switch a:hover {
+    color: var(--color-slate);
+}
+
+/* Botón secundario ("Atrás"): mismo namespace que .auth-button--primary */
+.auth-button--ghost {
+    background-color: transparent;
+    color: var(--color-slate);
+    border: 1.5px solid rgba(30, 45, 61, 0.18);
+    margin-bottom: 0;
+}
+
+.auth-button--ghost:hover {
+    border-color: var(--color-slate);
+}
+
+.auth-button--ghost:active {
+    transform: scale(0.97);
+    transition: transform 0.1s ease;
+}
+
+/* ==========================================================================
+   WIZARD DE REGISTRO (3 pasos)
+   ========================================================================== */
+
+/* Card un poco más ancha que login/forgot: los pasos 1 y 2 tienen filas de
+   dos campos lado a lado y necesitan más aire horizontal. */
+.auth-card--wizard {
+    max-width: 520px;
+}
+
+/* ---------- Indicador de progreso ---------- */
+.wizard-progress {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 32px;
+}
+
+.wizard-progress__step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: var(--font-body);
+}
+
+/* Los pasos ya completados se pueden clickear para volver a revisarlos */
+.wizard-progress__step.is-complete {
+    cursor: pointer;
+}
+
+.wizard-progress__circle {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(30, 45, 61, 0.18);
+    background-color: var(--color-surface);
+    color: var(--color-mist);
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: background-color 0.25s ease, border-color 0.25s ease,
+                color 0.25s ease, transform 0.2s ease;
+}
+
+.wizard-progress__circle .icon-check {
+    display: none;
+    width: 15px;
+    height: 15px;
+}
+
+.wizard-progress__label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--color-mist);
+    text-align: center;
+    max-width: 76px;
+    line-height: 1.3;
+    transition: color 0.25s ease;
+}
+
+.wizard-progress__connector {
+    flex: 1 1 auto;
+    height: 2px;
+    margin: 15px 6px 0;
+    background-color: rgba(30, 45, 61, 0.12);
+    position: relative;
+    overflow: hidden;
+}
+
+.wizard-progress__connector::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: var(--color-sage);
+    transform: scaleX(0);
+    transform-origin: left;
+    /* Se recalcula (crece/encoge) cada vez que se avanza o retrocede */
+    transition: transform 0.35s ease;
+}
+
+.wizard-progress__connector.is-filled::after {
+    transform: scaleX(1);
+}
+
+.wizard-progress__step.is-active .wizard-progress__circle {
+    border-color: var(--color-sage);
+    background-color: var(--color-sage);
+    color: var(--color-surface);
+    transform: scale(1.08);
+}
+
+.wizard-progress__step.is-active .wizard-progress__label {
+    color: var(--color-slate);
+}
+
+.wizard-progress__step.is-complete .wizard-progress__circle {
+    border-color: var(--color-sage);
+    background-color: var(--color-sand-soft);
+    color: var(--color-sage-dark);
+}
+
+.wizard-progress__step.is-complete .wizard-progress__label {
+    color: var(--color-sage-dark);
+}
+
+/* En un paso completo se muestra el check en vez del número */
+.wizard-progress__step.is-complete .wizard-progress__circle .step-number {
+    display: none;
+}
+
+.wizard-progress__step.is-complete .wizard-progress__circle .icon-check {
+    display: block;
+}
+
+/* ---------- Título de cada paso ---------- */
+.wizard-step__title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-slate);
+    margin: 0 0 6px;
+}
+
+.wizard-step__subtitle {
+    color: var(--color-mist);
+    font-size: 0.88rem;
+    margin: 0 0 24px;
+}
+
+/* ---------- Filas de dos campos (Nombres/Apellidos, Depto/Ciudad) ---------- */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+/* ---------- Select (tipo de negocio, departamento) ---------- */
+.form-static-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-mist);
+    margin-bottom: 6px;
+}
+
+.form-select {
+    width: 100%;
+    padding: 13px 40px 13px 16px;
+    border: 1.5px solid rgba(30, 45, 61, 0.16);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-surface);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    color: var(--color-slate);
+    cursor: pointer;
+    /* Flecha propia (dibujada a mano) en vez de la del navegador, para que
+       combine con el resto de los campos */
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238C9BAB' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 16px;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: var(--color-sage);
+    box-shadow: 0 0 0 3px rgba(74, 124, 111, 0.16);
+}
+
+.form-field.has-error .form-select {
+    border-color: var(--color-error);
+    animation: auth-shake 0.4s ease;
+}
+
+/* ---------- Navegación entre pasos ---------- */
+.wizard-nav {
+    display: flex;
+    gap: 12px;
+    margin-top: 6px;
+}
+
+.wizard-nav .auth-button {
+    flex: 1 1 0;
+    margin-bottom: 0;
+}
+
+/* Paso 1 no tiene botón "Atrás": el único botón ocupa todo el ancho */
+.wizard-nav .auth-button:only-child {
+    flex: 1 1 100%;
+}
+
+/* ---------- Transición entre pasos (slide + fade) ---------- */
+.wizard-step {
+    transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.wizard-step.is-active {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Estados intermedios que aplica register-wizard.js:
+   -forward  = se avanza con "Siguiente" (el saliente va hacia la izquierda,
+               el entrante llega desde la derecha)
+   -backward = se retrocede con "Atrás" (direcciones invertidas) */
+.wizard-step--exit-forward   { opacity: 0; transform: translateX(-24px); }
+.wizard-step--exit-backward  { opacity: 0; transform: translateX(24px); }
+.wizard-step--enter-forward  { opacity: 0; transform: translateX(24px); }
+.wizard-step--enter-backward { opacity: 0; transform: translateX(-24px); }
+
+/* ---------- Sacudida reutilizable en cualquier campo (no solo al cargar) ---------- */
+.form-field.is-shaking .form-input,
+.form-field.is-shaking .form-select,
+.wizard-terms.is-shaking {
+    animation: auth-shake 0.4s ease;
+}
+
+/* ---------- Paso 3: resumen de datos ---------- */
+.wizard-summary__group {
+    margin-bottom: 22px;
+}
+
+.wizard-summary__group-title {
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-sage-dark);
+    margin: 0 0 12px;
+}
+
+.wizard-summary__list {
+    margin: 0;
+}
+
+.wizard-summary__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    padding: 9px 0;
+    border-bottom: 1px solid rgba(30, 45, 61, 0.08);
+    font-size: 0.9rem;
+}
+
+.wizard-summary__row dt {
+    color: var(--color-mist);
+    flex-shrink: 0;
+}
+
+.wizard-summary__row dd {
+    margin: 0;
+    color: var(--color-slate);
+    font-weight: 500;
+    text-align: right;
+}
+
+/* ---------- Checkbox de términos y condiciones ---------- */
+.wizard-terms {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 4px;
+    margin: 4px 0 26px;
+    border-radius: var(--radius-sm);
+    font-size: 0.86rem;
+    line-height: 1.5;
+    color: var(--color-slate);
+    cursor: pointer;
+}
+
+.wizard-terms a {
+    font-weight: 600;
+    color: var(--color-sage-dark);
+}
+
+.wizard-terms a:hover {
+    color: var(--color-slate);
+}
+
+/* El checkbox de términos reusa .auth-form__checkbox-box, pero necesita
+   quedar alineado con la primera línea del texto (que puede envolver a 2) */
+.wizard-terms .auth-form__checkbox-box {
+    margin-top: 1px;
+}
+
+/* ==========================================================================
+   ANIMACIÓN DE ENTRADA (al cargar la página)
+   ========================================================================== */
+.auth-reveal {
+    opacity: 0;
+    animation: auth-field-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes auth-field-in {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Cada elemento entra un poco después que el anterior */
+.auth-reveal-1 { animation-delay: 90ms; }
+.auth-reveal-2 { animation-delay: 150ms; }
+.auth-reveal-3 { animation-delay: 210ms; }
+.auth-reveal-4 { animation-delay: 270ms; }
+.auth-reveal-5 { animation-delay: 330ms; }
+.auth-reveal-6 { animation-delay: 390ms; }
+.auth-reveal-7 { animation-delay: 450ms; }
+.auth-reveal-8 { animation-delay: 510ms; }
+.auth-reveal-9 { animation-delay: 570ms; }
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+@media (max-width: 480px) {
+    .auth-card {
+        padding: 36px 26px;
+    }
+
+    /* Nombres/Apellidos y Departamento/Ciudad pasan de 2 columnas a 1 */
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .wizard-progress__label {
+        max-width: 60px;
+        font-size: 0.64rem;
+    }
+}
+
+/* ==========================================================================
+   ACCESIBILIDAD: menos movimiento
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+    .auth-card,
+    .auth-reveal {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
+
+    .form-field.has-error .form-input,
+    .form-field.has-error .form-select,
+    .form-field.is-shaking .form-input,
+    .form-field.is-shaking .form-select,
+    .wizard-terms.is-shaking {
+        animation: none;
+    }
+
+    .wizard-step,
+    .wizard-progress__circle,
+    .wizard-progress__connector::after {
+        transition: none;
+    }
+}
