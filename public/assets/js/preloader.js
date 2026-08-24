@@ -21,7 +21,7 @@
  */
 
 (function () {
-    var DURATION = 3000; // ms que tarda la línea en llegar a 100%
+    var DURATION = 2000; // ms que tarda la línea en llegar a 100%
 
     // Porcentaje de la línea en el que se revela cada letra de "Stockly"
     // (mismo orden que los .preloader__letter en el HTML). Deben ser

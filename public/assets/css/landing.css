@@ -185,6 +185,12 @@ h1, h2, h3 {
     transform: translateY(-2px);
 }
 
+/* Feedback de presión: el botón "cede" ligeramente al hacer click */
+.button--primary:active {
+    transform: translateY(0) scale(0.97);
+    transition: transform 0.1s ease;
+}
+
 .button--ghost {
     background-color: transparent;
     color: var(--color-slate);
