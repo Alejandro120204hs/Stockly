@@ -76,10 +76,6 @@
             <form method="POST" action="{{ route('register') }}" class="auth-form" novalidate>
                 @csrf
 
-                <!-- El backend actual solo tiene una columna "name"; se arma
-                     a partir de nombres + apellidos vía JS antes de enviar. -->
-                <input type="hidden" id="name" name="name" value="{{ old('name') }}">
-
                 <!-- ======================================================
                      PASO 1: DATOS PERSONALES
                      ====================================================== -->

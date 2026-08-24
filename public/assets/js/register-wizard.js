@@ -252,36 +252,13 @@ function initRegisterWizard() {
     }
 
     /* ------------------------------------------------------------------
-     * 4. Nombres + Apellidos -> campo "name" real
-     *
-     * El backend actual (sin cambios de base de datos) solo entiende un
-     * campo "name". La UI pide nombres y apellidos por separado porque se
-     * ve mejor y es más claro para el usuario, así que se combinan acá
-     * antes de enviar el formulario.
+     * 4. Nombres y apellidos van al backend como campos separados
+     *    (first_name / last_name), así que acá solo se leen para el
+     *    resumen del paso 3 -no hace falta combinarlos.
      * ------------------------------------------------------------------ */
 
     var firstNameInput = wizard.querySelector('#first_name');
     var lastNameInput = wizard.querySelector('#last_name');
-    var hiddenNameInput = wizard.querySelector('#name');
-
-    function syncFullName() {
-        if (!hiddenNameInput) {
-            return;
-        }
-        var parts = [
-            firstNameInput ? firstNameInput.value.trim() : '',
-            lastNameInput ? lastNameInput.value.trim() : ''
-        ].filter(Boolean);
-
-        hiddenNameInput.value = parts.join(' ');
-    }
-
-    if (firstNameInput) {
-        firstNameInput.addEventListener('input', syncFullName);
-    }
-    if (lastNameInput) {
-        lastNameInput.addEventListener('input', syncFullName);
-    }
 
     /* ------------------------------------------------------------------
      * 5. Resumen del paso 3
