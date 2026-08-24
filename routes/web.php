@@ -27,6 +27,18 @@ Route::middleware('auth')->group(function () {
         return view('admin.empresas');
     })->name('admin.empresas');
 
+    Route::get('/admin/pagos', function () {
+        return view('admin.pagos');
+    })->name('admin.pagos');
+
+    Route::get('/admin/modulos', function () {
+        return view('admin.modulos');
+    })->name('admin.modulos');
+
+    Route::get('/admin/perfil', function () {
+        return view('admin.perfil');
+    })->name('admin.perfil');
+
     Route::get('/cliente/dashboard', function () {
         return view('cliente.dashboard-cliente');
     })->name('cliente.dashboard');
