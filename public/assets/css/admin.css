@@ -47,6 +47,32 @@ a {
     color: inherit;
 }
 
+/* ---------- Scrollbar con la paleta de la marca (igual que landing.css) ---------- */
+html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-sage) var(--color-background);
+}
+
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background-color: var(--color-background);
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--color-sage);
+    border-radius: 999px;
+    border: 3px solid var(--color-background);
+    background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-sage-dark);
+}
+
 body.admin-body {
     margin: 0;
     min-height: 100vh;
@@ -1349,16 +1375,17 @@ body.admin-body {
     transform: scale(0.98);
 }
 
-.admin-form-success {
-    font-size: 0.84rem;
-    font-weight: 600;
-    color: var(--color-sage-dark);
-    opacity: 0;
-    transition: opacity 0.3s ease;
+.admin-form-banner {
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    font-size: 0.86rem;
+    font-weight: 500;
+    margin-bottom: 18px;
 }
 
-.admin-form-success.is-visible {
-    opacity: 1;
+.admin-form-banner--success {
+    background-color: var(--color-sage-soft);
+    color: var(--color-sage-dark);
 }
 
 @media (max-width: 900px) {
@@ -1744,6 +1771,79 @@ body.admin-body {
     .admin-topbar {
         padding: 0 16px;
     }
+}
+
+/* ==========================================================================
+   SWEETALERT2 CON LA PALETA DE STOCKLY
+   ========================================================================== */
+.stockly-swal.swal2-popup {
+    border-radius: var(--radius-lg);
+    padding: 32px 28px 28px;
+    font-family: var(--font-body);
+    box-shadow: 0 30px 60px -20px rgba(30, 45, 61, 0.35);
+}
+
+.stockly-swal .swal2-title {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--color-slate);
+    padding: 0;
+    margin-top: 18px;
+}
+
+.stockly-swal .swal2-html-container {
+    font-size: 0.92rem;
+    color: var(--color-mist);
+    margin-top: 6px;
+}
+
+.stockly-swal .swal2-icon {
+    border-color: var(--color-sage-soft);
+    color: var(--color-sage-dark);
+}
+
+.stockly-swal .swal2-icon.swal2-success .swal2-success-ring {
+    border-color: var(--color-sage-soft);
+}
+
+.stockly-swal .swal2-icon.swal2-success [class^='swal2-success-line'] {
+    background-color: var(--color-sage);
+}
+
+.stockly-swal .swal2-icon.swal2-error {
+    border-color: var(--color-error-soft);
+    color: var(--color-error);
+}
+
+.stockly-swal .swal2-icon.swal2-error [class^='swal2-x-mark-line'] {
+    background-color: var(--color-error);
+}
+
+.stockly-swal .swal2-confirm.swal2-styled {
+    background-color: var(--color-sage) !important;
+    border-radius: 999px;
+    padding: 10px 26px;
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    box-shadow: none !important;
+}
+
+.stockly-swal .swal2-confirm.swal2-styled:hover {
+    background-color: var(--color-sage-dark) !important;
+}
+
+.stockly-swal .swal2-confirm.swal2-styled:focus {
+    box-shadow: 0 0 0 3px var(--color-sage-soft) !important;
+}
+
+.stockly-swal .swal2-timer-progress-bar {
+    background-color: var(--color-sand);
+}
+
+.swal2-container.stockly-swal-backdrop {
+    background-color: rgba(30, 45, 61, 0.45);
 }
 
 /* ==========================================================================
