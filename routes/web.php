@@ -51,6 +51,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/cliente/inventario', function () {
         return view('cliente.inventario');
     })->name('cliente.inventario');
+
+    Route::get('/cliente/caja', function () {
+        return view('cliente.caja');
+    })->name('cliente.caja');
 });
 
 Route::middleware('auth')->group(function () {

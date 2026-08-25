@@ -56,7 +56,7 @@
                     <span class="cliente-nav-item__label">Inventario</span>
                 </a>
 
-                <a href="#" class="cliente-nav-item" data-coming-soon="La sección de Caja está en construcción.">
+                <a href="{{ url('/cliente/caja') }}" class="cliente-nav-item {{ request()->is('cliente/caja') ? 'is-active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
                         <circle cx="12" cy="12" r="3"/>
