@@ -1,0 +1,172 @@
+/* ==========================================================================
+   Stockly — Panel de Super Admin: vista Módulos
+   Las barras internas de cada tarjeta (.module-row__track/__fill) viven
+   en admin/layout.css y se reutilizan tal cual desde el Dashboard.
+   ========================================================================== */
+.modulo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 18px;
+}
+
+.modulo-card {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background-color: var(--color-surface);
+    border: none;
+    border-radius: var(--radius-lg);
+    padding: 22px;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 12px 30px -22px rgba(30, 45, 61, 0.35);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.modulo-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 36px -20px rgba(30, 45, 61, 0.4);
+}
+
+.modulo-card__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.modulo-card__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modulo-card__icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.modulo-card__icon--box { background-color: var(--color-sage-soft); color: var(--color-sage-dark); }
+.modulo-card__icon--card { background-color: var(--color-sand-soft); color: #8A6F3F; }
+
+.modulo-card__price {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-slate);
+}
+
+.modulo-card__price small {
+    font-weight: 500;
+    color: var(--color-mist);
+    font-size: 0.78rem;
+}
+
+.modulo-card__name {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    margin: 0 0 6px;
+    color: var(--color-slate);
+}
+
+.modulo-card__desc {
+    margin: 0 0 18px;
+    font-size: 0.86rem;
+    line-height: 1.5;
+    color: var(--color-mist);
+}
+
+.modulo-card__stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.84rem;
+    margin-bottom: 8px;
+}
+
+.modulo-card__stat-row span {
+    color: var(--color-mist);
+}
+
+.modulo-card__stat-row strong {
+    color: var(--color-slate);
+}
+
+.modulo-card__stat-row--revenue {
+    margin-top: 16px;
+    margin-bottom: 0;
+    padding-top: 14px;
+    border-top: 1px dashed rgba(30, 45, 61, 0.1);
+}
+
+.modulo-card__stat-row--revenue strong {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    color: var(--color-sage-dark);
+}
+
+.modulo-empresa-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.modulo-empresa-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 4px;
+    font-size: 0.86rem;
+    border-bottom: 1px dashed rgba(30, 45, 61, 0.06);
+}
+
+.modulo-empresa-row:last-child {
+    border-bottom: none;
+}
+
+.modulo-empresa-row::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background-color: var(--color-sage);
+}
+
+.modulo-empresa-row--inactiva::before {
+    background-color: var(--color-mist);
+}
+
+.modulo-empresa-row--inactiva {
+    color: var(--color-mist);
+}
+
+.modulo-empresa-list__empty {
+    font-size: 0.84rem;
+    color: var(--color-mist);
+    padding: 6px 4px;
+}
+
+.modulo-upsell-tag {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background-color: var(--color-sand-soft);
+    color: #8A6F3F;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: none;
+    vertical-align: middle;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .modulo-card {
+        animation: none;
+        transform: none;
+        transition: none;
+    }
+}

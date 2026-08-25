@@ -8,7 +8,8 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=fraunces:500,600,700|work-sans:400,500,600,700" rel="stylesheet">
 
-    <link rel="stylesheet" href="{{ asset('assets/css/cliente.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/cliente/layout.css') }}">
+    @stack('styles')
 </head>
 <body class="cliente-body">
 
@@ -39,7 +40,7 @@
                     <span class="cliente-nav-item__label">Dashboard</span>
                 </a>
 
-                <a href="#" class="cliente-nav-item" data-coming-soon="La sección de Ventas está en construcción.">
+                <a href="{{ url('/cliente/ventas') }}" class="cliente-nav-item {{ request()->is('cliente/ventas') ? 'is-active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M6 7V6a6 6 0 0 1 12 0v1"/>
                         <path d="M4 7h16l-1.5 13.5a2 2 0 0 1-2 1.5H7.5a2 2 0 0 1-2-1.5L4 7Z"/>
@@ -155,6 +156,7 @@
         </div>
     </div>
 
-    <script src="{{ asset('assets/js/cliente.js') }}" defer></script>
+    <script src="{{ asset('assets/js/cliente/layout.js') }}" defer></script>
+    @stack('scripts')
 </body>
 </html>

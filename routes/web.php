@@ -43,6 +43,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/cliente/dashboard', function () {
         return view('cliente.dashboard-cliente');
     })->name('cliente.dashboard');
+
+    Route::get('/cliente/ventas', function () {
+        return view('cliente.ventas');
+    })->name('cliente.ventas');
 });
 
 Route::middleware('auth')->group(function () {

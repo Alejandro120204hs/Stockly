@@ -1,0 +1,73 @@
+/* ==========================================================================
+   Stockly — Panel de Super Admin: vista Pagos y suscripciones
+   Lo compartido (tabla, pills, panel lateral, botones de acción) vive en
+   admin/layout.css. Acá solo lo propio del flujo de rechazo (pedir un
+   motivo antes de confirmar).
+   ========================================================================== */
+.slide-over__reason {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed rgba(30, 45, 61, 0.1);
+}
+
+.slide-over__reason-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-slate);
+}
+
+.slide-over__reason-input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(30, 45, 61, 0.15);
+    font-family: inherit;
+    font-size: 0.85rem;
+    color: var(--color-slate);
+    resize: vertical;
+    transition: border-color 0.2s ease;
+}
+
+.slide-over__reason-input:focus {
+    outline: none;
+    border-color: var(--color-error);
+}
+
+.slide-over__reason-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.slide-over__reason-actions .slide-over__btn {
+    flex: 1;
+}
+
+.slide-over__btn-text {
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--color-mist);
+    cursor: pointer;
+    padding: 8px 4px;
+    transition: color 0.2s ease;
+}
+
+.slide-over__btn-text:hover {
+    color: var(--color-slate);
+}
+
+.slide-over__motivo {
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    background-color: var(--color-error-soft);
+    color: var(--color-error);
+    font-size: 0.86rem;
+    line-height: 1.5;
+}

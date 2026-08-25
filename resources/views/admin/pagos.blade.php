@@ -166,4 +166,12 @@
         </div>
     </aside>
 
+    @push('styles')
+        <link rel="stylesheet" href="{{ asset('assets/css/admin/pagos.css') }}">
+    @endpush
+
+    @push('scripts')
+        <script src="{{ asset('assets/js/admin/pagos.js') }}" defer></script>
+    @endpush
+
 </x-admin-layout>

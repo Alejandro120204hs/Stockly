@@ -1,12 +1,15 @@
 /* ==========================================================================
-   Stockly — Panel del negocio cliente
-   Archivo independiente (no depende de admin.css/auth.css/landing.css a
-   propósito: cada subsistema de Stockly es autónomo, con su propio bloque
-   de tokens, aunque comparten la misma paleta de marca).
+   Stockly — Panel del negocio cliente: LAYOUT compartido
+   Esto es lo único que cargan TODAS las vistas del panel cliente (lo
+   carga el layout compartido, layouts/cliente-layout.blade.php): tokens,
+   el shell (sidebar/topbar), y componentes genéricos reutilizados en 2+
+   páginas (panel, tabla, pills, panel lateral, inputs/botones, toast).
+   Cada página trae aparte solo lo que le es propio.
 
    Estructura: tokens > shell (sidebar/topbar) > navegación > contenido
-               > encabezado > accesos rápidos > stat cards > paneles
-               > animaciones > responsive > accesibilidad
+               > encabezado de página > panel genérico > formularios
+               genéricos > tabla + pills > panel lateral (slide-over)
+               > toast > animación de entrada > responsive > accesibilidad
    ========================================================================== */
 
 :root {
@@ -389,204 +392,14 @@ body.cliente-body {
 }
 
 /* ==========================================================================
-   ACCESOS RÁPIDOS
+   PANEL genérico (usado por 2+ páginas: Dashboard y Ventas)
    ========================================================================== */
-.quick-actions {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 16px;
-    margin-bottom: 18px;
-}
-
-.quick-action {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 15px 20px;
-    border: none;
-    border-radius: var(--radius-lg);
-    background-color: var(--color-surface);
-    cursor: pointer;
-    text-align: left;
-    font-family: inherit;
-    box-shadow: 0 12px 30px -22px rgba(30, 45, 61, 0.35);
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-.quick-action:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 36px -20px rgba(30, 45, 61, 0.4);
-}
-
-.quick-action__icon {
-    width: 46px;
-    height: 46px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    background-color: var(--color-sage);
-    color: var(--color-surface);
-}
-
-.quick-action--sand .quick-action__icon {
-    background-color: var(--color-sand);
-    color: var(--color-slate);
-}
-
-.quick-action--slate .quick-action__icon {
-    background-color: var(--color-slate);
-    color: var(--color-sand);
-}
-
-.quick-action__icon svg {
-    width: 22px;
-    height: 22px;
-}
-
-.quick-action__text {
-    min-width: 0;
-}
-
-.quick-action__label {
-    display: block;
-    font-weight: 700;
-    font-size: 0.98rem;
-    color: var(--color-slate);
-}
-
-.quick-action__hint {
-    display: block;
-    margin-top: 2px;
-    font-size: 0.78rem;
-    color: var(--color-mist);
-}
-
-/* ==========================================================================
-   STAT CARDS
-   ========================================================================== */
-.stat-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 18px;
-}
-
-.stat-card {
-    position: relative;
-    background-color: var(--color-surface);
-    border-radius: var(--radius-lg);
-    padding: 16px 20px 14px;
-    box-shadow: 0 12px 30px -22px rgba(30, 45, 61, 0.35);
-    overflow: hidden;
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 36px -20px rgba(30, 45, 61, 0.4);
-}
-
-.stat-card__icon {
-    width: 38px;
-    height: 38px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 10px;
-}
-
-.stat-card__icon svg {
-    width: 20px;
-    height: 20px;
-}
-
-.stat-card--sage .stat-card__icon { background-color: var(--color-sage-soft); color: var(--color-sage-dark); }
-.stat-card--sand .stat-card__icon { background-color: var(--color-sand-soft); color: #8A6F3F; }
-.stat-card--mist .stat-card__icon { background-color: var(--color-mist-soft); color: var(--color-mist); }
-
-.stat-card__value {
-    font-family: var(--font-display);
-    font-size: 1.9rem;
-    font-weight: 600;
-    line-height: 1;
-    display: block;
-    font-variant-numeric: tabular-nums;
-}
-
-.stat-card__value--status {
-    font-size: 1.35rem;
-}
-
-.stat-card__label {
-    display: block;
-    margin-top: 6px;
-    color: var(--color-mist);
-    font-size: 0.86rem;
-}
-
-.stat-card__meta {
-    display: block;
-    margin-top: 10px;
-    font-size: 0.78rem;
-    color: var(--color-mist);
-}
-
-.stat-card__action {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    margin-top: 12px;
-    padding: 7px 14px;
-    border-radius: 999px;
-    border: none;
-    background-color: var(--color-sage);
-    color: var(--color-surface);
-    font-size: 0.78rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.stat-card__action:hover {
-    background-color: var(--color-sage-dark);
-}
-
-/* ==========================================================================
-   PANELES: gráfico de ventas + ventas recientes
-   ========================================================================== */
-.cliente-grid-2col {
-    display: grid;
-    grid-template-columns: 1.3fr 1fr;
-    gap: 18px;
-    margin-top: 14px;
-    align-items: stretch;
-}
-
 .panel {
     background-color: var(--color-surface);
     border-radius: var(--radius-lg);
     padding: 20px;
     box-shadow: 0 12px 30px -22px rgba(30, 45, 61, 0.35);
-}
-
-/* Dentro de la fila de 2 columnas, ambos paneles comparten una altura
-   fija -necesario para que "Ventas recientes" haga scroll interno en
-   vez de estirarse para mostrar las 10 ventas completas (con solo
-   flex/stretch, el navegador agranda la fila para que quepa todo el
-   contenido y el scroll nunca aparece). El gráfico y la lista llenan
-   lo que sobra después del encabezado, cada uno a su manera. */
-.cliente-grid-2col > .panel {
-    height: 300px;
-    display: flex;
-    flex-direction: column;
-}
-
-.cliente-grid-2col > .panel .bar-chart {
-    flex: 1;
-    min-height: 0;
-    height: auto;
+    margin-top: 20px;
 }
 
 .panel__header {
@@ -611,156 +424,277 @@ body.cliente-body {
     font-weight: 400;
 }
 
-/* ---------- Gráfico de barras (ventas de la semana) ---------- */
-.bar-chart {
-    display: flex;
-    align-items: flex-end;
-    gap: 14px;
-    height: 170px;
-    padding-top: 10px;
-}
-
-.bar-chart__col {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    height: 100%;
-}
-
-.bar-chart__track {
+/* ==========================================================================
+   FORMULARIOS GENÉRICOS (inputs, botones) — usados por Ventas y el modal
+   compartido "Nueva venta"
+   ========================================================================== */
+.cliente-input {
     width: 100%;
-    max-width: 34px;
-    flex: 1;
-    display: flex;
-    align-items: flex-end;
-    border-radius: 6px 6px 0 0;
+    padding: 10px 13px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(30, 45, 61, 0.14);
     background-color: var(--color-background);
-}
-
-.bar-chart__fill {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    border-radius: 6px 6px 0 0;
-    background-color: var(--color-sage);
-    transform: scaleY(0);
-    transform-origin: bottom;
-    transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.bar-chart__col.is-current .bar-chart__fill {
-    background-color: var(--color-sand);
-}
-
-.bar-chart__fill::after {
-    content: attr(data-value);
-    position: absolute;
-    left: 50%;
-    top: -26px;
-    transform: translateX(-50%) translateY(4px);
-    padding: 3px 8px;
-    border-radius: 6px;
-    background-color: var(--color-slate);
-    color: var(--color-surface);
-    font-size: 0.7rem;
-    font-weight: 600;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.bar-chart__track:hover .bar-chart__fill::after {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-}
-
-.bar-chart__label {
-    font-size: 0.76rem;
-    color: var(--color-mist);
-    font-weight: 500;
-}
-
-.bar-chart__col.is-current .bar-chart__label {
-    color: var(--color-slate);
-    font-weight: 700;
-}
-
-/* ---------- Ventas recientes ---------- */
-.sale-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    padding-right: 6px;
-    margin-right: -6px;
-}
-
-.sale-row {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 10px 12px;
-    border-radius: var(--radius-md);
-    border: 1px solid rgba(30, 45, 61, 0.07);
-    transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-
-.sale-row:hover {
-    background-color: var(--color-background);
-    border-color: rgba(30, 45, 61, 0.1);
-}
-
-.sale-row__icon {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-    background-color: var(--color-sage-soft);
-    color: var(--color-sage-dark);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.sale-row--efectivo .sale-row__icon {
-    background-color: var(--color-sand-soft);
-    color: #8A6F3F;
-}
-
-.sale-row__icon svg {
-    width: 18px;
-    height: 18px;
-}
-
-.sale-row__info {
-    min-width: 0;
-    flex: 1;
-}
-
-.sale-row__id {
+    font-family: inherit;
     font-size: 0.88rem;
-    font-weight: 600;
-}
-
-.sale-row__meta {
-    font-size: 0.78rem;
-    color: var(--color-mist);
-}
-
-.sale-row__monto {
-    font-size: 0.92rem;
-    font-weight: 700;
     color: var(--color-slate);
-    white-space: nowrap;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.cliente-input:focus {
+    outline: none;
+    border-color: var(--color-sage);
+    background-color: var(--color-surface);
+}
+
+.cliente-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-slate);
+}
+
+.cliente-btn-primary {
+    padding: 10px 20px;
+    border-radius: 999px;
+    border: none;
+    background-color: var(--color-sage);
+    color: var(--color-surface);
+    font-family: inherit;
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.15s ease, opacity 0.2s ease;
+}
+
+.cliente-btn-primary:hover {
+    background-color: var(--color-sage-dark);
+}
+
+.cliente-btn-primary:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.cliente-btn-ghost {
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(30, 45, 61, 0.15);
+    background: none;
+    color: var(--color-slate);
+    font-family: inherit;
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.cliente-btn-ghost:hover {
+    border-color: var(--color-sage);
+    background-color: var(--color-sage-soft);
 }
 
 /* ==========================================================================
-   TOAST "disponible pronto"
+   TABLA + PILLS DE ESTADO (por ahora solo Ventas, queda acá para que la
+   reutilicen futuras vistas -Inventario, Compras, Gastos...- sin duplicar)
+   ========================================================================== */
+.data-table-wrap {
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th {
+    text-align: left;
+    padding: 8px 14px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-mist);
+    border-bottom: 1px solid rgba(30, 45, 61, 0.08);
+    white-space: nowrap;
+}
+
+.data-table__row {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.data-table__row td {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(30, 45, 61, 0.06);
+    white-space: nowrap;
+}
+
+.data-table__row:hover,
+.data-table__row:focus-visible {
+    background-color: var(--color-background);
+}
+
+.data-table__row:last-child td {
+    border-bottom: none;
+}
+
+.data-table__title {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.data-table__meta {
+    font-size: 0.84rem;
+    color: var(--color-mist);
+}
+
+.data-table__empty {
+    padding: 32px 14px;
+    text-align: center;
+    color: var(--color-mist);
+    font-size: 0.9rem;
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+.status-pill::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: currentColor;
+}
+
+.status-pill--pagada,
+.status-pill--facturada { background-color: var(--color-sage-soft); color: var(--color-sage-dark); }
+.status-pill--pendiente { background-color: var(--color-sand-soft); color: #8A6F3F; }
+.status-pill--sin-facturar { background-color: var(--color-mist-soft); color: var(--color-mist); }
+
+/* ==========================================================================
+   PANEL LATERAL (slide-over) — misma razón que la tabla: queda acá para
+   que lo reutilicen futuras vistas sin duplicar la estructura.
+   ========================================================================== */
+.slide-over-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(30, 45, 61, 0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 60;
+}
+
+.slide-over-overlay.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.slide-over {
+    position: fixed;
+    inset: 0 0 0 auto;
+    width: min(420px, 100%);
+    background-color: var(--color-surface);
+    box-shadow: -20px 0 50px rgba(30, 45, 61, 0.25);
+    z-index: 65;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.slide-over.is-open {
+    transform: translateX(0);
+}
+
+.slide-over__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 24px 24px 18px;
+    border-bottom: 1px solid rgba(30, 45, 61, 0.08);
+}
+
+.slide-over__title {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    margin: 0 0 8px;
+}
+
+.slide-over__close {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background-color: var(--color-background);
+    color: var(--color-slate);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.slide-over__close:hover {
+    background-color: var(--color-sand-soft);
+    transform: rotate(90deg);
+}
+
+.slide-over__close svg {
+    width: 16px;
+    height: 16px;
+}
+
+.slide-over__body {
+    padding: 22px 24px 32px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.slide-over__section {
+    margin-bottom: 26px;
+}
+
+.slide-over__section-title {
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-sage-dark);
+    margin: 0 0 12px;
+}
+
+.slide-over__field {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px dashed rgba(30, 45, 61, 0.08);
+    font-size: 0.86rem;
+}
+
+.slide-over__field span {
+    color: var(--color-mist);
+}
+
+.slide-over__field strong {
+    font-weight: 600;
+    text-align: right;
+}
+
+/* ==========================================================================
+   TOAST "disponible pronto" (sidebar y accesos rápidos sin vista todavía)
    ========================================================================== */
 .cliente-toast {
     position: fixed;
@@ -803,14 +737,8 @@ body.cliente-body {
 .cliente-reveal-3 { animation-delay: 140ms; }
 
 /* ==========================================================================
-   RESPONSIVE
+   RESPONSIVE (shell)
    ========================================================================== */
-@media (max-width: 1100px) {
-    .cliente-grid-2col {
-        grid-template-columns: 1fr;
-    }
-}
-
 @media (max-width: 900px) {
     .cliente-sidebar {
         transform: translateX(-100%);
@@ -849,22 +777,16 @@ body.cliente-body {
 }
 
 @media (max-width: 560px) {
-    .stat-grid {
-        grid-template-columns: 1fr 1fr;
-    }
-
     .cliente-topbar {
         padding: 0 16px;
     }
 }
 
 /* ==========================================================================
-   ACCESIBILIDAD: menos movimiento
+   ACCESIBILIDAD: menos movimiento (elementos del shell/compartidos)
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
     .cliente-reveal,
-    .stat-card,
-    .quick-action,
     .cliente-nav-item {
         animation: none;
         opacity: 1;
@@ -872,7 +794,9 @@ body.cliente-body {
         transition: none;
     }
 
-    .bar-chart__fill {
+    .slide-over,
+    .slide-over-overlay,
+    .slide-over__close {
         transition: none;
     }
 }

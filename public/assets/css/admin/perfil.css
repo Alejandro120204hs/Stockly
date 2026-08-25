@@ -1,0 +1,202 @@
+/* ==========================================================================
+   Stockly — Panel de Super Admin: vista Mi perfil
+   Los inputs/botón genéricos de acá (admin-form-*, admin-btn-primary) por
+   ahora solo los usa esta vista.
+   ========================================================================== */
+.profile-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+.profile-photo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+}
+
+.profile-photo__avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background-color: var(--color-slate);
+    color: var(--color-sand);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    font-weight: 600;
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+}
+
+.profile-photo__btn {
+    padding: 9px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(30, 45, 61, 0.15);
+    background-color: var(--color-surface);
+    color: var(--color-slate);
+    font-family: inherit;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.profile-photo__btn:hover {
+    border-color: var(--color-sage);
+    background-color: var(--color-sage-soft);
+}
+
+.profile-photo__hint {
+    margin: 0;
+    font-size: 0.76rem;
+    color: var(--color-mist);
+    line-height: 1.5;
+}
+
+.admin-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.admin-form-field {
+    position: relative;
+    margin-bottom: 16px;
+}
+
+.admin-form-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-slate);
+}
+
+.admin-form-input {
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(30, 45, 61, 0.14);
+    background-color: var(--color-background);
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--color-slate);
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.admin-form-input:focus {
+    outline: none;
+    border-color: var(--color-sage);
+    background-color: var(--color-surface);
+}
+
+.admin-form-field--password .admin-form-input {
+    padding-right: 44px;
+}
+
+.admin-form-toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 34px;
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: none;
+    color: var(--color-mist);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.admin-form-toggle-password:hover {
+    color: var(--color-slate);
+    background-color: var(--color-background);
+}
+
+.admin-form-toggle-password svg {
+    width: 18px;
+    height: 18px;
+}
+
+.admin-form-toggle-password .icon-eye-off {
+    display: none;
+}
+
+.admin-form-toggle-password[aria-pressed="true"] .icon-eye {
+    display: none;
+}
+
+.admin-form-toggle-password[aria-pressed="true"] .icon-eye-off {
+    display: block;
+}
+
+.admin-form-error {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.78rem;
+    color: var(--color-error);
+}
+
+.admin-form-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 4px;
+}
+
+.admin-btn-primary {
+    padding: 11px 22px;
+    border-radius: 999px;
+    border: none;
+    background-color: var(--color-sage);
+    color: var(--color-surface);
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.admin-btn-primary:hover {
+    background-color: var(--color-sage-dark);
+    box-shadow: 0 8px 16px -8px rgba(74, 124, 111, 0.6);
+}
+
+.admin-btn-primary:active {
+    transform: scale(0.98);
+}
+
+.admin-form-banner {
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    font-size: 0.86rem;
+    font-weight: 500;
+    margin-bottom: 18px;
+}
+
+.admin-form-banner--success {
+    background-color: var(--color-sage-soft);
+    color: var(--color-sage-dark);
+}
+
+@media (max-width: 900px) {
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 560px) {
+    .admin-form-grid {
+        grid-template-columns: 1fr;
+    }
+}

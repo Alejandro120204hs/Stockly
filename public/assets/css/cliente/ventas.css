@@ -1,0 +1,100 @@
+/* ==========================================================================
+   Stockly — Panel del negocio cliente: vista Ventas
+   Lo compartido (panel, tabla, pills, panel lateral, inputs/botones) vive
+   en cliente/layout.css. Acá solo el buscador/filtros propios de esta
+   vista, la paginación, y el detalle de productos vendidos en el panel
+   lateral.
+   ========================================================================== */
+.cliente-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.cliente-toolbar__search {
+    position: relative;
+    flex: 1;
+    min-width: 220px;
+}
+
+.cliente-toolbar__search svg {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 17px;
+    height: 17px;
+    color: var(--color-mist);
+    pointer-events: none;
+}
+
+.cliente-toolbar__search input {
+    padding-left: 40px;
+}
+
+.cliente-toolbar__select {
+    padding: 10px 13px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(30, 45, 61, 0.12);
+    background-color: var(--color-background);
+    font-family: inherit;
+    font-size: 0.86rem;
+    color: var(--color-slate);
+    cursor: pointer;
+}
+
+.data-table__pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(30, 45, 61, 0.08);
+}
+
+.data-table__pagination-info {
+    font-size: 0.84rem;
+    color: var(--color-mist);
+    min-width: 110px;
+    text-align: center;
+}
+
+.data-table__pagination .cliente-btn-ghost:disabled {
+    opacity: 0.4;
+    cursor: default;
+    border-color: rgba(30, 45, 61, 0.1);
+    background-color: transparent;
+}
+
+/* Productos vendidos dentro del detalle de la venta (panel lateral) */
+.venta-detalle-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px dashed rgba(30, 45, 61, 0.08);
+}
+
+.venta-detalle-item:last-child {
+    border-bottom: none;
+}
+
+.venta-detalle-item__nombre {
+    font-size: 0.86rem;
+    font-weight: 500;
+}
+
+.venta-detalle-item__cantidad {
+    font-size: 0.78rem;
+    color: var(--color-mist);
+}
+
+.venta-detalle-item__monto {
+    font-size: 0.86rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
