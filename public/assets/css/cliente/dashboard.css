@@ -1,0 +1,282 @@
+/* ==========================================================================
+   Stockly — Panel del negocio cliente: vista Dashboard
+   Lo compartido (shell, panel genérico, tabla/pills, formularios, stat
+   cards) vive en cliente/layout.css -las stat cards las usa también
+   Inventario. Acá solo los accesos rápidos, el gráfico de ventas de la
+   semana y la lista de ventas recientes.
+   ========================================================================== */
+
+/* ==========================================================================
+   ACCESOS RÁPIDOS
+   ========================================================================== */
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.quick-action {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 15px 20px;
+    border: none;
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface);
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    box-shadow: 0 12px 30px -22px rgba(30, 45, 61, 0.35);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.quick-action:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 36px -20px rgba(30, 45, 61, 0.4);
+}
+
+.quick-action__icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background-color: var(--color-sage);
+    color: var(--color-surface);
+}
+
+.quick-action--sand .quick-action__icon {
+    background-color: var(--color-sand);
+    color: var(--color-slate);
+}
+
+.quick-action--slate .quick-action__icon {
+    background-color: var(--color-slate);
+    color: var(--color-sand);
+}
+
+.quick-action__icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.quick-action__text {
+    min-width: 0;
+}
+
+.quick-action__label {
+    display: block;
+    font-weight: 700;
+    font-size: 0.98rem;
+    color: var(--color-slate);
+}
+
+.quick-action__hint {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.78rem;
+    color: var(--color-mist);
+}
+
+/* ==========================================================================
+   FILA: gráfico de ventas + ventas recientes
+   ========================================================================== */
+.cliente-grid-2col {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 18px;
+    margin-top: 14px;
+    align-items: stretch;
+}
+
+/* Dentro de la fila de 2 columnas, ambos paneles comparten una altura
+   fija -necesario para que "Ventas recientes" haga scroll interno en
+   vez de estirarse para mostrar todas las ventas (con solo flex/stretch,
+   el navegador agranda la fila para que quepa todo el contenido y el
+   scroll nunca aparece). El gráfico y la lista llenan lo que sobra
+   después del encabezado, cada uno a su manera. */
+.cliente-grid-2col > .panel {
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+}
+
+.cliente-grid-2col > .panel .bar-chart {
+    flex: 1;
+    min-height: 0;
+    height: auto;
+}
+
+/* ---------- Gráfico de barras (ventas de la semana) ---------- */
+.bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    height: 170px;
+    padding-top: 10px;
+}
+
+.bar-chart__col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    height: 100%;
+}
+
+.bar-chart__track {
+    width: 100%;
+    max-width: 34px;
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    border-radius: 6px 6px 0 0;
+    background-color: var(--color-background);
+}
+
+.bar-chart__fill {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 6px 6px 0 0;
+    background-color: var(--color-sage);
+    transform: scaleY(0);
+    transform-origin: bottom;
+    transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bar-chart__col.is-current .bar-chart__fill {
+    background-color: var(--color-sand);
+}
+
+.bar-chart__fill::after {
+    content: attr(data-value);
+    position: absolute;
+    left: 50%;
+    top: -26px;
+    transform: translateX(-50%) translateY(4px);
+    padding: 3px 8px;
+    border-radius: 6px;
+    background-color: var(--color-slate);
+    color: var(--color-surface);
+    font-size: 0.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.bar-chart__track:hover .bar-chart__fill::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.bar-chart__label {
+    font-size: 0.76rem;
+    color: var(--color-mist);
+    font-weight: 500;
+}
+
+.bar-chart__col.is-current .bar-chart__label {
+    color: var(--color-slate);
+    font-weight: 700;
+}
+
+/* ---------- Ventas recientes ---------- */
+.sale-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 6px;
+    margin-right: -6px;
+}
+
+.sale-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(30, 45, 61, 0.07);
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.sale-row:hover {
+    background-color: var(--color-background);
+    border-color: rgba(30, 45, 61, 0.1);
+}
+
+.sale-row__icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background-color: var(--color-sage-soft);
+    color: var(--color-sage-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.sale-row--efectivo .sale-row__icon {
+    background-color: var(--color-sand-soft);
+    color: #8A6F3F;
+}
+
+.sale-row__icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.sale-row__info {
+    min-width: 0;
+    flex: 1;
+}
+
+.sale-row__id {
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.sale-row__meta {
+    font-size: 0.78rem;
+    color: var(--color-mist);
+}
+
+.sale-row__monto {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--color-slate);
+    white-space: nowrap;
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+@media (max-width: 1100px) {
+    .cliente-grid-2col {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================================================
+   ACCESIBILIDAD: menos movimiento
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+    .quick-action {
+        transform: none;
+        transition: none;
+    }
+
+    .bar-chart__fill {
+        transition: none;
+    }
+}

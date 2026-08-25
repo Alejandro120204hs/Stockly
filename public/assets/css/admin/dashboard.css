@@ -1,0 +1,367 @@
+/* ==========================================================================
+   Stockly — Panel de Super Admin: vista Dashboard
+   Solo lo que es exclusivo de esta página (todo lo compartido con otras
+   vistas -shell, panel genérico, tabla, pills, barra de progreso- vive en
+   admin/layout.css, que ya está cargado por el layout).
+
+   Estructura: stat cards > cola de pagos pendientes > lista de empresas
+               por vencer > gráfico de barras > desglose de módulos
+               > accesibilidad
+   ========================================================================== */
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 18px;
+    margin-bottom: 28px;
+}
+
+.stat-card {
+    position: relative;
+    background-color: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: 22px 22px 20px;
+    box-shadow: 0 12px 30px -22px rgba(30, 45, 61, 0.35);
+    overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 36px -20px rgba(30, 45, 61, 0.4);
+}
+
+.stat-card__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.stat-card__icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.stat-card--sage .stat-card__icon { background-color: var(--color-sage-soft); color: var(--color-sage-dark); }
+.stat-card--sand .stat-card__icon { background-color: var(--color-sand-soft); color: #8A6F3F; }
+.stat-card--error .stat-card__icon { background-color: var(--color-error-soft); color: var(--color-error); }
+.stat-card--mist .stat-card__icon { background-color: var(--color-mist-soft); color: var(--color-mist); }
+
+.stat-card__value {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1;
+    display: block;
+    /* font-variant-numeric evita que los números salten de ancho mientras
+       el contador sube (cada dígito ocupa el mismo espacio) */
+    font-variant-numeric: tabular-nums;
+}
+
+.stat-card__label {
+    display: block;
+    margin-top: 6px;
+    color: var(--color-mist);
+    font-size: 0.86rem;
+}
+
+.stat-card__trend {
+    position: absolute;
+    top: 22px;
+    right: 22px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--color-sage-dark);
+}
+
+.stat-card__trend svg {
+    width: 13px;
+    height: 13px;
+}
+
+/* ---------- Cola de pagos pendientes ---------- */
+.payment-queue {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.payment-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(30, 45, 61, 0.07);
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.payment-row:hover {
+    background-color: var(--color-background);
+    border-color: rgba(30, 45, 61, 0.1);
+}
+
+.payment-row__icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background-color: var(--color-sand-soft);
+    color: #8A6F3F;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.payment-row__icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.payment-row__info {
+    min-width: 0;
+    flex: 1;
+}
+
+.payment-row__empresa {
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.payment-row__meta {
+    font-size: 0.78rem;
+    color: var(--color-mist);
+}
+
+.payment-row__monto {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--color-slate);
+    white-space: nowrap;
+}
+
+.payment-row__action {
+    flex-shrink: 0;
+}
+
+/* Botón "Activar": estados normal / cargando / listo, con transición */
+.activar-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: none;
+    background-color: var(--color-sage);
+    color: var(--color-surface);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.activar-btn:hover {
+    background-color: var(--color-sage-dark);
+    box-shadow: 0 8px 16px -8px rgba(74, 124, 111, 0.6);
+}
+
+.activar-btn:active {
+    transform: scale(0.96);
+}
+
+.activar-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.payment-row.is-done {
+    opacity: 0.6;
+}
+
+.payment-row.is-done .activar-btn {
+    background-color: var(--color-sage-soft);
+    color: var(--color-sage-dark);
+    cursor: default;
+    box-shadow: none;
+}
+
+/* ---------- Lista de empresas próximas a vencer ---------- */
+.expiring-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.expiring-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 8px;
+    border-radius: var(--radius-sm);
+    transition: background-color 0.2s ease;
+}
+
+.expiring-row:hover {
+    background-color: var(--color-background);
+}
+
+.expiring-row__days {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    line-height: 1;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--color-error);
+    background-color: var(--color-error-soft);
+    flex-shrink: 0;
+}
+
+.expiring-row__days strong {
+    font-size: 0.98rem;
+}
+
+.expiring-row__info {
+    min-width: 0;
+    flex: 1;
+}
+
+.expiring-row__empresa {
+    font-size: 0.88rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.expiring-row__meta {
+    font-size: 0.76rem;
+    color: var(--color-mist);
+}
+
+/* ==========================================================================
+   GRÁFICO DE INGRESOS (barras, CSS puro)
+   ========================================================================== */
+.bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    height: 180px;
+    padding-top: 10px;
+}
+
+.bar-chart__col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    height: 100%;
+}
+
+.bar-chart__track {
+    width: 100%;
+    max-width: 34px;
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    border-radius: 6px 6px 0 0;
+    background-color: var(--color-background);
+}
+
+.bar-chart__fill {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 6px 6px 0 0;
+    background-color: var(--color-sage);
+    /* Crece con transform en vez de animar height: evita layout thrash.
+       El JS fija el % real con scaleY (ver admin/dashboard.js). */
+    transform: scaleY(0);
+    transform-origin: bottom;
+    transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bar-chart__col.is-current .bar-chart__fill {
+    background-color: var(--color-sand);
+}
+
+.bar-chart__fill::after {
+    content: attr(data-value);
+    position: absolute;
+    left: 50%;
+    top: -26px;
+    transform: translateX(-50%) translateY(4px);
+    padding: 3px 8px;
+    border-radius: 6px;
+    background-color: var(--color-slate);
+    color: var(--color-surface);
+    font-size: 0.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.bar-chart__track:hover .bar-chart__fill::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.bar-chart__label {
+    font-size: 0.76rem;
+    color: var(--color-mist);
+    font-weight: 500;
+}
+
+.bar-chart__col.is-current .bar-chart__label {
+    color: var(--color-slate);
+    font-weight: 700;
+}
+
+/* ==========================================================================
+   DESGLOSE DE MÓDULOS CONTRATADOS
+   (las barras .module-row__track/__fill viven en admin/layout.css, se
+   reutilizan tal cual en la vista Módulos)
+   ========================================================================== */
+.module-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+@media (max-width: 560px) {
+    .stat-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* ==========================================================================
+   ACCESIBILIDAD: menos movimiento
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+    .stat-card {
+        transition: none;
+    }
+
+    .bar-chart__fill {
+        transition: none;
+    }
+}

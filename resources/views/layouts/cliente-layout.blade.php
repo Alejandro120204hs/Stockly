@@ -8,7 +8,8 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=fraunces:500,600,700|work-sans:400,500,600,700" rel="stylesheet">
 
-    <link rel="stylesheet" href="{{ asset('assets/css/cliente.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/cliente/layout.css') }}">
+    @stack('styles')
 </head>
 <body class="cliente-body">
 
@@ -39,7 +40,7 @@
                     <span class="cliente-nav-item__label">Dashboard</span>
                 </a>
 
-                <a href="#" class="cliente-nav-item" data-coming-soon="La sección de Ventas está en construcción.">
+                <a href="{{ url('/cliente/ventas') }}" class="cliente-nav-item {{ request()->is('cliente/ventas') ? 'is-active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M6 7V6a6 6 0 0 1 12 0v1"/>
                         <path d="M4 7h16l-1.5 13.5a2 2 0 0 1-2 1.5H7.5a2 2 0 0 1-2-1.5L4 7Z"/>
@@ -47,21 +48,12 @@
                     <span class="cliente-nav-item__label">Ventas</span>
                 </a>
 
-                <a href="#" class="cliente-nav-item" data-coming-soon="La sección de Inventario está en construcción.">
+                <a href="{{ url('/cliente/inventario') }}" class="cliente-nav-item {{ request()->is('cliente/inventario') ? 'is-active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/>
                         <path d="M3 8l9 5 9-5M12 13v8"/>
                     </svg>
                     <span class="cliente-nav-item__label">Inventario</span>
-                </a>
-
-                <a href="#" class="cliente-nav-item" data-coming-soon="La sección de Compras está en construcción.">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="9" cy="20" r="1"/>
-                        <circle cx="18" cy="20" r="1"/>
-                        <path d="M3 4h2l2.3 11.4a2 2 0 0 0 2 1.6h7.4a2 2 0 0 0 2-1.6L21 8H6"/>
-                    </svg>
-                    <span class="cliente-nav-item__label">Compras</span>
                 </a>
 
                 <a href="#" class="cliente-nav-item" data-coming-soon="La sección de Caja está en construcción.">
@@ -155,6 +147,7 @@
         </div>
     </div>
 
-    <script src="{{ asset('assets/js/cliente.js') }}" defer></script>
+    <script src="{{ asset('assets/js/cliente/layout.js') }}" defer></script>
+    @stack('scripts')
 </body>
 </html>

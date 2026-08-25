@@ -11,7 +11,7 @@
     </div>
 
     <div class="quick-actions cliente-reveal cliente-reveal-2">
-        <button type="button" class="quick-action" data-coming-soon="Nueva venta estará disponible pronto.">
+        <button type="button" class="quick-action" id="nuevaVentaBtn">
             <span class="quick-action__icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M6 7V6a6 6 0 0 1 12 0v1"/>
@@ -311,5 +311,17 @@
             </div>
         </div>
     </div>
+
+    @include('cliente.partials.nueva-venta-modal')
+
+    @push('styles')
+        <link rel="stylesheet" href="{{ asset('assets/css/cliente/dashboard.css') }}">
+        <link rel="stylesheet" href="{{ asset('assets/css/cliente/nueva-venta-modal.css') }}">
+    @endpush
+
+    @push('scripts')
+        <script src="{{ asset('assets/js/cliente/dashboard.js') }}" defer></script>
+        <script src="{{ asset('assets/js/cliente/nueva-venta-modal.js') }}" defer></script>
+    @endpush
 
 </x-cliente-layout>
