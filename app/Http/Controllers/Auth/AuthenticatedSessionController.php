@@ -34,7 +34,7 @@ class AuthenticatedSessionController extends Controller
             ? route('admin.dashboard', absolute: false)
             : route('cliente.dashboard', absolute: false);
 
-        return redirect()->intended($destino);
+        return redirect()->intended($destino)->with('status', 'login-exitoso');
     }
 
     /**

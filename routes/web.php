@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -35,9 +36,9 @@ Route::middleware('auth')->group(function () {
         return view('admin.modulos');
     })->name('admin.modulos');
 
-    Route::get('/admin/perfil', function () {
-        return view('admin.perfil');
-    })->name('admin.perfil');
+    Route::get('/admin/perfil', [AdminProfileController::class, 'edit'])->name('admin.perfil');
+    Route::patch('/admin/perfil', [AdminProfileController::class, 'updateInfo'])->name('admin.perfil.update');
+    Route::put('/admin/perfil/password', [AdminProfileController::class, 'updatePassword'])->name('admin.perfil.password');
 
     Route::get('/cliente/dashboard', function () {
         return view('cliente.dashboard-cliente');

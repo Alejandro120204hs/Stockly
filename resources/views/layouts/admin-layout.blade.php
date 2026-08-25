@@ -9,8 +9,9 @@
     <link href="https://fonts.bunny.net/css?family=fraunces:500,600,700|work-sans:400,500,600,700" rel="stylesheet">
 
     <link rel="stylesheet" href="{{ asset('assets/css/admin.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body class="admin-body">
+<body class="admin-body" data-flash-status="{{ session('status') }}">
 
     <div class="admin-shell">
 

@@ -14,7 +14,12 @@
  *   8. initModulosPanel   -> tarjetas + panel lateral de la vista Módulos
  *      (qué empresas tienen cada módulo activo/inactivo)
  *   9. initPerfilPage     -> vista Mi perfil (preview de foto real en el
- *      navegador, formularios demo, mostrar/ocultar contraseña)
+ *      navegador, mostrar/ocultar contraseña, validación de confirmación
+ *      antes de mandar -los formularios en sí ya son reales, van al
+ *      backend vía Admin\ProfileController)
+ *  10. initFlashAlerts    -> SweetAlert2 con la paleta de Stockly, solo
+ *      para el mensaje de bienvenida al iniciar sesión (los mensajes de
+ *      "Mi perfil" volvieron al banner de texto en la propia página)
  */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -27,6 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initPagosPanel();
     initModulosPanel();
     initPerfilPage();
+    initFlashAlerts();
 });
 
 /* --------------------------------------------------------------------
@@ -812,41 +818,27 @@ function initPerfilPage() {
         reader.readAsDataURL(file);
     });
 
-    function flashSuccess(el) {
-        el.hidden = false;
-        el.classList.add('is-visible');
-        window.setTimeout(function () {
-            el.classList.remove('is-visible');
-            window.setTimeout(function () {
-                el.hidden = true;
-            }, 300);
-        }, 2200);
-    }
-
-    var infoForm = document.getElementById('profileInfoForm');
-    infoForm.addEventListener('submit', function (event) {
-        event.preventDefault();
-        flashSuccess(document.getElementById('profileInfoSuccess'));
-    });
-
+    /* ---------- Info personal y contraseña: formularios reales ----------
+     * Los dos <form> ya mandan de verdad al backend (ver
+     * Admin\ProfileController). Acá solo queda una validación rápida del
+     * lado del cliente para la confirmación de contraseña -evita un viaje
+     * al servidor si ya se ve que no coinciden, pero el servidor sigue
+     * siendo quien valida de verdad. */
     var passwordForm = document.getElementById('profilePasswordForm');
     var claveNueva = document.getElementById('perfilClaveNueva');
     var claveConfirmar = document.getElementById('perfilClaveConfirmar');
-    var claveError = document.getElementById('perfilClaveError');
+    var claveMismatch = document.getElementById('perfilClaveMismatch');
 
     passwordForm.addEventListener('submit', function (event) {
-        event.preventDefault();
-
-        if (claveNueva.value !== claveConfirmar.value || claveNueva.value === '') {
-            claveError.hidden = false;
+        if (claveNueva.value !== claveConfirmar.value) {
+            event.preventDefault();
+            claveMismatch.hidden = false;
             claveConfirmar.style.borderColor = 'var(--color-error)';
             return;
         }
 
-        claveError.hidden = true;
+        claveMismatch.hidden = true;
         claveConfirmar.style.borderColor = '';
-        flashSuccess(document.getElementById('profilePasswordSuccess'));
-        passwordForm.reset();
     });
 
     /* ---------- Mostrar/ocultar contraseña ---------- */
@@ -862,5 +854,45 @@ function initPerfilPage() {
             input.type = isVisible ? 'password' : 'text';
             toggle.setAttribute('aria-pressed', String(!isVisible));
         });
+    });
+}
+
+/* --------------------------------------------------------------------
+ * 10. Alertas de éxito (SweetAlert2)
+ *
+ * El backend deja el "tipo" de mensaje en session('status') (ver
+ * AuthenticatedSessionController y Admin\ProfileController), y el layout
+ * lo pasa al HTML como data-flash-status en el <body>. Acá solo se lee
+ * una vez al cargar la página y se muestra la alerta correspondiente.
+ * ------------------------------------------------------------------ */
+function initFlashAlerts() {
+    var status = document.body.getAttribute('data-flash-status');
+    if (!status || typeof Swal === 'undefined') {
+        return;
+    }
+
+    var mensajes = {
+        'login-exitoso': {
+            title: '¡Bienvenido de nuevo!',
+            text: 'Iniciaste sesión correctamente.'
+        }
+    };
+
+    var mensaje = mensajes[status];
+    if (!mensaje) {
+        return;
+    }
+
+    Swal.fire({
+        icon: 'success',
+        title: mensaje.title,
+        text: mensaje.text,
+        showConfirmButton: false,
+        timer: 2400,
+        timerProgressBar: true,
+        customClass: {
+            popup: 'stockly-swal',
+            container: 'stockly-swal-backdrop'
+        }
     });
 }
