@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=fraunces:500,600,700|work-sans:400,500,600,700" rel="stylesheet">
 
-    <link rel="stylesheet" href="{{ asset('assets/css/landing.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/preloader.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('assets/css/landing.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('assets/css/preloader.css') }}">
 </head>
 <body>
 
@@ -478,7 +478,7 @@
         </div>
     </footer>
 
-    <script src="{{ asset('assets/js/preloader.js') }}" defer></script>
-    <script src="{{ asset('assets/js/landing.js') }}" defer></script>
+    <script src="{{ asset_v('assets/js/preloader.js') }}" defer></script>
+    <script src="{{ asset_v('assets/js/landing.js') }}" defer></script>
 </body>
 </html>

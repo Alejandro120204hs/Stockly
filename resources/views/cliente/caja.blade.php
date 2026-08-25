@@ -113,7 +113,7 @@
 
             <div class="caja-hero__form">
                 <label for="cajaBaseInicial" class="cliente-label">Base de efectivo inicial</label>
-                <input type="number" id="cajaBaseInicial" class="cliente-input" placeholder="Ej: 150000" min="0">
+                <input type="text" id="cajaBaseInicial" class="cliente-input" placeholder="Ej: 150.000">
                 <button type="button" class="cliente-btn-primary" id="abrirCajaBtn">Abrir caja</button>
             </div>
         </div>
@@ -277,7 +277,7 @@
             <p class="caja-modal-esperado">Total esperado en efectivo: <strong id="cerrarModalEsperado">$0</strong></p>
 
             <label for="conteoFisicoInput" class="cliente-label">Conteo físico real</label>
-            <input type="number" id="conteoFisicoInput" class="cliente-input" placeholder="Cuenta el efectivo en caja y escribe el total" min="0">
+            <input type="text" id="conteoFisicoInput" class="cliente-input" placeholder="Cuenta el efectivo en caja y escribe el total">
 
             <div class="caja-modal-diferencia" id="cajaModalDiferencia" hidden>
                 <span id="cajaModalDiferenciaTexto">—</span>
@@ -290,11 +290,11 @@
     </div>
 
     @push('styles')
-        <link rel="stylesheet" href="{{ asset('assets/css/cliente/caja.css') }}">
+        <link rel="stylesheet" href="{{ asset_v('assets/css/cliente/caja.css') }}">
     @endpush
 
     @push('scripts')
-        <script src="{{ asset('assets/js/cliente/caja.js') }}" defer></script>
+        <script src="{{ asset_v('assets/js/cliente/caja.js') }}" defer></script>
     @endpush
 
 </x-cliente-layout>

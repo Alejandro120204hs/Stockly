@@ -9,6 +9,53 @@
    esta vista: pestañas, botón de transferir, y el toggle proveedor/informal.
    ========================================================================== */
 
+/* ---------- Stat cards: 5 en una sola fila (más angostas que en
+   Dashboard/Caja, que solo tienen 4) ---------- */
+.stat-grid--inventario {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+}
+
+.stat-grid--inventario .stat-card {
+    padding: 13px 15px 12px;
+}
+
+.stat-grid--inventario .stat-card__icon {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 8px;
+}
+
+.stat-grid--inventario .stat-card__icon svg {
+    width: 17px;
+    height: 17px;
+}
+
+.stat-grid--inventario .stat-card__value {
+    font-size: 1.4rem;
+}
+
+.stat-grid--inventario .stat-card__label {
+    font-size: 0.78rem;
+}
+
+.stat-grid--inventario .stat-card__meta {
+    margin-top: 6px;
+    font-size: 0.72rem;
+}
+
+@media (max-width: 1100px) {
+    .stat-grid--inventario {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 560px) {
+    .stat-grid--inventario {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 /* ---------- Pestañas Vitrina / Bodega / Compras ---------- */
 .inventario-tabs {
     display: flex;

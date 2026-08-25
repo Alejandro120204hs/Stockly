@@ -288,11 +288,11 @@
     </section>
 
     @push('styles')
-        <link rel="stylesheet" href="{{ asset('assets/css/admin/dashboard.css') }}">
+        <link rel="stylesheet" href="{{ asset_v('assets/css/admin/dashboard.css') }}">
     @endpush
 
     @push('scripts')
-        <script src="{{ asset('assets/js/admin/dashboard.js') }}" defer></script>
+        <script src="{{ asset_v('assets/js/admin/dashboard.js') }}" defer></script>
     @endpush
 
 </x-admin-layout>

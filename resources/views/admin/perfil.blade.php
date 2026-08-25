@@ -153,11 +153,11 @@
     </div>
 
     @push('styles')
-        <link rel="stylesheet" href="{{ asset('assets/css/admin/perfil.css') }}">
+        <link rel="stylesheet" href="{{ asset_v('assets/css/admin/perfil.css') }}">
     @endpush
 
     @push('scripts')
-        <script src="{{ asset('assets/js/admin/perfil.js') }}" defer></script>
+        <script src="{{ asset_v('assets/js/admin/perfil.js') }}" defer></script>
     @endpush
 
 </x-admin-layout>

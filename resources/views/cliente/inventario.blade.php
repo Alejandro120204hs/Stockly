@@ -1,41 +1,14 @@
 <x-cliente-layout title="Inventario">
 
-    {{-- Inventario — SOLO FRONTEND, datos mock (no hay backend de
-         productos/inventario todavía). Ojo con la regla de negocio: una
-         compra SIEMPRE entra a bodega, nunca directo a vitrina -mover
-         stock de bodega a vitrina es una acción manual aparte (acá el
-         modal "Transferir"). Si la compra es con proveedor y factura
-         electrónica, el QR/CUFE solo VALIDA la factura ante la DIAN -no
-         trae el detalle de productos, así que las líneas siempre se
-         registran a mano en cualquiera de los dos casos (proveedor o
-         compra informal). --}}
+    {{-- Inventario — datos reales (App\Http\Controllers\Cliente\InventarioController).
+         Ojo con la regla de negocio: una compra SIEMPRE entra a bodega,
+         nunca directo a vitrina -mover stock de bodega a vitrina es una
+         acción manual aparte (acá el modal "Transferir"). Si la compra es
+         con proveedor y factura electrónica, el QR/CUFE solo VALIDA la
+         factura ante la DIAN -no trae el detalle de productos, así que las
+         líneas siempre se registran a mano en cualquiera de los dos casos
+         (proveedor o compra informal). --}}
     @php
-        $categorias = ['Aguardientes', 'Rones', 'Cervezas', 'Whiskys', 'Vinos'];
-        $unidades = ['Botella', 'Lata', 'Caja', 'Paquete', 'Unidad', 'Kilogramo', 'Litro'];
-
-        $productos = [
-            ['id' => 1, 'nombre' => 'Aguardiente Antioqueño 750ml', 'categoria' => 'Aguardientes', 'precioCosto' => 31000, 'precioVenta' => 45000, 'unidad' => 'Botella', 'stockVitrina' => 18, 'stockBodega' => 42],
-            ['id' => 2, 'nombre' => 'Ron Medellín Añejo 750ml', 'categoria' => 'Rones', 'precioCosto' => 44000, 'precioVenta' => 62000, 'unidad' => 'Botella', 'stockVitrina' => 9, 'stockBodega' => 21],
-            ['id' => 3, 'nombre' => 'Cerveza Águila Lata 330ml', 'categoria' => 'Cervezas', 'precioCosto' => 2300, 'precioVenta' => 3500, 'unidad' => 'Lata', 'stockVitrina' => 140, 'stockBodega' => 320],
-            ['id' => 4, 'nombre' => 'Whisky Old Parr 750ml', 'categoria' => 'Whiskys', 'precioCosto' => 138000, 'precioVenta' => 185000, 'unidad' => 'Botella', 'stockVitrina' => 3, 'stockBodega' => 7],
-            ['id' => 5, 'nombre' => 'Vino Santa Rita 750ml', 'categoria' => 'Vinos', 'precioCosto' => 40000, 'precioVenta' => 58000, 'unidad' => 'Botella', 'stockVitrina' => 6, 'stockBodega' => 14],
-            ['id' => 6, 'nombre' => 'Cerveza Club Colombia 330ml', 'categoria' => 'Cervezas', 'precioCosto' => 2700, 'precioVenta' => 4200, 'unidad' => 'Lata', 'stockVitrina' => 95, 'stockBodega' => 210],
-            ['id' => 7, 'nombre' => 'Ron Viejo de Caldas 750ml', 'categoria' => 'Rones', 'precioCosto' => 37000, 'precioVenta' => 54000, 'unidad' => 'Botella', 'stockVitrina' => 11, 'stockBodega' => 26],
-        ];
-
-        $compras = [
-            ['id' => 5, 'fecha' => '24 ago 2026, 10:15 a.m.', 'tipo' => 'proveedor', 'proveedor' => 'Licorera Continental S.A.S.', 'facturaEstado' => 'validada', 'cufe' => 'CUFE-9F82-1123-AAB2', 'lineas' => [['productoId' => 1, 'nombre' => 'Aguardiente Antioqueño 750ml', 'cantidad' => 24, 'costo' => 31000], ['productoId' => 2, 'nombre' => 'Ron Medellín Añejo 750ml', 'cantidad' => 12, 'costo' => 44000]]],
-            ['id' => 4, 'fecha' => '19 ago 2026, 3:40 p.m.', 'tipo' => 'informal', 'proveedor' => null, 'facturaEstado' => 'sin_factura', 'cufe' => null, 'lineas' => [['productoId' => 3, 'nombre' => 'Cerveza Águila Lata 330ml', 'cantidad' => 100, 'costo' => 2300]]],
-            ['id' => 3, 'fecha' => '12 ago 2026, 9:05 a.m.', 'tipo' => 'proveedor', 'proveedor' => 'Distribuidora El Manantial', 'facturaEstado' => 'por_validar', 'cufe' => 'CUFE-4471-0056-CD31', 'lineas' => [['productoId' => 4, 'nombre' => 'Whisky Old Parr 750ml', 'cantidad' => 6, 'costo' => 138000], ['productoId' => 5, 'nombre' => 'Vino Santa Rita 750ml', 'cantidad' => 8, 'costo' => 40000]]],
-            ['id' => 2, 'fecha' => '05 ago 2026, 11:50 a.m.', 'tipo' => 'informal', 'proveedor' => null, 'facturaEstado' => 'sin_factura', 'cufe' => null, 'lineas' => [['productoId' => 6, 'nombre' => 'Cerveza Club Colombia 330ml', 'cantidad' => 80, 'costo' => 2700]]],
-            ['id' => 1, 'fecha' => '29 jul 2026, 4:20 p.m.', 'tipo' => 'proveedor', 'proveedor' => 'Licorera Continental S.A.S.', 'facturaEstado' => 'validada', 'cufe' => 'CUFE-2201-9987-EE10', 'lineas' => [['productoId' => 7, 'nombre' => 'Ron Viejo de Caldas 750ml', 'cantidad' => 15, 'costo' => 37000]]],
-        ];
-
-        foreach ($compras as &$compra) {
-            $compra['total'] = collect($compra['lineas'])->sum(fn ($l) => $l['cantidad'] * $l['costo']);
-        }
-        unset($compra);
-
         $facturaLabels = [
             'validada' => 'Validada',
             'por_validar' => 'Por validar',
@@ -50,7 +23,6 @@
 
         $valorBodega = collect($productos)->sum(fn ($p) => $p['stockBodega'] * $p['precioCosto']);
         $valorVitrina = collect($productos)->sum(fn ($p) => $p['stockVitrina'] * $p['precioCosto']);
-        $comprasEsteMes = collect($compras)->filter(fn ($c) => str_contains($c['fecha'], 'ago 2026'))->count();
     @endphp
 
     <div class="cliente-page-header cliente-reveal cliente-reveal-1" style="display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap;">
@@ -68,7 +40,7 @@
     <!-- ==========================================================
          STAT CARDS
          ========================================================== -->
-    <section class="stat-grid cliente-reveal cliente-reveal-2">
+    <section class="stat-grid stat-grid--inventario cliente-reveal cliente-reveal-2">
         <div class="stat-card stat-card--sage">
             <div class="stat-card__icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -104,6 +76,17 @@
             <span class="stat-card__meta">Disponible para vender</span>
         </div>
 
+        <div class="stat-card stat-card--sand">
+            <div class="stat-card__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+            </div>
+            <span class="stat-card__value" id="statValorTotal" data-count="{{ $valorBodega + $valorVitrina }}" data-prefix="$">$0</span>
+            <span class="stat-card__label">Valor total (costo)</span>
+            <span class="stat-card__meta">Bodega + vitrina</span>
+        </div>
+
         <div class="stat-card stat-card--sage">
             <div class="stat-card__icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -114,7 +97,7 @@
             </div>
             <span class="stat-card__value" id="statComprasMes" data-count="{{ $comprasEsteMes }}">0</span>
             <span class="stat-card__label">Compras este mes</span>
-            <span class="stat-card__meta">Agosto 2026</span>
+            <span class="stat-card__meta">{{ now()->locale('es')->translatedFormat('F Y') }}</span>
         </div>
     </section>
 
@@ -165,7 +148,7 @@
                                 </td>
                                 <td class="data-table__meta">{{ $producto['categoria'] }}</td>
                                 <td class="data-table__title">${{ number_format($producto['precioVenta'], 0, ',', '.') }}</td>
-                                <td class="data-table__meta">{{ $producto['stockVitrina'] }} {{ Str::lower($producto['unidad']) }}s</td>
+                                <td class="data-table__meta">{{ $producto['stockVitrina'] }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -213,7 +196,7 @@
                                 </td>
                                 <td class="data-table__meta">{{ $producto['categoria'] }}</td>
                                 <td class="data-table__title">${{ number_format($producto['precioCosto'], 0, ',', '.') }}</td>
-                                <td class="data-table__meta">{{ $producto['stockBodega'] }} {{ Str::lower($producto['unidad']) }}s</td>
+                                <td class="data-table__meta">{{ $producto['stockBodega'] }}</td>
                                 <td>
                                     <button type="button" class="inventario-transfer-btn" data-producto-id="{{ $producto['id'] }}">
                                         Transferir
@@ -394,11 +377,11 @@
             <div style="display:flex; gap:12px; margin-bottom:14px;">
                 <div style="flex:1;">
                     <label for="prodPrecioCosto" class="cliente-label">Precio de costo</label>
-                    <input type="number" id="prodPrecioCosto" class="cliente-input" placeholder="0" min="0">
+                    <input type="text" id="prodPrecioCosto" class="cliente-input" placeholder="0">
                 </div>
                 <div style="flex:1;">
                     <label for="prodPrecioVenta" class="cliente-label">Precio de venta</label>
-                    <input type="number" id="prodPrecioVenta" class="cliente-input" placeholder="0" min="0">
+                    <input type="text" id="prodPrecioVenta" class="cliente-input" placeholder="0">
                 </div>
             </div>
 
@@ -407,7 +390,14 @@
                 @foreach ($unidades as $unidad)
                     <option value="{{ $unidad }}">{{ $unidad }}</option>
                 @endforeach
+                <option value="__nueva__">+ Agregar otra...</option>
             </select>
+
+            <div class="nueva-categoria-row" id="nuevaUnidadRow" hidden style="margin-top:10px;">
+                <input type="text" id="nuevaUnidadInput" class="cliente-input" placeholder="Ej: Media, Docena, Metro..." style="flex:1;">
+                <button type="button" class="cliente-btn-primary" id="nuevaUnidadConfirmar">Agregar</button>
+                <button type="button" class="cliente-btn-ghost" id="nuevaUnidadCancelar">Cancelar</button>
+            </div>
         </div>
 
         <div class="modal__footer">
@@ -503,12 +493,12 @@
     </div>
 
     @push('styles')
-        <link rel="stylesheet" href="{{ asset('assets/css/cliente/inventario.css') }}">
-        <link rel="stylesheet" href="{{ asset('assets/css/cliente/nueva-venta-modal.css') }}">
+        <link rel="stylesheet" href="{{ asset_v('assets/css/cliente/inventario.css') }}">
+        <link rel="stylesheet" href="{{ asset_v('assets/css/cliente/nueva-venta-modal.css') }}">
     @endpush
 
     @push('scripts')
-        <script src="{{ asset('assets/js/cliente/inventario.js') }}" defer></script>
+        <script src="{{ asset_v('assets/js/cliente/inventario.js') }}" defer></script>
     @endpush
 
 </x-cliente-layout>
