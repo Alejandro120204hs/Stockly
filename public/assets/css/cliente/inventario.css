@@ -1,0 +1,137 @@
+/* ==========================================================================
+   Stockly — Panel del negocio cliente: vista Inventario
+   Lo compartido (panel, tabla, pills, toolbar, slide-over, formularios,
+   shell de modal) vive en cliente/layout.css. El shell de líneas de
+   producto (.venta-product-search, .venta-lines, .venta-line*,
+   .venta-total-row) lo trae cliente/nueva-venta-modal.css -acá se
+   reutiliza para las líneas de "Registrar compra" (misma estructura,
+   cantidad + costo en vez de cantidad + precio). Acá solo lo propio de
+   esta vista: pestañas, botón de transferir, y el toggle proveedor/informal.
+   ========================================================================== */
+
+/* ---------- Pestañas Vitrina / Bodega / Compras ---------- */
+.inventario-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid rgba(30, 45, 61, 0.08);
+}
+
+.inventario-tab {
+    padding: 10px 16px;
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--color-mist);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transform: translateY(1px);
+    transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.inventario-tab:hover {
+    color: var(--color-slate);
+}
+
+.inventario-tab.is-active {
+    color: var(--color-sage-dark);
+    border-bottom-color: var(--color-sage);
+}
+
+.inventario-tab-panel[hidden] {
+    display: none;
+}
+
+/* ---------- Botón "Transferir" en la fila de Bodega ---------- */
+.inventario-transfer-btn {
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--color-sage);
+    background-color: var(--color-sage-soft);
+    color: var(--color-sage-dark);
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.inventario-transfer-btn:hover {
+    background-color: var(--color-sage);
+    color: var(--color-surface);
+    transform: translateY(-1px);
+}
+
+/* ---------- Toggle "Con proveedor" / "Compra informal" ---------- */
+.compra-tipo-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.compra-tipo-btn {
+    flex: 1;
+    padding: 11px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(30, 45, 61, 0.14);
+    background-color: var(--color-surface);
+    color: var(--color-mist);
+    font-family: inherit;
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.compra-tipo-btn.is-active {
+    border-color: var(--color-sage);
+    background-color: var(--color-sage-soft);
+    color: var(--color-sage-dark);
+}
+
+/* ---------- Validación de factura (proveedor) ---------- */
+.compra-validar-status {
+    font-size: 0.78rem;
+    color: var(--color-mist);
+    margin: 0 0 4px;
+}
+
+.compra-validar-status.is-validando {
+    color: #8A6F3F;
+}
+
+.compra-validar-status.is-validada {
+    color: var(--color-sage-dark);
+    font-weight: 600;
+}
+
+.compra-informal-hint {
+    font-size: 0.84rem;
+    color: var(--color-mist);
+    background-color: var(--color-background);
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    margin: 0 0 4px;
+}
+
+/* ---------- Modal "Transferir" ---------- */
+.transferir-producto-nombre {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0 0 4px;
+}
+
+.transferir-disponible {
+    font-size: 0.84rem;
+    color: var(--color-mist);
+    margin: 0 0 16px;
+}
+
+.transferir-error {
+    font-size: 0.8rem;
+    color: var(--color-error);
+    margin: 8px 0 0;
+}

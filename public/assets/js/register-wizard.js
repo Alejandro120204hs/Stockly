@@ -161,6 +161,15 @@ function initRegisterWizard() {
         var fields = Array.prototype.slice.call(step.querySelectorAll('.form-input[required], .form-select[required]'));
         var firstInvalid = null;
 
+        // Limpiar cualquier "Las contraseñas no coinciden" de un intento
+        // anterior ANTES de revisar validez -si no, checkValidity() del
+        // campo sigue viendo ese mensaje viejo como error aunque el
+        // usuario ya haya corregido la contraseña para que coincida.
+        var staleConfirmation = step.querySelector('#password_confirmation');
+        if (staleConfirmation) {
+            staleConfirmation.setCustomValidity('');
+        }
+
         fields.forEach(function (field) {
             var isValid = field.checkValidity();
             setFieldError(field, !isValid);

@@ -1,8 +1,9 @@
 /* ==========================================================================
    Stockly — Panel del negocio cliente: vista Dashboard
-   Lo compartido (shell, panel genérico, tabla/pills, formularios) vive en
-   cliente/layout.css. Acá solo los accesos rápidos, las stat cards, el
-   gráfico de ventas de la semana y la lista de ventas recientes.
+   Lo compartido (shell, panel genérico, tabla/pills, formularios, stat
+   cards) vive en cliente/layout.css -las stat cards las usa también
+   Inventario. Acá solo los accesos rápidos, el gráfico de ventas de la
+   semana y la lista de ventas recientes.
    ========================================================================== */
 
 /* ==========================================================================
@@ -78,96 +79,6 @@
     margin-top: 2px;
     font-size: 0.78rem;
     color: var(--color-mist);
-}
-
-/* ==========================================================================
-   STAT CARDS
-   ========================================================================== */
-.stat-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 18px;
-}
-
-.stat-card {
-    position: relative;
-    background-color: var(--color-surface);
-    border-radius: var(--radius-lg);
-    padding: 16px 20px 14px;
-    box-shadow: 0 12px 30px -22px rgba(30, 45, 61, 0.35);
-    overflow: hidden;
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 36px -20px rgba(30, 45, 61, 0.4);
-}
-
-.stat-card__icon {
-    width: 38px;
-    height: 38px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 10px;
-}
-
-.stat-card__icon svg {
-    width: 20px;
-    height: 20px;
-}
-
-.stat-card--sage .stat-card__icon { background-color: var(--color-sage-soft); color: var(--color-sage-dark); }
-.stat-card--sand .stat-card__icon { background-color: var(--color-sand-soft); color: #8A6F3F; }
-.stat-card--mist .stat-card__icon { background-color: var(--color-mist-soft); color: var(--color-mist); }
-
-.stat-card__value {
-    font-family: var(--font-display);
-    font-size: 1.9rem;
-    font-weight: 600;
-    line-height: 1;
-    display: block;
-    font-variant-numeric: tabular-nums;
-}
-
-.stat-card__value--status {
-    font-size: 1.35rem;
-}
-
-.stat-card__label {
-    display: block;
-    margin-top: 6px;
-    color: var(--color-mist);
-    font-size: 0.86rem;
-}
-
-.stat-card__meta {
-    display: block;
-    margin-top: 10px;
-    font-size: 0.78rem;
-    color: var(--color-mist);
-}
-
-.stat-card__action {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    margin-top: 12px;
-    padding: 7px 14px;
-    border-radius: 999px;
-    border: none;
-    background-color: var(--color-sage);
-    color: var(--color-surface);
-    font-size: 0.78rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.stat-card__action:hover {
-    background-color: var(--color-sage-dark);
 }
 
 /* ==========================================================================
@@ -356,17 +267,10 @@
     }
 }
 
-@media (max-width: 560px) {
-    .stat-grid {
-        grid-template-columns: 1fr 1fr;
-    }
-}
-
 /* ==========================================================================
    ACCESIBILIDAD: menos movimiento
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
-    .stat-card,
     .quick-action {
         transform: none;
         transition: none;
