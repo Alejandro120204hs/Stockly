@@ -1,4 +1,4 @@
-<x-admin-layout title="Empresas" :pending-payments="3">
+<x-admin-layout title="Empresas">
 
     {{-- Vista de empresas del Super Admin — SOLO FRONTEND por ahora, datos
          mock. Cuando conectemos el backend, esto se llenará desde la tabla

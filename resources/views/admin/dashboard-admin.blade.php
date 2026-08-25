@@ -5,7 +5,7 @@
     esto se reemplaza por datos reales que vengan de un controlador
     (Empresa::count(), PagoSuscripcion::where(...), etc.).
 --}}
-<x-admin-layout title="Dashboard" :pending-payments="3">
+<x-admin-layout title="Dashboard">
 
     <div class="admin-page-header admin-reveal admin-reveal-1">
         <div>

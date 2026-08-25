@@ -47,6 +47,32 @@ a {
     color: inherit;
 }
 
+/* ---------- Scrollbar con la paleta de la marca (igual que landing.css) ---------- */
+html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-sage) var(--color-background);
+}
+
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background-color: var(--color-background);
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--color-sage);
+    border-radius: 999px;
+    border: 3px solid var(--color-background);
+    background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-sage-dark);
+}
+
 body.admin-body {
     margin: 0;
     min-height: 100vh;
@@ -137,6 +163,14 @@ body.admin-body {
     transition: opacity 0.2s ease;
 }
 
+.admin-nav-item__label {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .admin-nav-item:hover {
     background-color: rgba(242, 240, 237, 0.08);
     color: var(--color-surface);
@@ -195,6 +229,11 @@ body.admin-body {
     gap: 10px;
     padding: 10px;
     border-radius: var(--radius-sm);
+    transition: background-color 0.2s ease;
+}
+
+.admin-user-card:hover {
+    background-color: rgba(242, 240, 237, 0.08);
 }
 
 .admin-user-card__avatar {
@@ -364,6 +403,12 @@ body.admin-body {
     font-weight: 700;
     font-size: 0.82rem;
     flex-shrink: 0;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-topbar__avatar:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px -6px rgba(30, 45, 61, 0.4);
 }
 
 .admin-content {
@@ -992,6 +1037,370 @@ body.admin-body {
 .status-pill--suspendido { background-color: var(--color-mist-soft); color: var(--color-mist); }
 
 /* ==========================================================================
+   VISTA MÓDULOS: catálogo en tarjetas
+   ========================================================================== */
+.modulo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 18px;
+}
+
+.modulo-card {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background-color: var(--color-surface);
+    border: none;
+    border-radius: var(--radius-lg);
+    padding: 22px;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 12px 30px -22px rgba(30, 45, 61, 0.35);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.modulo-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 36px -20px rgba(30, 45, 61, 0.4);
+}
+
+.modulo-card__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.modulo-card__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modulo-card__icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.modulo-card__icon--box { background-color: var(--color-sage-soft); color: var(--color-sage-dark); }
+.modulo-card__icon--card { background-color: var(--color-sand-soft); color: #8A6F3F; }
+
+.modulo-card__price {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-slate);
+}
+
+.modulo-card__price small {
+    font-weight: 500;
+    color: var(--color-mist);
+    font-size: 0.78rem;
+}
+
+.modulo-card__name {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    margin: 0 0 6px;
+    color: var(--color-slate);
+}
+
+.modulo-card__desc {
+    margin: 0 0 18px;
+    font-size: 0.86rem;
+    line-height: 1.5;
+    color: var(--color-mist);
+}
+
+.modulo-card__stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.84rem;
+    margin-bottom: 8px;
+}
+
+.modulo-card__stat-row span {
+    color: var(--color-mist);
+}
+
+.modulo-card__stat-row strong {
+    color: var(--color-slate);
+}
+
+.modulo-card__stat-row--revenue {
+    margin-top: 16px;
+    margin-bottom: 0;
+    padding-top: 14px;
+    border-top: 1px dashed rgba(30, 45, 61, 0.1);
+}
+
+.modulo-card__stat-row--revenue strong {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    color: var(--color-sage-dark);
+}
+
+.modulo-empresa-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.modulo-empresa-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 4px;
+    font-size: 0.86rem;
+    border-bottom: 1px dashed rgba(30, 45, 61, 0.06);
+}
+
+.modulo-empresa-row:last-child {
+    border-bottom: none;
+}
+
+.modulo-empresa-row::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background-color: var(--color-sage);
+}
+
+.modulo-empresa-row--inactiva::before {
+    background-color: var(--color-mist);
+}
+
+.modulo-empresa-row--inactiva {
+    color: var(--color-mist);
+}
+
+.modulo-empresa-list__empty {
+    font-size: 0.84rem;
+    color: var(--color-mist);
+    padding: 6px 4px;
+}
+
+.modulo-upsell-tag {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background-color: var(--color-sand-soft);
+    color: #8A6F3F;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: none;
+    vertical-align: middle;
+}
+
+/* ==========================================================================
+   VISTA MI PERFIL
+   ========================================================================== */
+.profile-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+.profile-photo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+}
+
+.profile-photo__avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background-color: var(--color-slate);
+    color: var(--color-sand);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    font-weight: 600;
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+}
+
+.profile-photo__btn {
+    padding: 9px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(30, 45, 61, 0.15);
+    background-color: var(--color-surface);
+    color: var(--color-slate);
+    font-family: inherit;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.profile-photo__btn:hover {
+    border-color: var(--color-sage);
+    background-color: var(--color-sage-soft);
+}
+
+.profile-photo__hint {
+    margin: 0;
+    font-size: 0.76rem;
+    color: var(--color-mist);
+    line-height: 1.5;
+}
+
+.admin-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.admin-form-field {
+    position: relative;
+    margin-bottom: 16px;
+}
+
+.admin-form-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-slate);
+}
+
+.admin-form-input {
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(30, 45, 61, 0.14);
+    background-color: var(--color-background);
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--color-slate);
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.admin-form-input:focus {
+    outline: none;
+    border-color: var(--color-sage);
+    background-color: var(--color-surface);
+}
+
+.admin-form-field--password .admin-form-input {
+    padding-right: 44px;
+}
+
+.admin-form-toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 34px;
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: none;
+    color: var(--color-mist);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.admin-form-toggle-password:hover {
+    color: var(--color-slate);
+    background-color: var(--color-background);
+}
+
+.admin-form-toggle-password svg {
+    width: 18px;
+    height: 18px;
+}
+
+.admin-form-toggle-password .icon-eye-off {
+    display: none;
+}
+
+.admin-form-toggle-password[aria-pressed="true"] .icon-eye {
+    display: none;
+}
+
+.admin-form-toggle-password[aria-pressed="true"] .icon-eye-off {
+    display: block;
+}
+
+.admin-form-error {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.78rem;
+    color: var(--color-error);
+}
+
+.admin-form-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 4px;
+}
+
+.admin-btn-primary {
+    padding: 11px 22px;
+    border-radius: 999px;
+    border: none;
+    background-color: var(--color-sage);
+    color: var(--color-surface);
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.admin-btn-primary:hover {
+    background-color: var(--color-sage-dark);
+    box-shadow: 0 8px 16px -8px rgba(74, 124, 111, 0.6);
+}
+
+.admin-btn-primary:active {
+    transform: scale(0.98);
+}
+
+.admin-form-banner {
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    font-size: 0.86rem;
+    font-weight: 500;
+    margin-bottom: 18px;
+}
+
+.admin-form-banner--success {
+    background-color: var(--color-sage-soft);
+    color: var(--color-sage-dark);
+}
+
+@media (max-width: 900px) {
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 560px) {
+    .admin-form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================================================
    PANEL LATERAL (slide-over) de detalle de empresa
    ========================================================================== */
 .slide-over-overlay {
@@ -1151,6 +1560,74 @@ body.admin-body {
     transform: none;
 }
 
+.slide-over__reason {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed rgba(30, 45, 61, 0.1);
+}
+
+.slide-over__reason-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-slate);
+}
+
+.slide-over__reason-input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(30, 45, 61, 0.15);
+    font-family: inherit;
+    font-size: 0.85rem;
+    color: var(--color-slate);
+    resize: vertical;
+    transition: border-color 0.2s ease;
+}
+
+.slide-over__reason-input:focus {
+    outline: none;
+    border-color: var(--color-error);
+}
+
+.slide-over__reason-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.slide-over__reason-actions .slide-over__btn {
+    flex: 1;
+}
+
+.slide-over__btn-text {
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--color-mist);
+    cursor: pointer;
+    padding: 8px 4px;
+    transition: color 0.2s ease;
+}
+
+.slide-over__btn-text:hover {
+    color: var(--color-slate);
+}
+
+.slide-over__motivo {
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    background-color: var(--color-error-soft);
+    color: var(--color-error);
+    font-size: 0.86rem;
+    line-height: 1.5;
+}
+
 .module-toggle-row {
     display: flex;
     align-items: center;
@@ -1297,11 +1774,85 @@ body.admin-body {
 }
 
 /* ==========================================================================
+   SWEETALERT2 CON LA PALETA DE STOCKLY
+   ========================================================================== */
+.stockly-swal.swal2-popup {
+    border-radius: var(--radius-lg);
+    padding: 32px 28px 28px;
+    font-family: var(--font-body);
+    box-shadow: 0 30px 60px -20px rgba(30, 45, 61, 0.35);
+}
+
+.stockly-swal .swal2-title {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--color-slate);
+    padding: 0;
+    margin-top: 18px;
+}
+
+.stockly-swal .swal2-html-container {
+    font-size: 0.92rem;
+    color: var(--color-mist);
+    margin-top: 6px;
+}
+
+.stockly-swal .swal2-icon {
+    border-color: var(--color-sage-soft);
+    color: var(--color-sage-dark);
+}
+
+.stockly-swal .swal2-icon.swal2-success .swal2-success-ring {
+    border-color: var(--color-sage-soft);
+}
+
+.stockly-swal .swal2-icon.swal2-success [class^='swal2-success-line'] {
+    background-color: var(--color-sage);
+}
+
+.stockly-swal .swal2-icon.swal2-error {
+    border-color: var(--color-error-soft);
+    color: var(--color-error);
+}
+
+.stockly-swal .swal2-icon.swal2-error [class^='swal2-x-mark-line'] {
+    background-color: var(--color-error);
+}
+
+.stockly-swal .swal2-confirm.swal2-styled {
+    background-color: var(--color-sage) !important;
+    border-radius: 999px;
+    padding: 10px 26px;
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    box-shadow: none !important;
+}
+
+.stockly-swal .swal2-confirm.swal2-styled:hover {
+    background-color: var(--color-sage-dark) !important;
+}
+
+.stockly-swal .swal2-confirm.swal2-styled:focus {
+    box-shadow: 0 0 0 3px var(--color-sage-soft) !important;
+}
+
+.stockly-swal .swal2-timer-progress-bar {
+    background-color: var(--color-sand);
+}
+
+.swal2-container.stockly-swal-backdrop {
+    background-color: rgba(30, 45, 61, 0.45);
+}
+
+/* ==========================================================================
    ACCESIBILIDAD: menos movimiento
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
     .admin-reveal,
     .stat-card,
+    .modulo-card,
     .admin-nav-item,
     .admin-icon-button {
         animation: none;

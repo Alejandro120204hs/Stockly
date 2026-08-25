@@ -1,4 +1,3 @@
-@props(['title' => 'Dashboard', 'pendingPayments' => 0])
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -10,8 +9,9 @@
     <link href="https://fonts.bunny.net/css?family=fraunces:500,600,700|work-sans:400,500,600,700" rel="stylesheet">
 
     <link rel="stylesheet" href="{{ asset('assets/css/admin.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body class="admin-body">
+<body class="admin-body" data-flash-status="{{ session('status') }}">
 
     <div class="admin-shell">
 
@@ -38,7 +38,7 @@
                         <rect x="3.5" y="13" width="7.5" height="7.5" rx="1.5"/>
                         <rect x="13" y="13" width="7.5" height="7.5" rx="1.5"/>
                     </svg>
-                    Dashboard
+                    <span class="admin-nav-item__label">Dashboard</span>
                 </a>
 
                 <a href="{{ url('/admin/empresas') }}" class="admin-nav-item {{ request()->is('admin/empresas') ? 'is-active' : '' }}">
@@ -47,46 +47,46 @@
                         <path d="M4 21h16"/>
                         <path d="M9 9h1M14 9h1M9 13h1M14 13h1M9 21v-4h6v4"/>
                     </svg>
-                    Empresas
+                    <span class="admin-nav-item__label">Empresas</span>
                 </a>
 
-                <a href="#" class="admin-nav-item">
+                <a href="{{ url('/admin/pagos') }}" class="admin-nav-item {{ request()->is('admin/pagos') ? 'is-active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M5 4h14v16l-3.5-2-3.5 2-3.5-2L5 20Z"/>
                         <path d="M8.5 9h7M8.5 12.5h7M8.5 16h4"/>
                     </svg>
-                    Pagos y suscripciones
+                    <span class="admin-nav-item__label">Pagos y suscripciones</span>
                     @if ($pendingPayments > 0)
                         <span class="admin-nav-item__badge">{{ $pendingPayments }}</span>
                     @endif
                 </a>
 
-                <a href="#" class="admin-nav-item">
+                <a href="{{ url('/admin/modulos') }}" class="admin-nav-item {{ request()->is('admin/modulos') ? 'is-active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M12 3 3 8l9 5 9-5-9-5Z"/>
                         <path d="M3 12l9 5 9-5"/>
                         <path d="M3 16l9 5 9-5"/>
                     </svg>
-                    Módulos
+                    <span class="admin-nav-item__label">Módulos</span>
                 </a>
 
-                <a href="#" class="admin-nav-item">
+                <a href="{{ url('/admin/perfil') }}" class="admin-nav-item {{ request()->is('admin/perfil') ? 'is-active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="3"/>
                         <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.35a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.65 15a1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.65 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.65a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.35 9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.04Z"/>
                     </svg>
-                    Configuración
+                    <span class="admin-nav-item__label">Mi perfil</span>
                 </a>
             </nav>
 
             <div class="admin-sidebar__footer">
-                <div class="admin-user-card">
+                <a href="{{ url('/admin/perfil') }}" class="admin-user-card">
                     <span class="admin-user-card__avatar">AH</span>
                     <div class="admin-user-card__info">
                         <p class="admin-user-card__name">Alejandro Hernández</p>
                         <p class="admin-user-card__role">Super Admin</p>
                     </div>
-                </div>
+                </a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit" class="admin-logout">
@@ -127,7 +127,7 @@
                         @endif
                     </button>
 
-                    <span class="admin-topbar__avatar">AH</span>
+                    <a href="{{ url('/admin/perfil') }}" class="admin-topbar__avatar" aria-label="Mi perfil">AH</a>
                 </div>
             </header>
 
