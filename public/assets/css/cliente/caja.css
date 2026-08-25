@@ -1,0 +1,255 @@
+/* ==========================================================================
+   Stockly — Panel del negocio cliente: vista Caja
+   Lo compartido (panel, stat cards, tabla/pills, slide-over, shell de
+   modal, formularios) vive en cliente/layout.css. Acá solo lo propio de
+   esta vista: el hero de "Abrir caja", el recibo en vivo de la caja
+   abierta, el gráfico de diferencias, y el modal de cierre.
+   ========================================================================== */
+
+/* ---------- Pills propias de esta vista (sobrante/faltante) ----------
+   Las demás variantes de .status-pill (pagada/facturada/pendiente/
+   sin-facturar) viven en cliente/layout.css; estas dos son solo de Caja. */
+.status-pill--sobrante { background-color: var(--color-sage-soft); color: var(--color-sage-dark); }
+.status-pill--faltante { background-color: var(--color-error-soft); color: var(--color-error); }
+
+/* ==========================================================================
+   HERO: "Todavía no has abierto caja hoy"
+   ========================================================================== */
+.caja-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 28px 20px 8px;
+}
+
+.caja-hero[hidden],
+.caja-abierta[hidden] {
+    display: none;
+}
+
+.caja-hero__icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    background-color: var(--color-mist-soft);
+    color: var(--color-mist);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.caja-hero__icon svg {
+    width: 30px;
+    height: 30px;
+}
+
+.caja-hero__title {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    margin: 0 0 6px;
+}
+
+.caja-hero__subtitle {
+    color: var(--color-mist);
+    font-size: 0.9rem;
+    max-width: 380px;
+    margin: 0 0 22px;
+}
+
+.caja-hero__form {
+    width: 100%;
+    max-width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.caja-hero__form .cliente-input {
+    text-align: center;
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   CAJA ABIERTA: encabezado + recibo en vivo
+   ========================================================================== */
+.caja-abierta__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.caja-abierta__meta {
+    margin: 8px 0 0;
+    font-size: 0.84rem;
+    color: var(--color-mist);
+}
+
+.caja-recibo {
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 24px 26px;
+    border-radius: var(--radius-lg);
+    background-color: var(--color-background);
+}
+
+.caja-recibo__row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    font-size: 0.92rem;
+}
+
+.caja-recibo__row strong {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.caja-recibo__row--suma strong {
+    color: var(--color-sage-dark);
+}
+
+.caja-recibo__row--resta strong {
+    color: var(--color-error);
+}
+
+.caja-recibo__divider {
+    border-top: 1px dashed rgba(30, 45, 61, 0.25);
+    margin: 6px 0;
+}
+
+.caja-recibo__row--total {
+    padding: 10px 0 14px;
+}
+
+.caja-recibo__row--total span {
+    font-weight: 600;
+    color: var(--color-slate);
+}
+
+.caja-recibo__row--total strong {
+    font-family: var(--font-display);
+    font-size: 1.55rem;
+    color: var(--color-sage-dark);
+}
+
+.caja-recibo__row--secundario {
+    font-size: 0.84rem;
+    color: var(--color-mist);
+    padding: 5px 0;
+}
+
+.caja-recibo__row--secundario strong {
+    color: var(--color-mist);
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   GRÁFICO: línea de tendencia con área de degradado (sobrante/faltante)
+   Una sola línea conecta los cierres; el relleno se degrada a verde
+   arriba de la línea de cero y a rojo abajo -el corte exacto del color
+   se calcula en JS para que coincida con el eje de cero real.
+   ========================================================================== */
+.caja-diff-chart {
+    padding-top: 6px;
+}
+
+.caja-line-chart__svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+}
+
+.caja-line-chart__line {
+    fill: none;
+    stroke: var(--color-slate);
+    stroke-width: 2.5;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+
+.caja-line-chart__zero {
+    stroke: rgba(30, 45, 61, 0.16);
+    stroke-width: 1;
+    stroke-dasharray: 4 4;
+}
+
+.caja-line-chart__value {
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.caja-line-chart__date {
+    font-family: var(--font-body);
+    font-size: 11px;
+    fill: var(--color-mist);
+}
+
+/* ==========================================================================
+   MODAL "Cerrar caja"
+   ========================================================================== */
+.caja-modal-esperado {
+    font-size: 0.9rem;
+    color: var(--color-mist);
+    margin: 0 0 16px;
+}
+
+.caja-modal-esperado strong {
+    color: var(--color-slate);
+    font-size: 1rem;
+}
+
+.caja-modal-diferencia {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.caja-modal-diferencia.es-exacto {
+    background-color: var(--color-mist-soft);
+    color: var(--color-mist);
+}
+
+.caja-modal-diferencia.es-sobrante {
+    background-color: var(--color-sage-soft);
+    color: var(--color-sage-dark);
+}
+
+.caja-modal-diferencia.es-faltante {
+    background-color: var(--color-error-soft);
+    color: var(--color-error);
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+@media (max-width: 560px) {
+    .caja-recibo {
+        padding: 20px 18px;
+    }
+
+    .caja-diff-chart {
+        height: 130px;
+    }
+}
+
+/* ==========================================================================
+   ACCESIBILIDAD: menos movimiento
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+    .caja-diff-chart__bar {
+        transition: none;
+    }
+}
