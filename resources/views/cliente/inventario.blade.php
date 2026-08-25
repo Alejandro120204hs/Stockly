@@ -56,7 +56,7 @@
     <div class="cliente-page-header cliente-reveal cliente-reveal-1" style="display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap;">
         <div>
             <p class="cliente-page-header__eyebrow">Tu negocio</p>
-            <h1 class="cliente-page-header__title">Inventario</h1>
+            <h1 class="cliente-page-header__title">Vitrina y bodega</h1>
             <p class="cliente-page-header__date">{{ count($productos) }} productos en catálogo</p>
         </div>
         <div style="display:flex; gap:10px;">
@@ -76,9 +76,9 @@
                     <path d="M3 8l9 5 9-5M12 13v8"/>
                 </svg>
             </div>
-            <span class="stat-card__value" data-count="{{ count($productos) }}">0</span>
+            <span class="stat-card__value" id="statProductos" data-count="{{ count($productos) }}">0</span>
             <span class="stat-card__label">Productos en catálogo</span>
-            <span class="stat-card__meta">{{ count($categorias) }} categorías</span>
+            <span class="stat-card__meta" id="statCategoriasMeta">{{ count($categorias) }} categorías</span>
         </div>
 
         <div class="stat-card stat-card--sand">
@@ -88,7 +88,7 @@
                     <path d="M3 9h18M9 21V9"/>
                 </svg>
             </div>
-            <span class="stat-card__value" data-count="{{ $valorBodega }}" data-prefix="$">$0</span>
+            <span class="stat-card__value" id="statValorBodega" data-count="{{ $valorBodega }}" data-prefix="$">$0</span>
             <span class="stat-card__label">Valor en bodega (costo)</span>
             <span class="stat-card__meta">Inventario de reserva</span>
         </div>
@@ -99,7 +99,7 @@
                     <path d="M6 21V10M18 21V3M12 21v-7"/>
                 </svg>
             </div>
-            <span class="stat-card__value" data-count="{{ $valorVitrina }}" data-prefix="$">$0</span>
+            <span class="stat-card__value" id="statValorVitrina" data-count="{{ $valorVitrina }}" data-prefix="$">$0</span>
             <span class="stat-card__label">Valor en vitrina (costo)</span>
             <span class="stat-card__meta">Disponible para vender</span>
         </div>
@@ -112,7 +112,7 @@
                     <path d="M3 4h2l2.3 11.4a2 2 0 0 0 2 1.6h7.4a2 2 0 0 0 2-1.6L21 8H6"/>
                 </svg>
             </div>
-            <span class="stat-card__value" data-count="{{ $comprasEsteMes }}">0</span>
+            <span class="stat-card__value" id="statComprasMes" data-count="{{ $comprasEsteMes }}">0</span>
             <span class="stat-card__label">Compras este mes</span>
             <span class="stat-card__meta">Agosto 2026</span>
         </div>
@@ -316,6 +316,9 @@
                 <div class="slide-over__field"><span>Stock en bodega</span><strong id="productoSlideOverStockBodega">—</strong></div>
             </section>
 
+            <button type="button" class="cliente-btn-ghost" id="productoSlideOverEditarBtn" style="width:100%; margin-bottom:10px;">
+                Editar producto
+            </button>
             <button type="button" class="cliente-btn-primary" id="productoSlideOverTransferirBtn" style="width:100%;">
                 Transferir de bodega a vitrina
             </button>
@@ -379,7 +382,14 @@
                 @foreach ($categorias as $categoria)
                     <option value="{{ $categoria }}">{{ $categoria }}</option>
                 @endforeach
+                <option value="__nueva__">+ Agregar categoría...</option>
             </select>
+
+            <div class="nueva-categoria-row" id="nuevaCategoriaRow" hidden>
+                <input type="text" id="nuevaCategoriaInput" class="cliente-input" placeholder="Nombre de la nueva categoría" style="flex:1;">
+                <button type="button" class="cliente-btn-primary" id="nuevaCategoriaConfirmar">Agregar</button>
+                <button type="button" class="cliente-btn-ghost" id="nuevaCategoriaCancelar">Cancelar</button>
+            </div>
 
             <div style="display:flex; gap:12px; margin-bottom:14px;">
                 <div style="flex:1;">
