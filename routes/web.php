@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
+use App\Http\Controllers\Cliente\InventarioController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -48,9 +49,12 @@ Route::middleware('auth')->group(function () {
         return view('cliente.ventas');
     })->name('cliente.ventas');
 
-    Route::get('/cliente/inventario', function () {
-        return view('cliente.inventario');
-    })->name('cliente.inventario');
+    Route::get('/cliente/inventario', [InventarioController::class, 'index'])->name('cliente.inventario');
+    Route::post('/cliente/inventario/categorias', [InventarioController::class, 'storeCategoria'])->name('cliente.inventario.categorias.store');
+    Route::post('/cliente/inventario/productos', [InventarioController::class, 'storeProducto'])->name('cliente.inventario.productos.store');
+    Route::put('/cliente/inventario/productos/{producto}', [InventarioController::class, 'updateProducto'])->name('cliente.inventario.productos.update');
+    Route::post('/cliente/inventario/compras', [InventarioController::class, 'storeCompra'])->name('cliente.inventario.compras.store');
+    Route::post('/cliente/inventario/transferencias', [InventarioController::class, 'transferir'])->name('cliente.inventario.transferencias.store');
 
     Route::get('/cliente/caja', function () {
         return view('cliente.caja');

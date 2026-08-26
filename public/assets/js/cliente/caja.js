@@ -274,6 +274,8 @@ function initCajaFlow() {
     var baseActual = 0;
     var totalEsperadoActual = 0;
 
+    formatearInputDinero(baseInicialInput);
+
     function formatHoraAhora() {
         var ahora = new Date();
         var horas = ahora.getHours();
@@ -288,8 +290,8 @@ function initCajaFlow() {
     }
 
     abrirBtn.addEventListener('click', function () {
-        var base = parseFloat(baseInicialInput.value);
-        if (!base || base < 0) {
+        var base = valorDineroInput(baseInicialInput);
+        if (!base) {
             baseInicialInput.focus();
             return;
         }
@@ -342,16 +344,18 @@ function initCerrarCajaModal(getEstadoActual, onCerrada) {
     var diferenciaTexto = document.getElementById('cajaModalDiferenciaTexto');
     var confirmarBtn = document.getElementById('confirmarCierreBtn');
 
+    formatearInputDinero(conteoInput);
+
     function actualizarDiferencia() {
-        var conteo = parseFloat(conteoInput.value);
         var estado = getEstadoActual();
 
-        if (isNaN(conteo)) {
+        if (!conteoInput.value.replace(/\D/g, '')) {
             diferenciaBox.hidden = true;
             confirmarBtn.disabled = true;
             return;
         }
 
+        var conteo = valorDineroInput(conteoInput);
         var diferencia = conteo - estado.totalEsperadoActual;
         diferenciaBox.hidden = false;
         confirmarBtn.disabled = false;
@@ -417,7 +421,7 @@ function initCerrarCajaModal(getEstadoActual, onCerrada) {
         }
 
         var estado = getEstadoActual();
-        var conteo = parseFloat(conteoInput.value) || 0;
+        var conteo = valorDineroInput(conteoInput);
         var diferencia = conteo - estado.totalEsperadoActual;
 
         var originalText = confirmarBtn.textContent;

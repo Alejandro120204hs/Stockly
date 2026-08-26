@@ -315,13 +315,13 @@
     @include('cliente.partials.nueva-venta-modal')
 
     @push('styles')
-        <link rel="stylesheet" href="{{ asset('assets/css/cliente/dashboard.css') }}">
-        <link rel="stylesheet" href="{{ asset('assets/css/cliente/nueva-venta-modal.css') }}">
+        <link rel="stylesheet" href="{{ asset_v('assets/css/cliente/dashboard.css') }}">
+        <link rel="stylesheet" href="{{ asset_v('assets/css/cliente/nueva-venta-modal.css') }}">
     @endpush
 
     @push('scripts')
-        <script src="{{ asset('assets/js/cliente/dashboard.js') }}" defer></script>
-        <script src="{{ asset('assets/js/cliente/nueva-venta-modal.js') }}" defer></script>
+        <script src="{{ asset_v('assets/js/cliente/dashboard.js') }}" defer></script>
+        <script src="{{ asset_v('assets/js/cliente/nueva-venta-modal.js') }}" defer></script>
     @endpush
 
 </x-cliente-layout>

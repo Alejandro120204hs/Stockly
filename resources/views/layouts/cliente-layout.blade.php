@@ -3,12 +3,13 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title }} — Stockly</title>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=fraunces:500,600,700|work-sans:400,500,600,700" rel="stylesheet">
 
-    <link rel="stylesheet" href="{{ asset('assets/css/cliente/layout.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('assets/css/cliente/layout.css') }}">
     @stack('styles')
 </head>
 <body class="cliente-body">
@@ -147,7 +148,7 @@
         </div>
     </div>
 
-    <script src="{{ asset('assets/js/cliente/layout.js') }}" defer></script>
+    <script src="{{ asset_v('assets/js/cliente/layout.js') }}" defer></script>
     @stack('scripts')
 </body>
 </html>

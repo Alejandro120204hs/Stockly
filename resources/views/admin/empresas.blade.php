@@ -152,11 +152,11 @@
     </aside>
 
     @push('styles')
-        <link rel="stylesheet" href="{{ asset('assets/css/admin/empresas.css') }}">
+        <link rel="stylesheet" href="{{ asset_v('assets/css/admin/empresas.css') }}">
     @endpush
 
     @push('scripts')
-        <script src="{{ asset('assets/js/admin/empresas.js') }}" defer></script>
+        <script src="{{ asset_v('assets/js/admin/empresas.js') }}" defer></script>
     @endpush
 
 </x-admin-layout>

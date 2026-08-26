@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=fraunces:500,600,700|work-sans:400,500,600,700" rel="stylesheet">
 
-    <link rel="stylesheet" href="{{ asset('assets/css/auth.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('assets/css/auth.css') }}">
 </head>
 <body class="auth-body">
 
@@ -100,6 +100,6 @@
         </div>
     </div>
 
-    <script src="{{ asset('assets/js/auth.js') }}" defer></script>
+    <script src="{{ asset_v('assets/js/auth.js') }}" defer></script>
 </body>
 </html>
