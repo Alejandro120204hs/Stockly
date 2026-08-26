@@ -12,7 +12,7 @@
         $facturaLabels = [
             'validada' => 'Validada',
             'por_validar' => 'Por validar',
-            'sin_factura' => 'Sin factura',
+            'sin_factura' => 'Compra informal',
         ];
 
         $facturaPillClass = [
@@ -32,6 +32,7 @@
             <p class="cliente-page-header__date">{{ count($productos) }} productos en catálogo</p>
         </div>
         <div style="display:flex; gap:10px;">
+            <button type="button" class="cliente-btn-ghost" id="categoriasBtn">Gestionar Categorías</button>
             <button type="button" class="cliente-btn-ghost" id="nuevoProductoBtn">+ Nuevo producto</button>
             <button type="button" class="cliente-btn-primary" id="registrarCompraBtn">+ Registrar compra</button>
         </div>
@@ -62,7 +63,7 @@
             </div>
             <span class="stat-card__value" id="statValorBodega" data-count="{{ $valorBodega }}" data-prefix="$">$0</span>
             <span class="stat-card__label">Valor en bodega (costo)</span>
-            <span class="stat-card__meta">Inventario de reserva</span>
+       
         </div>
 
         <div class="stat-card stat-card--mist">
@@ -73,7 +74,7 @@
             </div>
             <span class="stat-card__value" id="statValorVitrina" data-count="{{ $valorVitrina }}" data-prefix="$">$0</span>
             <span class="stat-card__label">Valor en vitrina (costo)</span>
-            <span class="stat-card__meta">Disponible para vender</span>
+        
         </div>
 
         <div class="stat-card stat-card--sand">
@@ -225,7 +226,7 @@
                     <option value="">Todos los estados</option>
                     <option value="validada">Validada</option>
                     <option value="por_validar">Por validar</option>
-                    <option value="sin_factura">Sin factura</option>
+                    <option value="sin_factura">Compra informal</option>
                 </select>
             </div>
 
@@ -266,6 +267,7 @@
 
     <script id="inventarioProductosData" type="application/json">{!! json_encode($productos) !!}</script>
     <script id="inventarioComprasData" type="application/json">{!! json_encode($compras) !!}</script>
+    <script id="inventarioCategoriasData" type="application/json">{!! json_encode($categorias) !!}</script>
 
     {{-- ==================================================================
          PANEL LATERAL — detalle de un producto (ambos stocks)
@@ -299,11 +301,14 @@
                 <div class="slide-over__field"><span>Stock en bodega</span><strong id="productoSlideOverStockBodega">—</strong></div>
             </section>
 
+            <button type="button" class="cliente-btn-primary" id="productoSlideOverTransferirBtn" style="width:100%; margin-bottom:10px;">
+                Transferir de bodega a vitrina
+            </button>
             <button type="button" class="cliente-btn-ghost" id="productoSlideOverEditarBtn" style="width:100%; margin-bottom:10px;">
                 Editar producto
             </button>
-            <button type="button" class="cliente-btn-primary" id="productoSlideOverTransferirBtn" style="width:100%;">
-                Transferir de bodega a vitrina
+            <button type="button" class="cliente-btn-ghost cliente-btn-ghost--peligro" id="productoSlideOverEliminarBtn" style="width:100%;">
+                Eliminar producto
             </button>
         </div>
     </aside>
@@ -342,6 +347,32 @@
     </aside>
 
     {{-- ==================================================================
+         MODAL — Categorías (crear, renombrar, eliminar)
+         ================================================================== --}}
+    <div class="modal-overlay" id="categoriasOverlay"></div>
+
+    <div class="modal" id="categoriasModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="categoriasTitle">
+        <div class="modal__header">
+            <h2 class="modal__title" id="categoriasTitle">Categorías</h2>
+            <button type="button" class="modal__close" id="categoriasClose" aria-label="Cerrar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 6l12 12M18 6 6 18"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="modal__body">
+            <div class="nueva-categoria-row" style="margin-bottom:18px;">
+                <input type="text" id="categoriaNuevaInput" class="cliente-input" placeholder="Nombre de la nueva categoría" style="flex:1;">
+                <button type="button" class="cliente-btn-primary" id="categoriaNuevaConfirmar">Agregar</button>
+            </div>
+
+            <div class="categorias-lista" id="categoriasLista"></div>
+            <p class="data-table__empty" id="categoriasEmpty" hidden>Todavía no tienes categorías.</p>
+        </div>
+    </div>
+
+    {{-- ==================================================================
          MODAL — Nuevo producto
          ================================================================== --}}
     <div class="modal-overlay" id="nuevoProductoOverlay"></div>
@@ -362,17 +393,13 @@
 
             <label for="prodCategoria" class="cliente-label">Categoría</label>
             <select id="prodCategoria" class="cliente-toolbar__select" style="width:100%; margin-bottom:14px;">
+                @if (count($categorias) === 0)
+                    <option value="" disabled selected>Primero crea una categoría...</option>
+                @endif
                 @foreach ($categorias as $categoria)
                     <option value="{{ $categoria }}">{{ $categoria }}</option>
                 @endforeach
-                <option value="__nueva__">+ Agregar categoría...</option>
             </select>
-
-            <div class="nueva-categoria-row" id="nuevaCategoriaRow" hidden>
-                <input type="text" id="nuevaCategoriaInput" class="cliente-input" placeholder="Nombre de la nueva categoría" style="flex:1;">
-                <button type="button" class="cliente-btn-primary" id="nuevaCategoriaConfirmar">Agregar</button>
-                <button type="button" class="cliente-btn-ghost" id="nuevaCategoriaCancelar">Cancelar</button>
-            </div>
 
             <div style="display:flex; gap:12px; margin-bottom:14px;">
                 <div style="flex:1;">
@@ -427,8 +454,19 @@
             </div>
 
             <div id="compraProveedorFields">
-                <label for="compraProveedorNombre" class="cliente-label">Nombre del proveedor</label>
-                <input type="text" id="compraProveedorNombre" class="cliente-input" placeholder="Ej: Licorera Continental S.A.S." style="margin-bottom:14px;">
+                <label for="compraProveedorSelect" class="cliente-label">Proveedor</label>
+                <select id="compraProveedorSelect" class="cliente-toolbar__select" style="width:100%; margin-bottom:6px;">
+                    @if (count($proveedores) === 0)
+                        <option value="" disabled selected>No tienes proveedores todavía</option>
+                    @else
+                        @foreach ($proveedores as $proveedor)
+                            <option value="{{ $proveedor->id }}">{{ $proveedor->nombre }}</option>
+                        @endforeach
+                    @endif
+                </select>
+                <p class="compra-proveedor-hint">
+                    ¿No está en la lista? <a href="{{ url('/cliente/proveedores') }}">Regístralo en Proveedores</a> con sus datos fiscales.
+                </p>
 
                 <label for="compraCufeInput" class="cliente-label">CUFE o código de la factura</label>
                 <div style="display:flex; gap:8px; margin-bottom:6px;">

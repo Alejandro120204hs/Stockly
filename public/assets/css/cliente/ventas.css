@@ -29,32 +29,3 @@
     background-color: transparent;
 }
 
-/* Productos vendidos dentro del detalle de la venta (panel lateral) */
-.venta-detalle-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 10px 0;
-    border-bottom: 1px dashed rgba(30, 45, 61, 0.08);
-}
-
-.venta-detalle-item:last-child {
-    border-bottom: none;
-}
-
-.venta-detalle-item__nombre {
-    font-size: 0.86rem;
-    font-weight: 500;
-}
-
-.venta-detalle-item__cantidad {
-    font-size: 0.78rem;
-    color: var(--color-mist);
-}
-
-.venta-detalle-item__monto {
-    font-size: 0.86rem;
-    font-weight: 600;
-    white-space: nowrap;
-}

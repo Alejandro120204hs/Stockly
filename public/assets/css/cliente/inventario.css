@@ -9,6 +9,16 @@
    esta vista: pestañas, botón de transferir, y el toggle proveedor/informal.
    ========================================================================== */
 
+/* ---------- Botón destructivo (eliminar producto/categoría) ---------- */
+.cliente-btn-ghost--peligro {
+    color: var(--color-error);
+    border-color: var(--color-error);
+}
+
+.cliente-btn-ghost--peligro:hover {
+    background-color: var(--color-error-soft);
+}
+
 /* ---------- Stat cards: 5 en una sola fila (más angostas que en
    Dashboard/Caja, que solo tienen 4) ---------- */
 .stat-grid--inventario {
@@ -146,6 +156,17 @@
     margin: 0 0 4px;
 }
 
+.compra-proveedor-hint {
+    font-size: 0.78rem;
+    color: var(--color-mist);
+    margin: 0 0 14px;
+}
+
+.compra-proveedor-hint a {
+    color: var(--color-sage-dark);
+    font-weight: 600;
+}
+
 .compra-validar-status.is-validando {
     color: #8A6F3F;
 }
@@ -169,6 +190,79 @@
     display: flex;
     gap: 8px;
     margin-bottom: 14px;
+}
+
+/* ---------- Modal "Categorías": lista con renombrar/eliminar ---------- */
+.categorias-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.categoria-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid rgba(30, 45, 61, 0.14);
+    border-radius: var(--radius-md);
+}
+
+.categoria-row__nombre {
+    font-weight: 500;
+    color: var(--color-slate);
+    overflow-wrap: anywhere;
+}
+
+.categoria-row__actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.categoria-row__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(30, 45, 61, 0.14);
+    background: none;
+    color: var(--color-mist);
+    cursor: pointer;
+}
+
+.categoria-row__btn svg {
+    width: 15px;
+    height: 15px;
+}
+
+.categoria-row__btn:hover {
+    background-color: var(--color-background);
+}
+
+.categoria-row__btn--eliminar {
+    color: var(--color-error);
+    border-color: var(--color-error);
+}
+
+.categoria-row__btn--eliminar:hover {
+    background-color: var(--color-error-soft);
+}
+
+.categoria-row--editando {
+    padding: 8px 8px;
+}
+
+.categoria-row__btn--confirmar {
+    color: var(--color-sage);
+    border-color: var(--color-sage);
+}
+
+.categoria-row__btn--confirmar:hover {
+    background-color: var(--color-sage-soft);
 }
 
 /* ---------- Costo editable por línea (Registrar compra) ----------
@@ -196,6 +290,26 @@
 }
 
 .compra-line__costo-input:focus {
+    outline: none;
+    border-color: var(--color-sage);
+}
+
+/* ---------- Cantidad escribible en "Registrar compra" ----------
+   .venta-line__qty-value (tamaño/tipografía base) vive en
+   nueva-venta-modal.css y la comparte el <span> de solo lectura de
+   "Nueva venta" -este modificador es solo para el <input> de acá,
+   para no ponerle borde/fondo de campo al de la venta. */
+.venta-line__qty-value--input {
+    border: 1px solid rgba(30, 45, 61, 0.16);
+    border-radius: 6px;
+    padding: 3px 2px;
+    background-color: var(--color-surface);
+    color: var(--color-slate);
+    font-family: inherit;
+    width: 36px;
+}
+
+.venta-line__qty-value--input:focus {
     outline: none;
     border-color: var(--color-sage);
 }

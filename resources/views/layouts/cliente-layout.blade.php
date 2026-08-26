@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" href="{{ asset_v('assets/css/cliente/layout.css') }}">
     @stack('styles')
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="cliente-body">
 
@@ -49,6 +50,14 @@
                     <span class="cliente-nav-item__label">Ventas</span>
                 </a>
 
+                 <a href="{{ url('/cliente/proveedores') }}" class="cliente-nav-item {{ request()->is('cliente/proveedores') ? 'is-active' : '' }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="10" width="18" height="10" rx="1.5"/>
+                        <path d="M7 10V7a5 5 0 0 1 10 0v3"/>
+                    </svg>
+                    <span class="cliente-nav-item__label">Proveedores</span>
+                </a>
+
                 <a href="{{ url('/cliente/inventario') }}" class="cliente-nav-item {{ request()->is('cliente/inventario') ? 'is-active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/>
@@ -65,6 +74,8 @@
                     </svg>
                     <span class="cliente-nav-item__label">Caja</span>
                 </a>
+
+               
 
                 <a href="#" class="cliente-nav-item" data-coming-soon="La sección de Facturación está en construcción.">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">

@@ -826,6 +826,57 @@ body.cliente-body {
     text-align: right;
 }
 
+/* Filas de detalle dentro de un panel lateral (producto de una venta o
+   compra, compra de un proveedor...) -usado por Ventas, Inventario y
+   Proveedores, por eso vive acá y no en el CSS de una sola página. */
+.venta-detalle-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px dashed rgba(30, 45, 61, 0.08);
+}
+
+.venta-detalle-item:last-child {
+    border-bottom: none;
+}
+
+.venta-detalle-item__nombre {
+    font-size: 0.86rem;
+    font-weight: 500;
+}
+
+.venta-detalle-item__cantidad {
+    font-size: 0.78rem;
+    color: var(--color-mist);
+}
+
+.venta-detalle-item__monto {
+    font-size: 0.86rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Detalle de una línea de producto (cantidad, precio unitario y total),
+   cada dato en su propia fila "etiqueta - valor" (reutiliza .slide-over__field
+   para cada fila) -usado en el detalle de una compra y de una venta. */
+.compra-linea-producto {
+    margin-bottom: 16px;
+}
+
+.compra-linea-producto + .compra-linea-producto {
+    padding-top: 14px;
+    border-top: 1px solid rgba(30, 45, 61, 0.08);
+}
+
+.compra-linea-producto__nombre {
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--color-slate);
+    margin-bottom: 4px;
+}
+
 /* ==========================================================================
    MODAL (shell genérico) — lo usan "Nueva venta" y los modales de
    Inventario (Nuevo producto, Registrar compra, Transferir). Queda acá
@@ -1014,6 +1065,102 @@ body.cliente-body {
     .stat-grid {
         grid-template-columns: 1fr 1fr;
     }
+}
+
+/* ==========================================================================
+   SWEETALERT2 CON LA PALETA DE STOCKLY (confirmaciones/errores en vez de
+   confirm()/alert() nativos del navegador -ver confirmarAccion()/
+   mostrarError() más abajo). Mismo diseño que ya se usa en el panel admin.
+   ========================================================================== */
+.stockly-swal.swal2-popup {
+    border-radius: var(--radius-lg);
+    padding: 32px 28px 28px;
+    font-family: var(--font-body);
+    box-shadow: 0 30px 60px -20px rgba(30, 45, 61, 0.35);
+}
+
+.stockly-swal .swal2-title {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--color-slate);
+    padding: 0;
+    margin-top: 18px;
+}
+
+.stockly-swal .swal2-html-container {
+    font-size: 0.92rem;
+    color: var(--color-mist);
+    margin-top: 6px;
+}
+
+.stockly-swal .swal2-icon {
+    border-color: var(--color-sage-soft);
+    color: var(--color-sage-dark);
+}
+
+.stockly-swal .swal2-icon.swal2-warning {
+    border-color: var(--color-sand-soft);
+    color: #8A6F3F;
+}
+
+.stockly-swal .swal2-icon.swal2-error {
+    border-color: var(--color-error-soft);
+    color: var(--color-error);
+}
+
+.stockly-swal .swal2-icon.swal2-error [class^='swal2-x-mark-line'] {
+    background-color: var(--color-error);
+}
+
+.stockly-swal .swal2-actions {
+    gap: 10px;
+}
+
+.stockly-swal .swal2-confirm.swal2-styled {
+    background-color: var(--color-sage) !important;
+    border-radius: 999px;
+    padding: 10px 26px;
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    box-shadow: none !important;
+}
+
+.stockly-swal .swal2-confirm.swal2-styled:hover {
+    background-color: var(--color-sage-dark) !important;
+}
+
+.stockly-swal .swal2-confirm.swal2-styled:focus {
+    box-shadow: 0 0 0 3px var(--color-sage-soft) !important;
+}
+
+.stockly-swal .swal2-confirm.stockly-swal-confirm--peligro {
+    background-color: var(--color-error) !important;
+}
+
+.stockly-swal .swal2-confirm.stockly-swal-confirm--peligro:hover {
+    filter: brightness(0.9);
+}
+
+.stockly-swal .swal2-cancel.swal2-styled {
+    background-color: transparent !important;
+    color: var(--color-slate) !important;
+    border: 1px solid rgba(30, 45, 61, 0.15) !important;
+    border-radius: 999px;
+    padding: 10px 26px;
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    box-shadow: none !important;
+}
+
+.stockly-swal .swal2-cancel.swal2-styled:hover {
+    background-color: var(--color-background) !important;
+}
+
+.swal2-container.stockly-swal-backdrop {
+    background-color: rgba(30, 45, 61, 0.45);
 }
 
 /* ==========================================================================

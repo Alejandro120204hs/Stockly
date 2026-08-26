@@ -13,6 +13,21 @@ document.addEventListener('DOMContentLoaded', function () {
     initVentasTable();
 });
 
+/** Una fila "etiqueta - valor" (mismo look que .slide-over__field), para
+ * mostrar cantidad/precio unitario/total de una línea de venta sin meter
+ * el valor (texto libre en el caso del nombre) directo en innerHTML. */
+function crearCampoDetalleLinea(etiqueta, valor) {
+    var field = document.createElement('div');
+    field.className = 'slide-over__field';
+    var span = document.createElement('span');
+    span.textContent = etiqueta;
+    var strong = document.createElement('strong');
+    strong.textContent = valor;
+    field.appendChild(span);
+    field.appendChild(strong);
+    return field;
+}
+
 function initVentasTable() {
     var table = document.getElementById('ventasTable');
     var dataScript = document.getElementById('ventasData');
@@ -63,15 +78,23 @@ function initVentasTable() {
         var lineasContainer = document.getElementById('ventaSlideOverLineas');
         lineasContainer.innerHTML = '';
         venta.lineas.forEach(function (linea) {
-            var item = document.createElement('div');
-            item.className = 'venta-detalle-item';
-            item.innerHTML =
-                '<div>' +
-                    '<div class="venta-detalle-item__nombre">' + linea.nombre + '</div>' +
-                    '<div class="venta-detalle-item__cantidad">' + linea.cantidad + ' x ' + formatCOP(linea.precio) + '</div>' +
-                '</div>' +
-                '<div class="venta-detalle-item__monto">' + formatCOP(linea.cantidad * linea.precio) + '</div>';
-            lineasContainer.appendChild(item);
+            // linea.nombre es texto libre (nombre de producto) -va por
+            // textContent, nunca por innerHTML. Cantidad, precio unitario
+            // y total van cada uno en su propia fila "etiqueta - valor",
+            // igual que Precio de costo/venta en el panel del producto.
+            var wrapper = document.createElement('div');
+            wrapper.className = 'compra-linea-producto';
+
+            var nombreEl = document.createElement('div');
+            nombreEl.className = 'compra-linea-producto__nombre';
+            nombreEl.textContent = linea.nombre;
+            wrapper.appendChild(nombreEl);
+
+            wrapper.appendChild(crearCampoDetalleLinea('Cantidad', String(linea.cantidad)));
+            wrapper.appendChild(crearCampoDetalleLinea('Precio unitario', formatCOP(linea.precio)));
+            wrapper.appendChild(crearCampoDetalleLinea('Total', formatCOP(linea.cantidad * linea.precio)));
+
+            lineasContainer.appendChild(wrapper);
         });
 
         slideOver.classList.add('is-open');

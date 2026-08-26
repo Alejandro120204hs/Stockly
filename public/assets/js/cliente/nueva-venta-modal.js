@@ -65,9 +65,11 @@ function initNuevaVentaModal() {
             lineas.forEach(function (linea, index) {
                 var row = document.createElement('div');
                 row.className = 'venta-line';
+                // linea.nombre es texto libre (nombre de producto) -va por
+                // textContent más abajo, nunca directo en el innerHTML.
                 row.innerHTML =
                     '<div class="venta-line__info">' +
-                        '<div class="venta-line__nombre">' + linea.nombre + '</div>' +
+                        '<div class="venta-line__nombre"></div>' +
                         '<div class="venta-line__precio">' + formatCOP(linea.precio) + ' c/u</div>' +
                     '</div>' +
                     '<div class="venta-line__qty">' +
@@ -79,6 +81,8 @@ function initNuevaVentaModal() {
                     '<button type="button" class="venta-line__remove" aria-label="Quitar">' +
                         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg>' +
                     '</button>';
+
+                row.querySelector('.venta-line__nombre').textContent = linea.nombre;
 
                 row.querySelector('[data-action="inc"]').addEventListener('click', function () {
                     linea.cantidad++;
@@ -156,9 +160,12 @@ function initNuevaVentaModal() {
             matches.forEach(function (producto) {
                 var item = document.createElement('div');
                 item.className = 'venta-product-result';
+                // producto.nombre es texto libre -va por textContent más
+                // abajo, nunca directo en el innerHTML.
                 item.innerHTML =
-                    '<span>' + producto.nombre + '</span>' +
+                    '<span class="venta-product-result__nombre"></span>' +
                     '<span class="venta-product-result__precio">' + formatCOP(producto.precio) + '</span>';
+                item.querySelector('.venta-product-result__nombre').textContent = producto.nombre;
 
                 item.addEventListener('click', function () {
                     var existente = lineas.find(function (l) { return l.id === producto.id; });

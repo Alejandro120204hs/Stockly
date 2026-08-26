@@ -1,0 +1,34 @@
+/* ==========================================================================
+   Stockly — Panel del negocio cliente: vista Proveedores
+   Lo compartido (panel, tabla, pills, toolbar, slide-over, formularios,
+   shell de modal, stat cards) vive en cliente/layout.css -acá solo lo
+   propio de esta vista: el layout de 2 columnas del formulario fiscal.
+   ========================================================================== */
+
+.proveedor-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+@media (max-width: 480px) {
+    .proveedor-form-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+}
+
+/* Filas del historial de compras -clicables, abren el detalle de esa
+   compra encima del panel del proveedor. */
+.venta-detalle-item--clicable {
+    cursor: pointer;
+    margin: 0 -12px;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+}
+
+.venta-detalle-item--clicable:hover,
+.venta-detalle-item--clicable:focus-visible {
+    background-color: var(--color-background);
+}

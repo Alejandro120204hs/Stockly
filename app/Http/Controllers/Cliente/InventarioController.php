@@ -15,6 +15,7 @@ use App\Models\Cliente\Proveedor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class InventarioController extends Controller
 {
@@ -58,12 +59,18 @@ class InventarioController extends Controller
             ->filter(fn (Compra $compra) => $compra->fecha->isCurrentMonth())
             ->count();
 
+        // Solo id+nombre -los datos fiscales completos del proveedor se
+        // gestionan en su propio módulo (/cliente/proveedores), acá solo
+        // hace falta poder elegir uno para "Registrar compra".
+        $proveedores = Proveedor::orderBy('nombre')->get(['id', 'nombre']);
+
         return view('cliente.inventario', [
             'productos' => $productos,
             'categorias' => $categorias,
             'compras' => $compras,
             'unidades' => $unidades,
             'comprasEsteMes' => $comprasEsteMes,
+            'proveedores' => $proveedores,
         ]);
     }
 
@@ -129,15 +136,79 @@ class InventarioController extends Controller
         return response()->json(['producto' => $this->shapeProducto($producto)]);
     }
 
-    public function storeCompra(Request $request): JsonResponse
+    /**
+     * Baja lógica (soft delete): el producto deja de aparecer en el
+     * catálogo, pero las compras/movimientos que ya lo mencionan siguen
+     * intactos en el historial -no se puede borrar de verdad sin romper
+     * esos registros (compra_detalle no tiene cascada hacia productos).
+     */
+    public function destroyProducto(Producto $producto): JsonResponse
+    {
+        $producto->delete();
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function updateCategoria(Request $request): JsonResponse
     {
         $validated = $request->validate([
+            'nombre_actual' => ['required', 'string'],
+            'nombre_nuevo' => ['required', 'string', 'max:255'],
+        ]);
+
+        $categoria = CategoriaProducto::where('nombre', $validated['nombre_actual'])->firstOrFail();
+
+        $yaExiste = CategoriaProducto::whereRaw('LOWER(nombre) = ?', [mb_strtolower($validated['nombre_nuevo'])])
+            ->where('id', '!=', $categoria->id)
+            ->exists();
+
+        if ($yaExiste) {
+            return response()->json(['message' => 'Ya existe una categoría con ese nombre.'], 422);
+        }
+
+        $categoria->update(['nombre' => $validated['nombre_nuevo']]);
+
+        return response()->json(['categoria' => $categoria->nombre]);
+    }
+
+    public function destroyCategoria(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'nombre' => ['required', 'string'],
+        ]);
+
+        $categoria = CategoriaProducto::where('nombre', $validated['nombre'])->firstOrFail();
+
+        if ($categoria->productos()->exists()) {
+            return response()->json(['message' => 'No puedes eliminar una categoría que todavía tiene productos asignados.'], 422);
+        }
+
+        $categoria->delete();
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function storeCompra(Request $request): JsonResponse
+    {
+        // Los "exists" van escopados a la empresa del usuario -de lo
+        // contrario, la regla corre una consulta cruda sin pasar por el
+        // Global Scope, y aceptaría un id de producto/proveedor de OTRA
+        // empresa como si fuera válido.
+        $empresaId = auth()->user()->empresa_id;
+
+        $validated = $request->validate([
             'tipo' => ['required', 'in:proveedor,informal'],
-            'proveedor_nombre' => ['nullable', 'required_if:tipo,proveedor', 'string', 'max:255'],
+            'proveedor_id' => [
+                'nullable', 'required_if:tipo,proveedor', 'integer',
+                Rule::exists('proveedores', 'id')->where(fn ($query) => $query->where('empresa_id', $empresaId)),
+            ],
             'cufe' => ['nullable', 'string', 'max:255'],
             'factura_validada' => ['required', 'boolean'],
             'lineas' => ['required', 'array', 'min:1'],
-            'lineas.*.producto_id' => ['required', 'integer', 'exists:productos,id'],
+            'lineas.*.producto_id' => [
+                'required', 'integer',
+                Rule::exists('productos', 'id')->where(fn ($query) => $query->where('empresa_id', $empresaId)),
+            ],
             'lineas.*.cantidad' => ['required', 'integer', 'min:1'],
             'lineas.*.costo' => ['required', 'numeric', 'min:0'],
         ]);
@@ -148,7 +219,7 @@ class InventarioController extends Controller
             $total = collect($validated['lineas'])->sum(fn ($linea) => $linea['cantidad'] * $linea['costo']);
 
             if ($validated['tipo'] === 'proveedor') {
-                $proveedor = Proveedor::firstOrCreate(['nombre' => $validated['proveedor_nombre']]);
+                $proveedor = Proveedor::findOrFail($validated['proveedor_id']);
 
                 // Solo se crea el registro de factura validada si de verdad
                 // se validó -una factura "por validar" no es todavía una
