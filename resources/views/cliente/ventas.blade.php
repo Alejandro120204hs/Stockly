@@ -56,7 +56,7 @@
     <div class="panel cliente-reveal cliente-reveal-2">
         <div class="cliente-toolbar">
             <div class="cliente-toolbar__search">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="11" cy="11" r="7"/>
                     <path d="m21 21-4.3-4.3"/>
                 </svg>
@@ -136,7 +136,7 @@
                 <span class="status-pill" id="ventaSlideOverEstadoPago">—</span>
             </div>
             <button type="button" class="slide-over__close" id="ventaSlideOverClose" aria-label="Cerrar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M6 6l12 12M18 6 6 18"/>
                 </svg>
             </button>

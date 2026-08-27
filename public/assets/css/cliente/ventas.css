@@ -5,27 +5,4 @@
    paginación y el detalle de productos vendidos en el panel lateral,
    propios de esta vista.
    ========================================================================== */
-.data-table__pagination {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid rgba(30, 45, 61, 0.08);
-}
-
-.data-table__pagination-info {
-    font-size: 0.84rem;
-    color: var(--color-mist);
-    min-width: 110px;
-    text-align: center;
-}
-
-.data-table__pagination .cliente-btn-ghost:disabled {
-    opacity: 0.4;
-    cursor: default;
-    border-color: rgba(30, 45, 61, 0.1);
-    background-color: transparent;
-}
 

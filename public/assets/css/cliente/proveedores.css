@@ -24,8 +24,19 @@
 .venta-detalle-item--clicable {
     cursor: pointer;
     margin: 0 -12px;
-    padding: 10px 12px;
+    padding: 4px 12px;
     border-radius: var(--radius-md);
+}
+
+/* El panel de proveedor junta datos fiscales (6 filas) + hasta 6 compras
+   + los botones de abajo -con el padding normal de .slide-over__field no
+   cabía todo eso sin scroll en pantallas de laptop comunes. */
+#proveedorSlideOver .slide-over__field {
+    padding: 4px 0;
+}
+
+#proveedorSlideOver .slide-over__section {
+    margin-bottom: 16px;
 }
 
 .venta-detalle-item--clicable:hover,

@@ -177,7 +177,7 @@
 }
 
 .caja-line-chart__zero {
-    stroke: rgba(30, 45, 61, 0.16);
+    stroke: var(--color-border-16);
     stroke-width: 1;
     stroke-dasharray: 4 4;
 }

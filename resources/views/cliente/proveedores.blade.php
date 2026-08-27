@@ -25,7 +25,7 @@
     <section class="stat-grid cliente-reveal cliente-reveal-2">
         <div class="stat-card stat-card--sage">
             <div class="stat-card__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <rect x="3" y="10" width="18" height="10" rx="1.5"/>
                     <path d="M7 10V7a5 5 0 0 1 10 0v3"/>
                 </svg>
@@ -36,7 +36,7 @@
 
         <div class="stat-card stat-card--sand">
             <div class="stat-card__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
                 </svg>
             </div>
@@ -46,7 +46,7 @@
 
         <div class="stat-card stat-card--mist">
             <div class="stat-card__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="9" cy="20" r="1"/>
                     <circle cx="18" cy="20" r="1"/>
                     <path d="M3 4h2l2.3 11.4a2 2 0 0 0 2 1.6h7.4a2 2 0 0 0 2-1.6L21 8H6"/>
@@ -63,7 +63,7 @@
     <div class="panel cliente-reveal cliente-reveal-3">
         <div class="cliente-toolbar">
             <div class="cliente-toolbar__search">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="11" cy="11" r="7"/>
                     <path d="m21 21-4.3-4.3"/>
                 </svg>
@@ -102,6 +102,12 @@
                 Todavía no tienes proveedores registrados.
             </p>
         </div>
+
+        <div class="data-table__pagination" id="proveedoresPagination">
+            <button type="button" class="cliente-btn-ghost" id="proveedoresPrevPage">← Anterior</button>
+            <span class="data-table__pagination-info" id="proveedoresPageInfo">Página 1 de 1</span>
+            <button type="button" class="cliente-btn-ghost" id="proveedoresNextPage">Siguiente →</button>
+        </div>
     </div>
 
     {{-- ==================================================================
@@ -116,7 +122,7 @@
                 <span class="status-pill status-pill--sin-facturar" id="proveedorSlideOverTipo">—</span>
             </div>
             <button type="button" class="slide-over__close" id="proveedorSlideOverClose" aria-label="Cerrar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M6 6l12 12M18 6 6 18"/>
                 </svg>
             </button>
@@ -137,9 +143,14 @@
                 <h3 class="slide-over__section-title">Historial de compras</h3>
                 <div id="proveedorSlideOverCompras"></div>
                 <p class="data-table__empty" id="proveedorSlideOverSinCompras" hidden>Todavía no hay compras registradas con este proveedor.</p>
+                <div class="data-table__pagination" id="proveedorSlideOverComprasPagination" hidden>
+                    <button type="button" class="cliente-btn-ghost" id="proveedorSlideOverComprasPrev">← Anterior</button>
+                    <span class="data-table__pagination-info" id="proveedorSlideOverComprasPageInfo">Página 1 de 1</span>
+                    <button type="button" class="cliente-btn-ghost" id="proveedorSlideOverComprasNext">Siguiente →</button>
+                </div>
             </section>
 
-            <button type="button" class="cliente-btn-ghost" id="proveedorSlideOverEditarBtn" style="width:100%; margin-bottom:10px;">
+            <button type="button" class="cliente-btn-ghost" id="proveedorSlideOverEditarBtn" style="width:100%; margin-bottom:6px;">
                 Editar proveedor
             </button>
             <button type="button" class="cliente-btn-ghost cliente-btn-ghost--peligro" id="proveedorSlideOverEliminarBtn" style="width:100%;">
@@ -162,7 +173,7 @@
                 <span class="status-pill" id="compraDetalleEstado">—</span>
             </div>
             <button type="button" class="slide-over__close" id="compraDetalleClose" aria-label="Cerrar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M6 6l12 12M18 6 6 18"/>
                 </svg>
             </button>
@@ -172,12 +183,22 @@
             <section class="slide-over__section">
                 <h3 class="slide-over__section-title">Productos comprados</h3>
                 <div id="compraDetalleLineas"></div>
+                <div class="data-table__pagination" id="compraDetalleLineasPagination" hidden>
+                    <button type="button" class="cliente-btn-ghost" id="compraDetalleLineasPrev">← Anterior</button>
+                    <span class="data-table__pagination-info" id="compraDetalleLineasPageInfo">Página 1 de 1</span>
+                    <button type="button" class="cliente-btn-ghost" id="compraDetalleLineasNext">Siguiente →</button>
+                </div>
             </section>
 
-            <section class="slide-over__section">
+            <section class="slide-over__section" id="compraDetalleInfoSection">
                 <h3 class="slide-over__section-title">Compra</h3>
-                <div class="slide-over__field" id="compraDetalleCufeRow"><span>CUFE</span><strong id="compraDetalleCufe">—</strong></div>
-                <div class="slide-over__field"><span>Total</span><strong id="compraDetalleTotal">—</strong></div>
+                <div class="slide-over__compra-info">
+                    <div class="slide-over__field" id="compraDetalleCufeRow"><span>CUFE</span><strong id="compraDetalleCufe">—</strong></div>
+                    <div class="slide-over__compra-info-total">
+                        <span>Total de la compra</span>
+                        <strong id="compraDetalleTotal">—</strong>
+                    </div>
+                </div>
             </section>
         </div>
     </aside>
@@ -191,7 +212,7 @@
         <div class="modal__header">
             <h2 class="modal__title" id="proveedorModalTitle">Nuevo proveedor</h2>
             <button type="button" class="modal__close" id="proveedorModalClose" aria-label="Cerrar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M6 6l12 12M18 6 6 18"/>
                 </svg>
             </button>

@@ -45,7 +45,7 @@
     <section class="stat-grid cliente-reveal cliente-reveal-2">
         <div class="stat-card stat-card--mist" id="cajaEstadoCard">
             <div class="stat-card__icon" id="cajaEstadoIcono">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
                     <circle cx="12" cy="12" r="3"/>
                     <path d="M6 9v.01M18 15v.01"/>
@@ -58,7 +58,7 @@
 
         <div class="stat-card stat-card--sage">
             <div class="stat-card__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M6 7V6a6 6 0 0 1 12 0v1"/>
                     <path d="M4 7h16l-1.5 13.5a2 2 0 0 1-2 1.5H7.5a2 2 0 0 1-2-1.5L4 7Z"/>
                 </svg>
@@ -70,7 +70,7 @@
 
         <div class="stat-card stat-card--sand">
             <div class="stat-card__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v3"/>
                     <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2H5a2 2 0 0 1-2-2Z"/>
                     <path d="M17 14h.01"/>
@@ -83,7 +83,7 @@
 
         <div class="stat-card stat-card--mist">
             <div class="stat-card__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M4 21V6l8-3 8 3v15"/>
                     <path d="M4 21h16"/>
                     <path d="M9 9h1M14 9h1M9 13h1M14 13h1M9 21v-4h6v4"/>
@@ -102,7 +102,7 @@
         <!-- ---------- Estado CERRADA: llamado a abrir caja ---------- -->
         <div class="caja-hero" id="cajaHeroAbrir">
             <div class="caja-hero__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
                     <circle cx="12" cy="12" r="3"/>
                     <path d="M6 9v.01M18 15v.01"/>
@@ -232,7 +232,7 @@
                 <span class="status-pill" id="cierreSlideOverDiferenciaPill">—</span>
             </div>
             <button type="button" class="slide-over__close" id="cierreSlideOverClose" aria-label="Cerrar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M6 6l12 12M18 6 6 18"/>
                 </svg>
             </button>
@@ -267,7 +267,7 @@
         <div class="modal__header">
             <h2 class="modal__title" id="cerrarCajaTitle">Cerrar caja</h2>
             <button type="button" class="modal__close" id="cerrarCajaClose" aria-label="Cerrar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M6 6l12 12M18 6 6 18"/>
                 </svg>
             </button>

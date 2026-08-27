@@ -155,29 +155,69 @@ function initVitrinaTable() {
     var searchInput = document.getElementById('vitrinaSearch');
     var categoriaFilter = document.getElementById('vitrinaCategoriaFilter');
     var emptyState = document.getElementById('vitrinaEmpty');
+    var paginationEl = document.getElementById('vitrinaPagination');
+    var pageInfoEl = document.getElementById('vitrinaPageInfo');
+    var prevBtn = document.getElementById('vitrinaPrevPage');
+    var nextBtn = document.getElementById('vitrinaNextPage');
 
-    function render() {
+    var PAGE_SIZE = 10;
+    var currentPage = 1;
+
+    // Se vuelve a consultar el DOM en cada render (no se guarda una sola
+    // vez al inicio) porque crear un producto nuevo agrega filas después
+    // -si se guardara una sola lista al cargar la página, esas filas
+    // nuevas quedarían fuera de la paginación.
+    function getMatchingRows() {
         var term = normalizarTexto(searchInput.value.trim());
         var categoria = categoriaFilter.value;
-        var visibleCount = 0;
 
-        table.querySelectorAll('.data-table__row').forEach(function (row) {
+        return Array.prototype.filter.call(table.querySelectorAll('.data-table__row'), function (row) {
             var id = parseInt(row.getAttribute('data-producto-id'), 10);
             var producto = inventarioProductosById[id];
             var matchesTerm = !term || normalizarTexto(producto.nombre).indexOf(term) !== -1;
             var matchesCategoria = !categoria || producto.categoria === categoria;
-            var visible = matchesTerm && matchesCategoria;
-            row.hidden = !visible;
-            if (visible) {
-                visibleCount++;
-            }
+            return matchesTerm && matchesCategoria;
         });
-
-        emptyState.hidden = visibleCount !== 0;
     }
 
-    searchInput.addEventListener('input', render);
-    categoriaFilter.addEventListener('change', render);
+    function render() {
+        var matching = getMatchingRows();
+        var totalPages = Math.max(1, Math.ceil(matching.length / PAGE_SIZE));
+        currentPage = Math.min(currentPage, totalPages);
+
+        var start = (currentPage - 1) * PAGE_SIZE;
+        var pageRows = matching.slice(start, start + PAGE_SIZE);
+
+        table.querySelectorAll('.data-table__row').forEach(function (row) {
+            row.hidden = pageRows.indexOf(row) === -1;
+        });
+
+        emptyState.hidden = matching.length !== 0;
+        paginationEl.hidden = matching.length === 0;
+        pageInfoEl.textContent = 'Página ' + currentPage + ' de ' + totalPages;
+        prevBtn.disabled = currentPage <= 1;
+        nextBtn.disabled = currentPage >= totalPages;
+    }
+
+    function applyFilters() {
+        currentPage = 1;
+        render();
+    }
+
+    searchInput.addEventListener('input', applyFilters);
+    categoriaFilter.addEventListener('change', applyFilters);
+
+    prevBtn.addEventListener('click', function () {
+        if (currentPage > 1) {
+            currentPage--;
+            render();
+        }
+    });
+
+    nextBtn.addEventListener('click', function () {
+        currentPage++;
+        render();
+    });
 
     table.querySelectorAll('.data-table__row').forEach(function (row) {
         var id = parseInt(row.getAttribute('data-producto-id'), 10);
@@ -189,6 +229,12 @@ function initVitrinaTable() {
             }
         });
     });
+
+    // Expuesto para que crear un producto nuevo (otro módulo/función)
+    // pueda refrescar la paginación después de agregar su fila.
+    window.actualizarPaginacionVitrina = render;
+
+    render();
 }
 
 /* --------------------------------------------------------------------
@@ -203,29 +249,65 @@ function initBodegaTable() {
     var searchInput = document.getElementById('bodegaSearch');
     var categoriaFilter = document.getElementById('bodegaCategoriaFilter');
     var emptyState = document.getElementById('bodegaEmpty');
+    var paginationEl = document.getElementById('bodegaPagination');
+    var pageInfoEl = document.getElementById('bodegaPageInfo');
+    var prevBtn = document.getElementById('bodegaPrevPage');
+    var nextBtn = document.getElementById('bodegaNextPage');
 
-    function render() {
+    var PAGE_SIZE = 10;
+    var currentPage = 1;
+
+    function getMatchingRows() {
         var term = normalizarTexto(searchInput.value.trim());
         var categoria = categoriaFilter.value;
-        var visibleCount = 0;
 
-        table.querySelectorAll('.data-table__row').forEach(function (row) {
+        return Array.prototype.filter.call(table.querySelectorAll('.data-table__row'), function (row) {
             var id = parseInt(row.getAttribute('data-producto-id'), 10);
             var producto = inventarioProductosById[id];
             var matchesTerm = !term || normalizarTexto(producto.nombre).indexOf(term) !== -1;
             var matchesCategoria = !categoria || producto.categoria === categoria;
-            var visible = matchesTerm && matchesCategoria;
-            row.hidden = !visible;
-            if (visible) {
-                visibleCount++;
-            }
+            return matchesTerm && matchesCategoria;
         });
-
-        emptyState.hidden = visibleCount !== 0;
     }
 
-    searchInput.addEventListener('input', render);
-    categoriaFilter.addEventListener('change', render);
+    function render() {
+        var matching = getMatchingRows();
+        var totalPages = Math.max(1, Math.ceil(matching.length / PAGE_SIZE));
+        currentPage = Math.min(currentPage, totalPages);
+
+        var start = (currentPage - 1) * PAGE_SIZE;
+        var pageRows = matching.slice(start, start + PAGE_SIZE);
+
+        table.querySelectorAll('.data-table__row').forEach(function (row) {
+            row.hidden = pageRows.indexOf(row) === -1;
+        });
+
+        emptyState.hidden = matching.length !== 0;
+        paginationEl.hidden = matching.length === 0;
+        pageInfoEl.textContent = 'Página ' + currentPage + ' de ' + totalPages;
+        prevBtn.disabled = currentPage <= 1;
+        nextBtn.disabled = currentPage >= totalPages;
+    }
+
+    function applyFilters() {
+        currentPage = 1;
+        render();
+    }
+
+    searchInput.addEventListener('input', applyFilters);
+    categoriaFilter.addEventListener('change', applyFilters);
+
+    prevBtn.addEventListener('click', function () {
+        if (currentPage > 1) {
+            currentPage--;
+            render();
+        }
+    });
+
+    nextBtn.addEventListener('click', function () {
+        currentPage++;
+        render();
+    });
 
     table.querySelectorAll('.data-table__row').forEach(function (row) {
         var id = parseInt(row.getAttribute('data-producto-id'), 10);
@@ -245,6 +327,10 @@ function initBodegaTable() {
             abrirTransferirModal(id);
         });
     });
+
+    window.actualizarPaginacionBodega = render;
+
+    render();
 }
 
 /* --------------------------------------------------------------------
@@ -259,34 +345,72 @@ function initComprasTable() {
     var searchInput = document.getElementById('comprasSearch');
     var estadoFilter = document.getElementById('comprasEstadoFilter');
     var emptyState = document.getElementById('comprasEmpty');
+    var paginationEl = document.getElementById('comprasPagination');
+    var pageInfoEl = document.getElementById('comprasPageInfo');
+    var prevBtn = document.getElementById('comprasPrevPage');
+    var nextBtn = document.getElementById('comprasNextPage');
 
-    var facturaLabels = { validada: 'Validada', por_validar: 'Por validar', sin_factura: 'Compra informal' };
+    var PAGE_SIZE = 10;
+    var currentPage = 1;
 
-    function render() {
+    function getMatchingRows() {
         var term = normalizarTexto(searchInput.value.trim());
         var estado = estadoFilter.value;
-        var visibleCount = 0;
 
-        table.querySelectorAll('.data-table__row').forEach(function (row) {
+        return Array.prototype.filter.call(table.querySelectorAll('.data-table__row'), function (row) {
             var id = parseInt(row.getAttribute('data-compra-id'), 10);
             var compra = inventarioComprasById[id];
             var proveedorTexto = compra.proveedor || 'compra informal';
             var matchesTerm = !term || normalizarTexto(proveedorTexto).indexOf(term) !== -1;
             var matchesEstado = !estado || compra.facturaEstado === estado;
-            var visible = matchesTerm && matchesEstado;
-            row.hidden = !visible;
-            if (visible) {
-                visibleCount++;
-            }
+            return matchesTerm && matchesEstado;
         });
-
-        emptyState.hidden = visibleCount !== 0;
     }
 
-    searchInput.addEventListener('input', render);
-    estadoFilter.addEventListener('change', render);
+    function render() {
+        var matching = getMatchingRows();
+        var totalPages = Math.max(1, Math.ceil(matching.length / PAGE_SIZE));
+        currentPage = Math.min(currentPage, totalPages);
+
+        var start = (currentPage - 1) * PAGE_SIZE;
+        var pageRows = matching.slice(start, start + PAGE_SIZE);
+
+        table.querySelectorAll('.data-table__row').forEach(function (row) {
+            row.hidden = pageRows.indexOf(row) === -1;
+        });
+
+        emptyState.hidden = matching.length !== 0;
+        paginationEl.hidden = matching.length === 0;
+        pageInfoEl.textContent = 'Página ' + currentPage + ' de ' + totalPages;
+        prevBtn.disabled = currentPage <= 1;
+        nextBtn.disabled = currentPage >= totalPages;
+    }
+
+    function applyFilters() {
+        currentPage = 1;
+        render();
+    }
+
+    searchInput.addEventListener('input', applyFilters);
+    estadoFilter.addEventListener('change', applyFilters);
+
+    prevBtn.addEventListener('click', function () {
+        if (currentPage > 1) {
+            currentPage--;
+            render();
+        }
+    });
+
+    nextBtn.addEventListener('click', function () {
+        currentPage++;
+        render();
+    });
 
     wireFilaCompra(table);
+
+    window.actualizarPaginacionCompras = render;
+
+    render();
 }
 
 /* --------------------------------------------------------------------
@@ -349,32 +473,76 @@ function abrirCompraSlideOver(id) {
         document.getElementById('compraSlideOverCufe').textContent = compra.cufe;
     } else {
         cufeRow.hidden = true;
+        // Si por algo la fila no llegara a ocultarse, que al menos no
+        // se quede mostrando el CUFE de la última compra que sí tenía.
+        document.getElementById('compraSlideOverCufe').textContent = '—';
     }
 
+    // Con muchos productos en una sola compra, mostrarlos todos de un
+    // tirón obligaba a hacer scroll dentro del panel -en vez de eso, se
+    // paginan de a 4 (el tamaño del panel se queda igual siempre).
     var lineasContainer = document.getElementById('compraSlideOverLineas');
-    lineasContainer.innerHTML = '';
-    compra.lineas.forEach(function (linea) {
-        // El nombre del producto es texto libre escrito por el negocio -si
-        // se metiera con innerHTML, un nombre malicioso ("<img onerror=...")
-        // se ejecutaría en la sesión de cualquiera que abra esta compra.
-        // Cantidad, precio unitario y total van cada uno en su propia fila
-        // "etiqueta - valor", igual que Precio de costo/venta en el panel
-        // del producto -así quedan claramente separados, no todos pegados
-        // en una sola línea de texto.
-        var wrapper = document.createElement('div');
-        wrapper.className = 'compra-linea-producto';
+    var lineasPaginationEl = document.getElementById('compraSlideOverLineasPagination');
+    var lineasPageInfoEl = document.getElementById('compraSlideOverLineasPageInfo');
+    var lineasPrevBtn = document.getElementById('compraSlideOverLineasPrev');
+    var lineasNextBtn = document.getElementById('compraSlideOverLineasNext');
+    var LINEAS_PAGE_SIZE = 4;
+    var paginaLineas = 1;
+    var infoSectionEl = document.getElementById('compraSlideOverInfoSection');
 
-        var nombreEl = document.createElement('div');
-        nombreEl.className = 'compra-linea-producto__nombre';
-        nombreEl.textContent = linea.nombre;
-        wrapper.appendChild(nombreEl);
+    function renderLineasPagina() {
+        var totalPaginas = Math.max(1, Math.ceil(compra.lineas.length / LINEAS_PAGE_SIZE));
+        paginaLineas = Math.min(paginaLineas, totalPaginas);
 
-        wrapper.appendChild(crearCampoDetalleLinea('Cantidad', String(linea.cantidad)));
-        wrapper.appendChild(crearCampoDetalleLinea('Precio unitario', formatCOP(linea.costo)));
-        wrapper.appendChild(crearCampoDetalleLinea('Total', formatCOP(linea.cantidad * linea.costo)));
+        // El total/origen/CUFE son datos de TODA la compra, no de la página
+        // que se esté viendo -mostrarlos en cada página daba a entender
+        // que cada una tenía su propio total. Ahora solo aparecen al
+        // llegar a la última página de productos.
+        infoSectionEl.hidden = paginaLineas !== totalPaginas;
+        var start = (paginaLineas - 1) * LINEAS_PAGE_SIZE;
+        var lineasPagina = compra.lineas.slice(start, start + LINEAS_PAGE_SIZE);
 
-        lineasContainer.appendChild(wrapper);
-    });
+        lineasContainer.innerHTML = '';
+        lineasPagina.forEach(function (linea) {
+            // El nombre del producto es texto libre escrito por el negocio
+            // -si se metiera con innerHTML, un nombre malicioso ("<img
+            // onerror=...") se ejecutaría en la sesión de cualquiera que
+            // abra esta compra. Cantidad, precio unitario y total van cada
+            // uno en su propia fila "etiqueta - valor", igual que Precio
+            // de costo/venta en el panel del producto.
+            var wrapper = document.createElement('div');
+            wrapper.className = 'compra-linea-producto';
+
+            var nombreEl = document.createElement('div');
+            nombreEl.className = 'compra-linea-producto__nombre';
+            nombreEl.textContent = linea.nombre;
+            wrapper.appendChild(nombreEl);
+
+            wrapper.appendChild(crearCampoDetalleLinea('Cantidad', String(linea.cantidad)));
+            wrapper.appendChild(crearCampoDetalleLinea('Precio unitario', formatCOP(linea.costo)));
+            wrapper.appendChild(crearCampoDetalleLinea('Total', formatCOP(linea.cantidad * linea.costo)));
+
+            lineasContainer.appendChild(wrapper);
+        });
+
+        lineasPaginationEl.hidden = compra.lineas.length <= LINEAS_PAGE_SIZE;
+        lineasPageInfoEl.textContent = 'Página ' + paginaLineas + ' de ' + totalPaginas;
+        lineasPrevBtn.disabled = paginaLineas <= 1;
+        lineasNextBtn.disabled = paginaLineas >= totalPaginas;
+    }
+
+    lineasPrevBtn.onclick = function () {
+        if (paginaLineas > 1) {
+            paginaLineas--;
+            renderLineasPagina();
+        }
+    };
+    lineasNextBtn.onclick = function () {
+        paginaLineas++;
+        renderLineasPagina();
+    };
+
+    renderLineasPagina();
 
     slideOver.classList.add('is-open');
     slideOver.setAttribute('aria-hidden', 'false');
@@ -550,13 +718,12 @@ function eliminarProducto(id) {
                     bodegaRow.remove();
                 }
 
-                [['vitrinaTable', 'vitrinaEmpty'], ['bodegaTable', 'bodegaEmpty']].forEach(function (par) {
-                    var table = document.getElementById(par[0]);
-                    var emptyEl = document.getElementById(par[1]);
-                    if (table && emptyEl) {
-                        emptyEl.hidden = table.querySelectorAll('.data-table__row:not([hidden])').length !== 0;
-                    }
-                });
+                if (window.actualizarPaginacionVitrina) {
+                    window.actualizarPaginacionVitrina();
+                }
+                if (window.actualizarPaginacionBodega) {
+                    window.actualizarPaginacionBodega();
+                }
 
                 var idx = inventarioProductos.findIndex(function (p) { return p.id === id; });
                 if (idx !== -1) {
@@ -939,6 +1106,16 @@ function initNuevoProductoModal() {
                     }
                     if (bodegaTbody) {
                         bodegaTbody.appendChild(crearFilaBodega(producto));
+                    }
+
+                    // La fila ya está en el DOM -falta que la paginación se
+                    // entere de que ahora hay una más (si no, quedaría
+                    // agregada pero fuera de cualquier página visible).
+                    if (window.actualizarPaginacionVitrina) {
+                        window.actualizarPaginacionVitrina();
+                    }
+                    if (window.actualizarPaginacionBodega) {
+                        window.actualizarPaginacionBodega();
                     }
 
                     actualizarStatProductos();
@@ -1509,6 +1686,9 @@ function initRegistrarCompraModal() {
                     var nuevaFila = crearFilaCompra(compra);
                     wireFilaCompraRow(nuevaFila);
                     comprasTbody.insertBefore(nuevaFila, comprasTbody.firstChild);
+                }
+                if (window.actualizarPaginacionCompras) {
+                    window.actualizarPaginacionCompras();
                 }
 
                 // Toda compra suma a BODEGA -nunca a vitrina directamente.

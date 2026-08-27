@@ -71,7 +71,7 @@
     display: flex;
     gap: 6px;
     margin-bottom: 18px;
-    border-bottom: 1px solid rgba(30, 45, 61, 0.08);
+    border-bottom: 1px solid var(--color-border-08);
 }
 
 .inventario-tab {
@@ -133,7 +133,7 @@
     flex: 1;
     padding: 11px;
     border-radius: var(--radius-md);
-    border: 1px solid rgba(30, 45, 61, 0.14);
+    border: 1px solid var(--color-border-14);
     background-color: var(--color-surface);
     color: var(--color-mist);
     font-family: inherit;
@@ -205,7 +205,7 @@
     justify-content: space-between;
     gap: 10px;
     padding: 10px 12px;
-    border: 1px solid rgba(30, 45, 61, 0.14);
+    border: 1px solid var(--color-border-14);
     border-radius: var(--radius-md);
 }
 
@@ -228,7 +228,7 @@
     width: 30px;
     height: 30px;
     border-radius: var(--radius-md);
-    border: 1px solid rgba(30, 45, 61, 0.14);
+    border: 1px solid var(--color-border-14);
     background: none;
     color: var(--color-mist);
     cursor: pointer;
@@ -282,7 +282,7 @@
     width: 76px;
     padding: 3px 6px;
     border-radius: 6px;
-    border: 1px solid rgba(30, 45, 61, 0.16);
+    border: 1px solid var(--color-border-16);
     background-color: var(--color-surface);
     font-family: inherit;
     font-size: 0.8rem;
@@ -292,6 +292,7 @@
 .compra-line__costo-input:focus {
     outline: none;
     border-color: var(--color-sage);
+    box-shadow: 0 0 0 3px var(--color-sage-soft);
 }
 
 /* ---------- Cantidad escribible en "Registrar compra" ----------
@@ -300,7 +301,7 @@
    "Nueva venta" -este modificador es solo para el <input> de acá,
    para no ponerle borde/fondo de campo al de la venta. */
 .venta-line__qty-value--input {
-    border: 1px solid rgba(30, 45, 61, 0.16);
+    border: 1px solid var(--color-border-16);
     border-radius: 6px;
     padding: 3px 2px;
     background-color: var(--color-surface);
@@ -312,6 +313,7 @@
 .venta-line__qty-value--input:focus {
     outline: none;
     border-color: var(--color-sage);
+    box-shadow: 0 0 0 3px var(--color-sage-soft);
 }
 
 /* ---------- Modal "Transferir" ---------- */

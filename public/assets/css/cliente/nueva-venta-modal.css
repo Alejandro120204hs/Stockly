@@ -105,7 +105,7 @@
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    border: 1px solid rgba(30, 45, 61, 0.15);
+    border: 1px solid var(--color-border-15);
     background-color: var(--color-surface);
     color: var(--color-slate);
     font-size: 0.9rem;
@@ -167,7 +167,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 14px 0;
-    border-top: 1px dashed rgba(30, 45, 61, 0.15);
+    border-top: 1px dashed var(--color-border-15);
     margin-bottom: 18px;
     font-size: 0.95rem;
     font-weight: 600;
@@ -190,7 +190,7 @@
     flex: 1;
     padding: 11px;
     border-radius: var(--radius-md);
-    border: 1px solid rgba(30, 45, 61, 0.14);
+    border: 1px solid var(--color-border-14);
     background-color: var(--color-surface);
     color: var(--color-mist);
     font-family: inherit;
@@ -247,5 +247,29 @@
 .venta-qr-box.is-confirmed .venta-qr-box__status {
     color: var(--color-sage-dark);
     font-weight: 600;
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   -.venta-line era una sola fila con nombre + cantidad + subtotal + quitar
+   apretados uno junto al otro; en un teléfono angosto eso dejaba el
+   nombre del producto casi ilegible. Se parte en dos renglones: nombre
+   arriba, cantidad/subtotal/quitar abajo -misma información, más espacio
+   para leer el nombre completo.
+   ========================================================================== */
+@media (max-width: 560px) {
+    .venta-line {
+        flex-wrap: wrap;
+    }
+
+    .venta-line__info {
+        flex-basis: 100%;
+    }
+
+    .venta-line__nombre {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+    }
 }
 

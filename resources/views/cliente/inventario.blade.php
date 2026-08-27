@@ -44,7 +44,7 @@
     <section class="stat-grid stat-grid--inventario cliente-reveal cliente-reveal-2">
         <div class="stat-card stat-card--sage">
             <div class="stat-card__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/>
                     <path d="M3 8l9 5 9-5M12 13v8"/>
                 </svg>
@@ -56,7 +56,7 @@
 
         <div class="stat-card stat-card--sand">
             <div class="stat-card__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <rect x="3" y="3" width="18" height="18" rx="2"/>
                     <path d="M3 9h18M9 21V9"/>
                 </svg>
@@ -68,7 +68,7 @@
 
         <div class="stat-card stat-card--mist">
             <div class="stat-card__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M6 21V10M18 21V3M12 21v-7"/>
                 </svg>
             </div>
@@ -79,7 +79,7 @@
 
         <div class="stat-card stat-card--sand">
             <div class="stat-card__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
                 </svg>
             </div>
@@ -90,7 +90,7 @@
 
         <div class="stat-card stat-card--sage">
             <div class="stat-card__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="9" cy="20" r="1"/>
                     <circle cx="18" cy="20" r="1"/>
                     <path d="M3 4h2l2.3 11.4a2 2 0 0 0 2 1.6h7.4a2 2 0 0 0 2-1.6L21 8H6"/>
@@ -116,7 +116,7 @@
         <div class="inventario-tab-panel" data-tab-panel="vitrina">
             <div class="cliente-toolbar">
                 <div class="cliente-toolbar__search">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <circle cx="11" cy="11" r="7"/>
                         <path d="m21 21-4.3-4.3"/>
                     </svg>
@@ -157,13 +157,19 @@
 
                 <p class="data-table__empty" id="vitrinaEmpty" hidden>No hay productos que coincidan con la búsqueda.</p>
             </div>
+
+            <div class="data-table__pagination" id="vitrinaPagination">
+                <button type="button" class="cliente-btn-ghost" id="vitrinaPrevPage">← Anterior</button>
+                <span class="data-table__pagination-info" id="vitrinaPageInfo">Página 1 de 1</span>
+                <button type="button" class="cliente-btn-ghost" id="vitrinaNextPage">Siguiente →</button>
+            </div>
         </div>
 
         <!-- ---------- BODEGA ---------- -->
         <div class="inventario-tab-panel" data-tab-panel="bodega" hidden>
             <div class="cliente-toolbar">
                 <div class="cliente-toolbar__search">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <circle cx="11" cy="11" r="7"/>
                         <path d="m21 21-4.3-4.3"/>
                     </svg>
@@ -210,13 +216,19 @@
 
                 <p class="data-table__empty" id="bodegaEmpty" hidden>No hay productos que coincidan con la búsqueda.</p>
             </div>
+
+            <div class="data-table__pagination" id="bodegaPagination">
+                <button type="button" class="cliente-btn-ghost" id="bodegaPrevPage">← Anterior</button>
+                <span class="data-table__pagination-info" id="bodegaPageInfo">Página 1 de 1</span>
+                <button type="button" class="cliente-btn-ghost" id="bodegaNextPage">Siguiente →</button>
+            </div>
         </div>
 
         <!-- ---------- COMPRAS ---------- -->
         <div class="inventario-tab-panel" data-tab-panel="compras" hidden>
             <div class="cliente-toolbar">
                 <div class="cliente-toolbar__search">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <circle cx="11" cy="11" r="7"/>
                         <path d="m21 21-4.3-4.3"/>
                     </svg>
@@ -262,6 +274,12 @@
 
                 <p class="data-table__empty" id="comprasEmpty" hidden>No hay compras que coincidan con la búsqueda.</p>
             </div>
+
+            <div class="data-table__pagination" id="comprasPagination">
+                <button type="button" class="cliente-btn-ghost" id="comprasPrevPage">← Anterior</button>
+                <span class="data-table__pagination-info" id="comprasPageInfo">Página 1 de 1</span>
+                <button type="button" class="cliente-btn-ghost" id="comprasNextPage">Siguiente →</button>
+            </div>
         </div>
     </div>
 
@@ -281,7 +299,7 @@
                 <span class="status-pill status-pill--sin-facturar" id="productoSlideOverCategoria">—</span>
             </div>
             <button type="button" class="slide-over__close" id="productoSlideOverClose" aria-label="Cerrar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M6 6l12 12M18 6 6 18"/>
                 </svg>
             </button>
@@ -325,7 +343,7 @@
                 <span class="status-pill" id="compraSlideOverEstado">—</span>
             </div>
             <button type="button" class="slide-over__close" id="compraSlideOverClose" aria-label="Cerrar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M6 6l12 12M18 6 6 18"/>
                 </svg>
             </button>
@@ -335,13 +353,23 @@
             <section class="slide-over__section">
                 <h3 class="slide-over__section-title">Productos comprados</h3>
                 <div id="compraSlideOverLineas"></div>
+                <div class="data-table__pagination" id="compraSlideOverLineasPagination" hidden>
+                    <button type="button" class="cliente-btn-ghost" id="compraSlideOverLineasPrev">← Anterior</button>
+                    <span class="data-table__pagination-info" id="compraSlideOverLineasPageInfo">Página 1 de 1</span>
+                    <button type="button" class="cliente-btn-ghost" id="compraSlideOverLineasNext">Siguiente →</button>
+                </div>
             </section>
 
-            <section class="slide-over__section">
+            <section class="slide-over__section" id="compraSlideOverInfoSection">
                 <h3 class="slide-over__section-title">Compra</h3>
-                <div class="slide-over__field"><span>Origen</span><strong id="compraSlideOverOrigen">—</strong></div>
-                <div class="slide-over__field" id="compraSlideOverCufeRow"><span>CUFE</span><strong id="compraSlideOverCufe">—</strong></div>
-                <div class="slide-over__field"><span>Total</span><strong id="compraSlideOverTotal">—</strong></div>
+                <div class="slide-over__compra-info">
+                    <div class="slide-over__field"><span>Origen</span><strong id="compraSlideOverOrigen">—</strong></div>
+                    <div class="slide-over__field" id="compraSlideOverCufeRow"><span>CUFE</span><strong id="compraSlideOverCufe">—</strong></div>
+                    <div class="slide-over__compra-info-total">
+                        <span>Total de la compra</span>
+                        <strong id="compraSlideOverTotal">—</strong>
+                    </div>
+                </div>
             </section>
         </div>
     </aside>
@@ -355,7 +383,7 @@
         <div class="modal__header">
             <h2 class="modal__title" id="categoriasTitle">Categorías</h2>
             <button type="button" class="modal__close" id="categoriasClose" aria-label="Cerrar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M6 6l12 12M18 6 6 18"/>
                 </svg>
             </button>
@@ -381,7 +409,7 @@
         <div class="modal__header">
             <h2 class="modal__title" id="nuevoProductoTitle">Nuevo producto</h2>
             <button type="button" class="modal__close" id="nuevoProductoClose" aria-label="Cerrar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M6 6l12 12M18 6 6 18"/>
                 </svg>
             </button>
@@ -441,7 +469,7 @@
         <div class="modal__header">
             <h2 class="modal__title" id="registrarCompraTitle">Registrar compra</h2>
             <button type="button" class="modal__close" id="registrarCompraClose" aria-label="Cerrar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M6 6l12 12M18 6 6 18"/>
                 </svg>
             </button>
@@ -510,7 +538,7 @@
         <div class="modal__header">
             <h2 class="modal__title" id="transferirTitle">Transferir a vitrina</h2>
             <button type="button" class="modal__close" id="transferirClose" aria-label="Cerrar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M6 6l12 12M18 6 6 18"/>
                 </svg>
             </button>
