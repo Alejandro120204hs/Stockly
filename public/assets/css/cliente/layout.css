@@ -1,0 +1,1308 @@
+/* ==========================================================================
+   Stockly — Panel del negocio cliente: LAYOUT compartido
+   Esto es lo único que cargan TODAS las vistas del panel cliente (lo
+   carga el layout compartido, layouts/cliente-layout.blade.php): tokens,
+   el shell (sidebar/topbar), y componentes genéricos reutilizados en 2+
+   páginas (panel, tabla, pills, panel lateral, inputs/botones, toast).
+   Cada página trae aparte solo lo que le es propio.
+
+   Estructura: tokens > shell (sidebar/topbar) > navegación > contenido
+               > encabezado de página > panel genérico > formularios
+               genéricos > tabla + pills > panel lateral (slide-over)
+               > toast > animación de entrada > responsive > accesibilidad
+   ========================================================================== */
+
+:root {
+    --color-surface: #FFFFFF;
+    --color-background: #F2F0ED;
+    --color-slate: #1E2D3D;
+    --color-slate-soft: #28394B;
+    --color-sage: #4A7C6F;
+    --color-sage-dark: #3C6459;
+    --color-sage-soft: #E3ECE9;
+    --color-sand: #C9B99A;
+    --color-sand-soft: #F1EAD9;
+    --color-sand-dark: #8A6F3F;
+    /* Oscurecido desde #8C9BAB -ese tono daba ~2.8:1 de contraste sobre
+       blanco (falla WCAG AA, que exige 4.5:1) y se usa como color de
+       texto real en toda la app (categorías, unidades, fechas, etiquetas
+       de campo). Este tono da ~5:1-6:1 sobre blanco y sobre el fondo
+       "smoke", conservando la misma familia de color gris-azulado. */
+    --color-mist: #566573;
+    --color-mist-soft: #EEF1F3;
+
+    --color-error: #B3473C;
+    --color-error-soft: #F3E4E2;
+
+    /* Bordes: mismos valores exactos que ya se usaban sueltos como
+       rgba(30, 45, 61, X) en 5 hojas de estilo distintas (un token por
+       cada opacidad real encontrada, para no cambiarle el aspecto a
+       nada -solo centralizar el valor). */
+    --color-border-06: rgba(30, 45, 61, 0.06);
+    --color-border-07: rgba(30, 45, 61, 0.07);
+    --color-border-08: rgba(30, 45, 61, 0.08);
+    --color-border-10: rgba(30, 45, 61, 0.1);
+    --color-border-12: rgba(30, 45, 61, 0.12);
+    --color-border-14: rgba(30, 45, 61, 0.14);
+    --color-border-15: rgba(30, 45, 61, 0.15);
+    --color-border-16: rgba(30, 45, 61, 0.16);
+
+    --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+    --font-body: 'Work Sans', 'Segoe UI', Arial, sans-serif;
+
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+
+    --sidebar-width: 264px;
+    --topbar-height: 72px;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* ---------- Scrollbar con la paleta de la marca ---------- */
+html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-sage) var(--color-background);
+}
+
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background-color: var(--color-background);
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--color-sage);
+    border-radius: 999px;
+    border: 3px solid var(--color-background);
+    background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-sage-dark);
+}
+
+::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+body.cliente-body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--font-body);
+    color: var(--color-slate);
+    background-color: var(--color-background);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   SHELL: sidebar + topbar + contenido
+   ========================================================================== */
+.cliente-shell {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ---------- Sidebar ---------- */
+.cliente-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: var(--sidebar-width);
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-slate);
+    color: var(--color-surface);
+    z-index: 40;
+    transition: transform 0.3s ease;
+}
+
+.cliente-sidebar__brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 26px 24px;
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.cliente-sidebar__brand-mark {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+}
+
+.cliente-sidebar__badge {
+    display: block;
+    margin: -6px 24px 18px;
+    padding: 5px 10px;
+    width: fit-content;
+    max-width: calc(100% - 48px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border-radius: 999px;
+    background-color: rgba(74, 124, 111, 0.22);
+    color: #A9C9BE;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.cliente-sidebar__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 14px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.cliente-nav-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: rgba(242, 240, 237, 0.72);
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+
+.cliente-nav-item svg {
+    width: 19px;
+    height: 19px;
+    flex-shrink: 0;
+    opacity: 0.85;
+    transition: opacity 0.2s ease;
+}
+
+.cliente-nav-item__label {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cliente-nav-item:hover {
+    background-color: rgba(242, 240, 237, 0.08);
+    color: var(--color-surface);
+    transform: translateX(2px);
+}
+
+.cliente-nav-item:hover svg {
+    opacity: 1;
+}
+
+.cliente-nav-item.is-active {
+    background-color: var(--color-sage);
+    color: var(--color-surface);
+}
+
+.cliente-nav-item.is-active svg {
+    opacity: 1;
+}
+
+.cliente-nav-item.is-active::before {
+    content: '';
+    position: absolute;
+    left: -14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 22px;
+    border-radius: 0 4px 4px 0;
+    background-color: var(--color-sand);
+}
+
+.cliente-sidebar__footer {
+    padding: 16px;
+    border-top: 1px solid rgba(242, 240, 237, 0.1);
+}
+
+.cliente-user-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-radius: var(--radius-sm);
+    transition: background-color 0.2s ease;
+}
+
+.cliente-user-card:hover {
+    background-color: rgba(242, 240, 237, 0.08);
+}
+
+.cliente-user-card__avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: var(--color-sand);
+    color: var(--color-slate);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.cliente-user-card__info {
+    min-width: 0;
+}
+
+.cliente-user-card__name {
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--color-surface);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+}
+
+.cliente-user-card__role {
+    font-size: 0.74rem;
+    color: rgba(242, 240, 237, 0.6);
+    margin: 2px 0 0;
+}
+
+.cliente-logout {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 10px;
+    margin-top: 6px;
+    padding: 10px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: none;
+    font-family: inherit;
+    font-size: 0.86rem;
+    font-weight: 500;
+    color: rgba(242, 240, 237, 0.6);
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.cliente-logout:hover {
+    background-color: rgba(179, 71, 60, 0.16);
+    color: #E8A79E;
+}
+
+.cliente-logout svg {
+    width: 17px;
+    height: 17px;
+}
+
+/* ---------- Columna principal (topbar + contenido) ---------- */
+.cliente-main {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.cliente-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    height: var(--topbar-height);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 32px;
+    background-color: rgba(242, 240, 237, 0.92);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--color-border-08);
+}
+
+.cliente-topbar__menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    padding: 6px;
+    color: var(--color-slate);
+    cursor: pointer;
+}
+
+.cliente-topbar__menu-toggle svg {
+    width: 22px;
+    height: 22px;
+}
+
+.cliente-topbar__title {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.cliente-topbar__actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.cliente-topbar__avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background-color: var(--color-slate);
+    color: var(--color-sand);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.82rem;
+    flex-shrink: 0;
+}
+
+.cliente-content {
+    padding: 24px 32px;
+    flex: 1;
+}
+
+/* ==========================================================================
+   ENCABEZADO DE PÁGINA
+   ========================================================================== */
+.cliente-page-header {
+    margin-bottom: 18px;
+}
+
+.cliente-page-header__eyebrow {
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--color-sage-dark);
+    margin: 0 0 6px;
+}
+
+.cliente-page-header__title {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 2.6vw, 1.9rem);
+    margin: 0 0 4px;
+}
+
+.cliente-page-header__date {
+    color: var(--color-mist);
+    font-size: 0.9rem;
+    text-transform: capitalize;
+    margin: 0;
+}
+
+/* ==========================================================================
+   PANEL genérico (usado por 2+ páginas: Dashboard y Ventas)
+   ========================================================================== */
+.panel {
+    background-color: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    box-shadow: 0 12px 30px -22px rgba(30, 45, 61, 0.35);
+    margin-top: 20px;
+}
+
+.panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.panel__title {
+    font-size: 1.02rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.panel__subtitle {
+    display: block;
+    margin-top: 3px;
+    font-size: 0.8rem;
+    color: var(--color-mist);
+    font-weight: 400;
+}
+
+/* ==========================================================================
+   STAT CARDS (usadas por 2+ páginas: Dashboard e Inventario)
+   ========================================================================== */
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+}
+
+.stat-card {
+    position: relative;
+    background-color: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: 16px 20px 14px;
+    box-shadow: 0 12px 30px -22px rgba(30, 45, 61, 0.35);
+    overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 36px -20px rgba(30, 45, 61, 0.4);
+}
+
+.stat-card__icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.stat-card__icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.stat-card--sage .stat-card__icon { background-color: var(--color-sage-soft); color: var(--color-sage-dark); }
+.stat-card--sand .stat-card__icon { background-color: var(--color-sand-soft); color: var(--color-sand-dark); }
+.stat-card--mist .stat-card__icon { background-color: var(--color-mist-soft); color: var(--color-mist); }
+
+.stat-card__value {
+    font-family: var(--font-display);
+    font-size: 1.9rem;
+    font-weight: 600;
+    line-height: 1;
+    display: block;
+    font-variant-numeric: tabular-nums;
+}
+
+.stat-card__value--status {
+    font-size: 1.35rem;
+}
+
+.stat-card__label {
+    display: block;
+    margin-top: 6px;
+    color: var(--color-mist);
+    font-size: 0.86rem;
+}
+
+.stat-card__meta {
+    display: block;
+    margin-top: 10px;
+    font-size: 0.78rem;
+    color: var(--color-mist);
+}
+
+.stat-card__action {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 12px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: none;
+    background-color: var(--color-sage);
+    color: var(--color-surface);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.stat-card__action:hover {
+    background-color: var(--color-sage-dark);
+}
+
+/* ==========================================================================
+   FORMULARIOS GENÉRICOS (inputs, botones) — usados por Ventas y el modal
+   compartido "Nueva venta"
+   ========================================================================== */
+.cliente-input {
+    width: 100%;
+    padding: 10px 13px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border-14);
+    background-color: var(--color-background);
+    font-family: inherit;
+    font-size: 0.88rem;
+    color: var(--color-slate);
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.cliente-input:focus {
+    outline: none;
+    border-color: var(--color-sage);
+    background-color: var(--color-surface);
+    /* El cambio de color de borde solo no bastaba como indicador de foco
+       (WCAG 2.4.7) -este anillo lo hace visible sin depender de percibir
+       un tono de verde distinto. */
+    box-shadow: 0 0 0 3px var(--color-sage-soft);
+}
+
+.cliente-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-slate);
+}
+
+.cliente-btn-primary {
+    padding: 10px 20px;
+    border-radius: 999px;
+    border: none;
+    background-color: var(--color-sage);
+    color: var(--color-surface);
+    font-family: inherit;
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.15s ease, opacity 0.2s ease;
+}
+
+.cliente-btn-primary:hover {
+    background-color: var(--color-sage-dark);
+}
+
+.cliente-btn-primary:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.cliente-btn-ghost {
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--color-border-15);
+    background: none;
+    color: var(--color-slate);
+    font-family: inherit;
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.cliente-btn-ghost:hover {
+    border-color: var(--color-sage);
+    background-color: var(--color-sage-soft);
+}
+
+/* ==========================================================================
+   BUSCADOR/FILTROS DE TABLA (Ventas, Inventario, ...)
+   ========================================================================== */
+.cliente-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.cliente-toolbar__search {
+    position: relative;
+    flex: 1;
+    min-width: 220px;
+}
+
+.cliente-toolbar__search svg {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 17px;
+    height: 17px;
+    color: var(--color-mist);
+    pointer-events: none;
+}
+
+.cliente-toolbar__search input {
+    padding-left: 40px;
+}
+
+.cliente-toolbar__select {
+    padding: 10px 13px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-12);
+    background-color: var(--color-background);
+    font-family: inherit;
+    font-size: 0.86rem;
+    color: var(--color-slate);
+    cursor: pointer;
+}
+
+/* ==========================================================================
+   TABLA + PILLS DE ESTADO (por ahora solo Ventas, queda acá para que la
+   reutilicen futuras vistas -Inventario, Compras, Gastos...- sin duplicar)
+   ========================================================================== */
+.data-table-wrap {
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th {
+    text-align: left;
+    padding: 8px 14px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-mist);
+    border-bottom: 1px solid var(--color-border-08);
+    white-space: nowrap;
+}
+
+.data-table__row {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.data-table__row td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--color-border-06);
+    white-space: nowrap;
+}
+
+.data-table__row:hover,
+.data-table__row:focus-visible {
+    background-color: var(--color-background);
+}
+
+.data-table__row:last-child td {
+    border-bottom: none;
+}
+
+.data-table__title {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.data-table__meta {
+    font-size: 0.84rem;
+    color: var(--color-mist);
+}
+
+.data-table__empty {
+    padding: 32px 14px;
+    text-align: center;
+    color: var(--color-mist);
+    font-size: 0.9rem;
+}
+
+/* Paginación de tabla -compartida por Ventas, Inventario y Proveedores. */
+.data-table__pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-border-08);
+}
+
+/* El display:flex de arriba le gana a la regla nativa de [hidden] (misma
+   prioridad, y la de arriba está después) -sin esto, el control de
+   "Siguiente/Anterior" se seguía viendo (y ocupando espacio) aunque solo
+   hubiera una página. */
+.data-table__pagination[hidden] {
+    display: none;
+}
+
+.data-table__pagination-info {
+    font-size: 0.84rem;
+    color: var(--color-mist);
+    min-width: 110px;
+    text-align: center;
+}
+
+.data-table__pagination .cliente-btn-ghost:disabled {
+    opacity: 0.4;
+    cursor: default;
+    border-color: var(--color-border-10);
+    background-color: transparent;
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+.status-pill::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: currentColor;
+}
+
+.status-pill--pagada,
+.status-pill--facturada { background-color: var(--color-sage-soft); color: var(--color-sage-dark); }
+.status-pill--pendiente { background-color: var(--color-sand-soft); color: var(--color-sand-dark); }
+.status-pill--sin-facturar { background-color: var(--color-mist-soft); color: var(--color-mist); }
+
+/* ==========================================================================
+   PANEL LATERAL (slide-over) — misma razón que la tabla: queda acá para
+   que lo reutilicen futuras vistas sin duplicar la estructura.
+   ========================================================================== */
+.slide-over-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(30, 45, 61, 0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 60;
+}
+
+.slide-over-overlay.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.slide-over {
+    position: fixed;
+    inset: 0 0 0 auto;
+    width: min(420px, 100%);
+    background-color: var(--color-surface);
+    box-shadow: -20px 0 50px rgba(30, 45, 61, 0.25);
+    z-index: 65;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.slide-over.is-open {
+    transform: translateX(0);
+}
+
+.slide-over__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 24px 24px 18px;
+    border-bottom: 1px solid var(--color-border-08);
+}
+
+.slide-over__title {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    margin: 0 0 8px;
+}
+
+.slide-over__close {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background-color: var(--color-background);
+    color: var(--color-slate);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.slide-over__close:hover {
+    background-color: var(--color-sand-soft);
+    transform: rotate(90deg);
+}
+
+.slide-over__close svg {
+    width: 16px;
+    height: 16px;
+}
+
+.slide-over__body {
+    padding: 22px 24px 32px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+}
+
+.slide-over__section {
+    margin-bottom: 26px;
+}
+
+.slide-over__section-title {
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-sage-dark);
+    margin: 0 0 12px;
+}
+
+.slide-over__field {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--color-border-08);
+    font-size: 0.86rem;
+}
+
+/* El display:flex de arriba le gana a la regla nativa de [hidden] (misma
+   prioridad) -sin esto, ocultar la fila del CUFE cuando una compra no
+   tiene (ej. una compra informal) no la ocultaba de verdad, y se veía el
+   CUFE de la última compra con proveedor que se hubiera abierto. */
+.slide-over__field[hidden] {
+    display: none;
+}
+
+.slide-over__field span {
+    color: var(--color-mist);
+    flex-shrink: 0;
+}
+
+.slide-over__field strong {
+    font-weight: 600;
+    text-align: right;
+    /* Un valor largo sin espacios (el CUFE, por ejemplo) no tenía dónde
+       partirse y estiraba todo el panel -min-width:0 deja que el flex
+       item se encoja, y break-word lo parte en vez de desbordar. */
+    min-width: 0;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+/* Filas de detalle dentro de un panel lateral (producto de una venta o
+   compra, compra de un proveedor...) -usado por Ventas, Inventario y
+   Proveedores, por eso vive acá y no en el CSS de una sola página. */
+.venta-detalle-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--color-border-08);
+}
+
+.venta-detalle-item:last-child {
+    border-bottom: none;
+}
+
+.venta-detalle-item__nombre {
+    font-size: 0.86rem;
+    font-weight: 500;
+}
+
+.venta-detalle-item__cantidad {
+    font-size: 0.78rem;
+    color: var(--color-mist);
+}
+
+.venta-detalle-item__monto {
+    font-size: 0.86rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Caja destacada para el resumen de una compra (Origen/CUFE + Total) -con
+   fondo de color se diferencia de un vistazo de la lista de "Productos
+   comprados" de arriba, que es texto plano. El Total va grande, mismo
+   estilo que ya usan "Registrar compra"/"Nueva venta" (.venta-total-row). */
+.slide-over__compra-info {
+    background-color: var(--color-sage-soft);
+    border-radius: var(--radius-md);
+    padding: 4px 18px 16px;
+}
+
+.slide-over__compra-info-total {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-top: 4px;
+    padding-top: 12px;
+}
+
+.slide-over__compra-info-total span {
+    font-size: 0.86rem;
+    color: var(--color-mist);
+}
+
+.slide-over__compra-info-total strong {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    color: var(--color-sage-dark);
+}
+
+/* Detalle de una línea de producto (cantidad, precio unitario y total),
+   cada dato en su propia fila "etiqueta - valor" (reutiliza .slide-over__field
+   para cada fila) -usado en el detalle de una compra y de una venta. */
+.compra-linea-producto {
+    margin-bottom: 8px;
+}
+
+.compra-linea-producto + .compra-linea-producto {
+    padding-top: 8px;
+    border-top: 1px solid var(--color-border-08);
+}
+
+.compra-linea-producto__nombre {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-slate);
+    margin-bottom: 1px;
+}
+
+/* Más compacto que un .slide-over__field suelto (Precio de costo, Datos
+   fiscales, etc.) -acá hay hasta 4 productos con 3 filas cada uno más la
+   caja de "Compra" debajo, y con el padding normal no cabía sin scroll
+   en pantallas de laptop comunes. */
+.compra-linea-producto .slide-over__field {
+    padding: 3px 0;
+    font-size: 0.8rem;
+}
+
+.slide-over__compra-info .slide-over__field {
+    padding: 5px 0;
+}
+
+/* ==========================================================================
+   MODAL (shell genérico) — lo usan "Nueva venta" y los modales de
+   Inventario (Nuevo producto, Registrar compra, Transferir). Queda acá
+   para no duplicar el shell en cada modal.
+   ========================================================================== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(30, 45, 61, 0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 90;
+}
+
+.modal-overlay.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -48%) scale(0.97);
+    width: min(480px, calc(100% - 32px));
+    max-height: min(640px, calc(100vh - 48px));
+    background-color: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 30px 60px -20px rgba(30, 45, 61, 0.4);
+    z-index: 95;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.modal.is-open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 22px 24px;
+    border-bottom: 1px solid var(--color-border-08);
+}
+
+.modal__title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+.modal__close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background-color: var(--color-background);
+    color: var(--color-slate);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.modal__close:hover {
+    background-color: var(--color-sand-soft);
+    transform: rotate(90deg);
+}
+
+.modal__close svg {
+    width: 15px;
+    height: 15px;
+}
+
+.modal__body {
+    padding: 22px 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.modal__footer {
+    padding: 18px 24px;
+    border-top: 1px solid var(--color-border-08);
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* ==========================================================================
+   TOAST "disponible pronto" (sidebar y accesos rápidos sin vista todavía)
+   ========================================================================== */
+.cliente-toast {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 80;
+    padding: 13px 20px;
+    border-radius: var(--radius-md);
+    background-color: var(--color-slate);
+    color: var(--color-surface);
+    font-size: 0.86rem;
+    font-weight: 500;
+    box-shadow: 0 16px 36px -14px rgba(30, 45, 61, 0.5);
+    opacity: 0;
+    transform: translateY(12px);
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.cliente-toast.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ==========================================================================
+   ANIMACIÓN DE ENTRADA
+   ========================================================================== */
+.cliente-reveal {
+    opacity: 0;
+    animation: cliente-fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes cliente-fade-in {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.cliente-reveal-1 { animation-delay: 0ms; }
+.cliente-reveal-2 { animation-delay: 70ms; }
+.cliente-reveal-3 { animation-delay: 140ms; }
+
+/* ==========================================================================
+   RESPONSIVE (shell)
+   ========================================================================== */
+@media (max-width: 900px) {
+    .cliente-sidebar {
+        transform: translateX(-100%);
+        box-shadow: 20px 0 40px rgba(0, 0, 0, 0.25);
+    }
+
+    .cliente-sidebar.is-open {
+        transform: translateX(0);
+    }
+
+    .cliente-main {
+        margin-left: 0;
+    }
+
+    .cliente-topbar__menu-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .cliente-content {
+        padding: 22px 18px;
+    }
+
+    .cliente-sidebar-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background-color: rgba(30, 45, 61, 0.4);
+        z-index: 35;
+    }
+
+    .cliente-sidebar-overlay.is-visible {
+        display: block;
+    }
+}
+
+@media (max-width: 560px) {
+    .cliente-topbar {
+        padding: 0 16px;
+    }
+
+    .stat-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* ==========================================================================
+   SWEETALERT2 CON LA PALETA DE STOCKLY (confirmaciones/errores en vez de
+   confirm()/alert() nativos del navegador -ver confirmarAccion()/
+   mostrarError() más abajo). Mismo diseño que ya se usa en el panel admin.
+   ========================================================================== */
+.stockly-swal.swal2-popup {
+    border-radius: var(--radius-lg);
+    padding: 32px 28px 28px;
+    font-family: var(--font-body);
+    box-shadow: 0 30px 60px -20px rgba(30, 45, 61, 0.35);
+}
+
+.stockly-swal .swal2-title {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--color-slate);
+    padding: 0;
+    margin-top: 18px;
+}
+
+.stockly-swal .swal2-html-container {
+    font-size: 0.92rem;
+    color: var(--color-mist);
+    margin-top: 6px;
+}
+
+.stockly-swal .swal2-icon {
+    border-color: var(--color-sage-soft);
+    color: var(--color-sage-dark);
+}
+
+.stockly-swal .swal2-icon.swal2-warning {
+    border-color: var(--color-sand-soft);
+    color: var(--color-sand-dark);
+}
+
+.stockly-swal .swal2-icon.swal2-error {
+    border-color: var(--color-error-soft);
+    color: var(--color-error);
+}
+
+.stockly-swal .swal2-icon.swal2-error [class^='swal2-x-mark-line'] {
+    background-color: var(--color-error);
+}
+
+.stockly-swal .swal2-actions {
+    gap: 10px;
+}
+
+.stockly-swal .swal2-confirm.swal2-styled {
+    background-color: var(--color-sage) !important;
+    border-radius: 999px;
+    padding: 10px 26px;
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    box-shadow: none !important;
+}
+
+.stockly-swal .swal2-confirm.swal2-styled:hover {
+    background-color: var(--color-sage-dark) !important;
+}
+
+.stockly-swal .swal2-confirm.swal2-styled:focus {
+    box-shadow: 0 0 0 3px var(--color-sage-soft) !important;
+}
+
+.stockly-swal .swal2-confirm.stockly-swal-confirm--peligro {
+    background-color: var(--color-error) !important;
+}
+
+.stockly-swal .swal2-confirm.stockly-swal-confirm--peligro:hover {
+    filter: brightness(0.9);
+}
+
+.stockly-swal .swal2-cancel.swal2-styled {
+    background-color: transparent !important;
+    color: var(--color-slate) !important;
+    border: 1px solid var(--color-border-15) !important;
+    border-radius: 999px;
+    padding: 10px 26px;
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    box-shadow: none !important;
+}
+
+.stockly-swal .swal2-cancel.swal2-styled:hover {
+    background-color: var(--color-background) !important;
+}
+
+.swal2-container.stockly-swal-backdrop {
+    background-color: rgba(30, 45, 61, 0.45);
+}
+
+/* ==========================================================================
+   ACCESIBILIDAD: menos movimiento (elementos del shell/compartidos)
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+    .cliente-reveal,
+    .cliente-nav-item {
+        animation: none;
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+
+    .slide-over,
+    .slide-over-overlay,
+    .slide-over__close {
+        transition: none;
+    }
+
+    .modal,
+    .modal-overlay,
+    .modal__close {
+        transition: none;
+    }
+
+    .stat-card {
+        transform: none;
+        transition: none;
+    }
+}

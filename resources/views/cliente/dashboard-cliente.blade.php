@@ -11,9 +11,9 @@
     </div>
 
     <div class="quick-actions cliente-reveal cliente-reveal-2">
-        <button type="button" class="quick-action" data-coming-soon="Nueva venta estará disponible pronto.">
+        <button type="button" class="quick-action" id="nuevaVentaBtn">
             <span class="quick-action__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M6 7V6a6 6 0 0 1 12 0v1"/>
                     <path d="M4 7h16l-1.5 13.5a2 2 0 0 1-2 1.5H7.5a2 2 0 0 1-2-1.5L4 7Z"/>
                 </svg>
@@ -26,7 +26,7 @@
 
         <button type="button" class="quick-action quick-action--sand" data-coming-soon="Registrar compra estará disponible pronto.">
             <span class="quick-action__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="9" cy="20" r="1"/>
                     <circle cx="18" cy="20" r="1"/>
                     <path d="M3 4h2l2.3 11.4a2 2 0 0 0 2 1.6h7.4a2 2 0 0 0 2-1.6L21 8H6"/>
@@ -40,7 +40,7 @@
 
         <button type="button" class="quick-action quick-action--slate" id="abrirCajaAction">
             <span class="quick-action__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
                     <circle cx="12" cy="12" r="3"/>
                     <path d="M6 9v.01M18 15v.01"/>
@@ -56,7 +56,7 @@
     <div class="stat-grid cliente-reveal cliente-reveal-3">
         <div class="stat-card stat-card--sage">
             <div class="stat-card__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M6 7V6a6 6 0 0 1 12 0v1"/>
                     <path d="M4 7h16l-1.5 13.5a2 2 0 0 1-2 1.5H7.5a2 2 0 0 1-2-1.5L4 7Z"/>
                 </svg>
@@ -68,7 +68,7 @@
 
         <div class="stat-card stat-card--sage">
             <div class="stat-card__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M22 7 13.5 15.5 8.5 10.5 2 17"/>
                     <path d="M16 7h6v6"/>
                 </svg>
@@ -80,7 +80,7 @@
 
         <div class="stat-card stat-card--sand">
             <div class="stat-card__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v3"/>
                     <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2H5a2 2 0 0 1-2-2Z"/>
                     <path d="M17 14h.01"/>
@@ -93,7 +93,7 @@
 
         <div class="stat-card stat-card--mist" id="cajaEstadoCard">
             <div class="stat-card__icon" id="cajaEstadoIcono">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
                     <circle cx="12" cy="12" r="3"/>
                     <path d="M6 9v.01M18 15v.01"/>
@@ -171,7 +171,7 @@
             <div class="sale-list">
                 <div class="sale-row">
                     <div class="sale-row__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <rect x="2.5" y="5" width="19" height="14" rx="2.5"/>
                             <path d="M2.5 10h19M6 15h4"/>
                         </svg>
@@ -185,7 +185,7 @@
 
                 <div class="sale-row sale-row--efectivo">
                     <div class="sale-row__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
                             <circle cx="12" cy="12" r="3"/>
                         </svg>
@@ -199,7 +199,7 @@
 
                 <div class="sale-row sale-row--efectivo">
                     <div class="sale-row__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
                             <circle cx="12" cy="12" r="3"/>
                         </svg>
@@ -213,7 +213,7 @@
 
                 <div class="sale-row">
                     <div class="sale-row__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <rect x="2.5" y="5" width="19" height="14" rx="2.5"/>
                             <path d="M2.5 10h19M6 15h4"/>
                         </svg>
@@ -227,7 +227,7 @@
 
                 <div class="sale-row sale-row--efectivo">
                     <div class="sale-row__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
                             <circle cx="12" cy="12" r="3"/>
                         </svg>
@@ -241,7 +241,7 @@
 
                 <div class="sale-row">
                     <div class="sale-row__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <rect x="2.5" y="5" width="19" height="14" rx="2.5"/>
                             <path d="M2.5 10h19M6 15h4"/>
                         </svg>
@@ -255,7 +255,7 @@
 
                 <div class="sale-row sale-row--efectivo">
                     <div class="sale-row__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
                             <circle cx="12" cy="12" r="3"/>
                         </svg>
@@ -269,7 +269,7 @@
 
                 <div class="sale-row sale-row--efectivo">
                     <div class="sale-row__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
                             <circle cx="12" cy="12" r="3"/>
                         </svg>
@@ -283,7 +283,7 @@
 
                 <div class="sale-row">
                     <div class="sale-row__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <rect x="2.5" y="5" width="19" height="14" rx="2.5"/>
                             <path d="M2.5 10h19M6 15h4"/>
                         </svg>
@@ -297,7 +297,7 @@
 
                 <div class="sale-row sale-row--efectivo">
                     <div class="sale-row__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
                             <circle cx="12" cy="12" r="3"/>
                         </svg>
@@ -311,5 +311,17 @@
             </div>
         </div>
     </div>
+
+    @include('cliente.partials.nueva-venta-modal')
+
+    @push('styles')
+        <link rel="stylesheet" href="{{ asset_v('assets/css/cliente/dashboard.css') }}">
+        <link rel="stylesheet" href="{{ asset_v('assets/css/cliente/nueva-venta-modal.css') }}">
+    @endpush
+
+    @push('scripts')
+        <script src="{{ asset_v('assets/js/cliente/dashboard.js') }}" defer></script>
+        <script src="{{ asset_v('assets/js/cliente/nueva-venta-modal.js') }}" defer></script>
+    @endpush
 
 </x-cliente-layout>

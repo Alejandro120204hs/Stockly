@@ -1,0 +1,336 @@
+/* ==========================================================================
+   Stockly — Panel del negocio cliente: vista Inventario
+   Lo compartido (panel, tabla, pills, toolbar, slide-over, formularios,
+   shell de modal) vive en cliente/layout.css. El shell de líneas de
+   producto (.venta-product-search, .venta-lines, .venta-line*,
+   .venta-total-row) lo trae cliente/nueva-venta-modal.css -acá se
+   reutiliza para las líneas de "Registrar compra" (misma estructura,
+   cantidad + costo en vez de cantidad + precio). Acá solo lo propio de
+   esta vista: pestañas, botón de transferir, y el toggle proveedor/informal.
+   ========================================================================== */
+
+/* ---------- Botón destructivo (eliminar producto/categoría) ---------- */
+.cliente-btn-ghost--peligro {
+    color: var(--color-error);
+    border-color: var(--color-error);
+}
+
+.cliente-btn-ghost--peligro:hover {
+    background-color: var(--color-error-soft);
+}
+
+/* ---------- Stat cards: 5 en una sola fila (más angostas que en
+   Dashboard/Caja, que solo tienen 4) ---------- */
+.stat-grid--inventario {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+}
+
+.stat-grid--inventario .stat-card {
+    padding: 13px 15px 12px;
+}
+
+.stat-grid--inventario .stat-card__icon {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 8px;
+}
+
+.stat-grid--inventario .stat-card__icon svg {
+    width: 17px;
+    height: 17px;
+}
+
+.stat-grid--inventario .stat-card__value {
+    font-size: 1.4rem;
+}
+
+.stat-grid--inventario .stat-card__label {
+    font-size: 0.78rem;
+}
+
+.stat-grid--inventario .stat-card__meta {
+    margin-top: 6px;
+    font-size: 0.72rem;
+}
+
+@media (max-width: 1100px) {
+    .stat-grid--inventario {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 560px) {
+    .stat-grid--inventario {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ---------- Pestañas Vitrina / Bodega / Compras ---------- */
+.inventario-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--color-border-08);
+}
+
+.inventario-tab {
+    padding: 10px 16px;
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--color-mist);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transform: translateY(1px);
+    transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.inventario-tab:hover {
+    color: var(--color-slate);
+}
+
+.inventario-tab.is-active {
+    color: var(--color-sage-dark);
+    border-bottom-color: var(--color-sage);
+}
+
+.inventario-tab-panel[hidden] {
+    display: none;
+}
+
+/* ---------- Botón "Transferir" en la fila de Bodega ---------- */
+.inventario-transfer-btn {
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--color-sage);
+    background-color: var(--color-sage-soft);
+    color: var(--color-sage-dark);
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.inventario-transfer-btn:hover {
+    background-color: var(--color-sage);
+    color: var(--color-surface);
+    transform: translateY(-1px);
+}
+
+/* ---------- Toggle "Con proveedor" / "Compra informal" ---------- */
+.compra-tipo-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.compra-tipo-btn {
+    flex: 1;
+    padding: 11px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-14);
+    background-color: var(--color-surface);
+    color: var(--color-mist);
+    font-family: inherit;
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.compra-tipo-btn.is-active {
+    border-color: var(--color-sage);
+    background-color: var(--color-sage-soft);
+    color: var(--color-sage-dark);
+}
+
+/* ---------- Validación de factura (proveedor) ---------- */
+.compra-validar-status {
+    font-size: 0.78rem;
+    color: var(--color-mist);
+    margin: 0 0 4px;
+}
+
+.compra-proveedor-hint {
+    font-size: 0.78rem;
+    color: var(--color-mist);
+    margin: 0 0 14px;
+}
+
+.compra-proveedor-hint a {
+    color: var(--color-sage-dark);
+    font-weight: 600;
+}
+
+.compra-validar-status.is-validando {
+    color: #8A6F3F;
+}
+
+.compra-validar-status.is-validada {
+    color: var(--color-sage-dark);
+    font-weight: 600;
+}
+
+.compra-informal-hint {
+    font-size: 0.84rem;
+    color: var(--color-mist);
+    background-color: var(--color-background);
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    margin: 0 0 4px;
+}
+
+/* ---------- Agregar categoría al vuelo (modal "Nuevo producto") ---------- */
+.nueva-categoria-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+/* ---------- Modal "Categorías": lista con renombrar/eliminar ---------- */
+.categorias-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.categoria-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border-14);
+    border-radius: var(--radius-md);
+}
+
+.categoria-row__nombre {
+    font-weight: 500;
+    color: var(--color-slate);
+    overflow-wrap: anywhere;
+}
+
+.categoria-row__actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.categoria-row__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-14);
+    background: none;
+    color: var(--color-mist);
+    cursor: pointer;
+}
+
+.categoria-row__btn svg {
+    width: 15px;
+    height: 15px;
+}
+
+.categoria-row__btn:hover {
+    background-color: var(--color-background);
+}
+
+.categoria-row__btn--eliminar {
+    color: var(--color-error);
+    border-color: var(--color-error);
+}
+
+.categoria-row__btn--eliminar:hover {
+    background-color: var(--color-error-soft);
+}
+
+.categoria-row--editando {
+    padding: 8px 8px;
+}
+
+.categoria-row__btn--confirmar {
+    color: var(--color-sage);
+    border-color: var(--color-sage);
+}
+
+.categoria-row__btn--confirmar:hover {
+    background-color: var(--color-sage-soft);
+}
+
+/* ---------- Costo editable por línea (Registrar compra) ----------
+   El costo de una compra puede variar respecto al costo de referencia
+   del catálogo (otro proveedor, otro día), así que acá sí se puede
+   editar -a diferencia de "Nueva venta", donde el precio queda fijo. */
+.compra-line__costo-row {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin-top: 2px;
+    font-size: 0.76rem;
+    color: var(--color-mist);
+}
+
+.compra-line__costo-input {
+    width: 76px;
+    padding: 3px 6px;
+    border-radius: 6px;
+    border: 1px solid var(--color-border-16);
+    background-color: var(--color-surface);
+    font-family: inherit;
+    font-size: 0.8rem;
+    color: var(--color-slate);
+}
+
+.compra-line__costo-input:focus {
+    outline: none;
+    border-color: var(--color-sage);
+    box-shadow: 0 0 0 3px var(--color-sage-soft);
+}
+
+/* ---------- Cantidad escribible en "Registrar compra" ----------
+   .venta-line__qty-value (tamaño/tipografía base) vive en
+   nueva-venta-modal.css y la comparte el <span> de solo lectura de
+   "Nueva venta" -este modificador es solo para el <input> de acá,
+   para no ponerle borde/fondo de campo al de la venta. */
+.venta-line__qty-value--input {
+    border: 1px solid var(--color-border-16);
+    border-radius: 6px;
+    padding: 3px 2px;
+    background-color: var(--color-surface);
+    color: var(--color-slate);
+    font-family: inherit;
+    width: 36px;
+}
+
+.venta-line__qty-value--input:focus {
+    outline: none;
+    border-color: var(--color-sage);
+    box-shadow: 0 0 0 3px var(--color-sage-soft);
+}
+
+/* ---------- Modal "Transferir" ---------- */
+.transferir-producto-nombre {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0 0 4px;
+}
+
+.transferir-disponible {
+    font-size: 0.84rem;
+    color: var(--color-mist);
+    margin: 0 0 16px;
+}
+
+.transferir-error {
+    font-size: 0.8rem;
+    color: var(--color-error);
+    margin: 8px 0 0;
+}

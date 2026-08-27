@@ -8,7 +8,8 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=fraunces:500,600,700|work-sans:400,500,600,700" rel="stylesheet">
 
-    <link rel="stylesheet" href="{{ asset('assets/css/admin.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('assets/css/admin/layout.css') }}">
+    @stack('styles')
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="admin-body" data-flash-status="{{ session('status') }}">
@@ -137,6 +138,7 @@
         </div>
     </div>
 
-    <script src="{{ asset('assets/js/admin.js') }}" defer></script>
+    <script src="{{ asset_v('assets/js/admin/layout.js') }}" defer></script>
+    @stack('scripts')
 </body>
 </html>

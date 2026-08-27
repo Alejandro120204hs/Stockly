@@ -136,4 +136,12 @@
         </div>
     </aside>
 
+    @push('styles')
+        <link rel="stylesheet" href="{{ asset_v('assets/css/admin/modulos.css') }}">
+    @endpush
+
+    @push('scripts')
+        <script src="{{ asset_v('assets/js/admin/modulos.js') }}" defer></script>
+    @endpush
+
 </x-admin-layout>

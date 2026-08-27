@@ -1,0 +1,8 @@
+/* ==========================================================================
+   Stockly — Panel del negocio cliente: vista Ventas
+   Lo compartido (panel, tabla, pills, panel lateral, inputs/botones,
+   buscador/filtros de tabla) vive en cliente/layout.css. Acá solo la
+   paginación y el detalle de productos vendidos en el panel lateral,
+   propios de esta vista.
+   ========================================================================== */
+

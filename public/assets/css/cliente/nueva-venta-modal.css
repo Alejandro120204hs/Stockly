@@ -1,0 +1,275 @@
+/* ==========================================================================
+   Stockly — Panel del negocio cliente: modal "Nueva venta"
+   El shell genérico de modal (.modal, .modal-overlay, .modal__*) vive en
+   cliente/layout.css -lo reutilizan también los modales de Inventario.
+   Acá solo lo específico del formulario de venta: buscar producto,
+   líneas, total, método de pago.
+   ========================================================================== */
+
+/* ---------- Buscar producto ---------- */
+.venta-product-search {
+    position: relative;
+    margin-bottom: 16px;
+}
+
+.venta-product-results {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background-color: var(--color-surface);
+    border-radius: var(--radius-md);
+    box-shadow: 0 16px 36px -14px rgba(30, 45, 61, 0.4);
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 10;
+}
+
+.venta-product-result {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 11px 14px;
+    cursor: pointer;
+    font-size: 0.86rem;
+    transition: background-color 0.15s ease;
+}
+
+.venta-product-result:hover {
+    background-color: var(--color-background);
+}
+
+.venta-product-result__precio {
+    color: var(--color-mist);
+    white-space: nowrap;
+}
+
+.venta-product-results__empty {
+    padding: 14px;
+    font-size: 0.84rem;
+    color: var(--color-mist);
+    text-align: center;
+}
+
+/* ---------- Líneas agregadas ---------- */
+.venta-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.venta-lines__empty {
+    padding: 20px 0;
+    text-align: center;
+    color: var(--color-mist);
+    font-size: 0.86rem;
+}
+
+.venta-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    background-color: var(--color-background);
+}
+
+.venta-line__info {
+    flex: 1;
+    min-width: 0;
+}
+
+.venta-line__nombre {
+    font-size: 0.86rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.venta-line__precio {
+    font-size: 0.76rem;
+    color: var(--color-mist);
+}
+
+.venta-line__qty {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.venta-line__qty-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid var(--color-border-15);
+    background-color: var(--color-surface);
+    color: var(--color-slate);
+    font-size: 0.9rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.venta-line__qty-btn:hover {
+    border-color: var(--color-sage);
+    color: var(--color-sage-dark);
+}
+
+.venta-line__qty-value {
+    min-width: 18px;
+    text-align: center;
+    font-size: 0.86rem;
+    font-weight: 600;
+}
+
+.venta-line__subtotal {
+    flex-shrink: 0;
+    width: 84px;
+    text-align: right;
+    font-size: 0.86rem;
+    font-weight: 700;
+}
+
+.venta-line__remove {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: none;
+    background: none;
+    color: var(--color-mist);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.venta-line__remove:hover {
+    color: var(--color-error);
+    background-color: var(--color-error-soft);
+}
+
+.venta-line__remove svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* ---------- Total ---------- */
+.venta-total-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-top: 1px dashed var(--color-border-15);
+    margin-bottom: 18px;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.venta-total-row strong {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    color: var(--color-sage-dark);
+}
+
+/* ---------- Método de pago ---------- */
+.venta-payment-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.venta-payment-btn {
+    flex: 1;
+    padding: 11px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-14);
+    background-color: var(--color-surface);
+    color: var(--color-mist);
+    font-family: inherit;
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.venta-payment-btn.is-active {
+    border-color: var(--color-sage);
+    background-color: var(--color-sage-soft);
+    color: var(--color-sage-dark);
+}
+
+.venta-cambio-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    font-size: 0.88rem;
+}
+
+.venta-cambio-row strong {
+    font-size: 1rem;
+}
+
+.venta-cambio-row strong.is-negative {
+    color: var(--color-error);
+}
+
+.venta-qr-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 24px;
+    border-radius: var(--radius-md);
+    background-color: var(--color-background);
+    text-align: center;
+}
+
+.venta-qr-box svg {
+    width: 84px;
+    height: 84px;
+    color: var(--color-slate);
+}
+
+.venta-qr-box__status {
+    font-size: 0.86rem;
+    color: var(--color-mist);
+}
+
+.venta-qr-box.is-confirmed .venta-qr-box__status {
+    color: var(--color-sage-dark);
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   -.venta-line era una sola fila con nombre + cantidad + subtotal + quitar
+   apretados uno junto al otro; en un teléfono angosto eso dejaba el
+   nombre del producto casi ilegible. Se parte en dos renglones: nombre
+   arriba, cantidad/subtotal/quitar abajo -misma información, más espacio
+   para leer el nombre completo.
+   ========================================================================== */
+@media (max-width: 560px) {
+    .venta-line {
+        flex-wrap: wrap;
+    }
+
+    .venta-line__info {
+        flex-basis: 100%;
+    }
+
+    .venta-line__nombre {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+    }
+}
+
