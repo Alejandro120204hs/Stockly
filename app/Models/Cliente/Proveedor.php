@@ -17,6 +17,14 @@ class Proveedor extends Model
         'empresa_id',
         'nombre',
         'nit',
+        'dv',
+        'tipo_persona',
+        'regimen_fiscal',
+        'telefono',
+        'correo',
+        'direccion',
+        'departamento',
+        'ciudad',
     ];
 
     public function compras(): HasMany

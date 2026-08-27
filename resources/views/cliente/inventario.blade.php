@@ -12,7 +12,7 @@
         $facturaLabels = [
             'validada' => 'Validada',
             'por_validar' => 'Por validar',
-            'sin_factura' => 'Sin factura',
+            'sin_factura' => 'Compra informal',
         ];
 
         $facturaPillClass = [
@@ -32,6 +32,7 @@
             <p class="cliente-page-header__date">{{ count($productos) }} productos en catálogo</p>
         </div>
         <div style="display:flex; gap:10px;">
+            <button type="button" class="cliente-btn-ghost" id="categoriasBtn">Gestionar Categorías</button>
             <button type="button" class="cliente-btn-ghost" id="nuevoProductoBtn">+ Nuevo producto</button>
             <button type="button" class="cliente-btn-primary" id="registrarCompraBtn">+ Registrar compra</button>
         </div>
@@ -43,7 +44,7 @@
     <section class="stat-grid stat-grid--inventario cliente-reveal cliente-reveal-2">
         <div class="stat-card stat-card--sage">
             <div class="stat-card__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/>
                     <path d="M3 8l9 5 9-5M12 13v8"/>
                 </svg>
@@ -55,30 +56,30 @@
 
         <div class="stat-card stat-card--sand">
             <div class="stat-card__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <rect x="3" y="3" width="18" height="18" rx="2"/>
                     <path d="M3 9h18M9 21V9"/>
                 </svg>
             </div>
             <span class="stat-card__value" id="statValorBodega" data-count="{{ $valorBodega }}" data-prefix="$">$0</span>
             <span class="stat-card__label">Valor en bodega (costo)</span>
-            <span class="stat-card__meta">Inventario de reserva</span>
+       
         </div>
 
         <div class="stat-card stat-card--mist">
             <div class="stat-card__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M6 21V10M18 21V3M12 21v-7"/>
                 </svg>
             </div>
             <span class="stat-card__value" id="statValorVitrina" data-count="{{ $valorVitrina }}" data-prefix="$">$0</span>
             <span class="stat-card__label">Valor en vitrina (costo)</span>
-            <span class="stat-card__meta">Disponible para vender</span>
+        
         </div>
 
         <div class="stat-card stat-card--sand">
             <div class="stat-card__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
                 </svg>
             </div>
@@ -89,7 +90,7 @@
 
         <div class="stat-card stat-card--sage">
             <div class="stat-card__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="9" cy="20" r="1"/>
                     <circle cx="18" cy="20" r="1"/>
                     <path d="M3 4h2l2.3 11.4a2 2 0 0 0 2 1.6h7.4a2 2 0 0 0 2-1.6L21 8H6"/>
@@ -115,7 +116,7 @@
         <div class="inventario-tab-panel" data-tab-panel="vitrina">
             <div class="cliente-toolbar">
                 <div class="cliente-toolbar__search">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <circle cx="11" cy="11" r="7"/>
                         <path d="m21 21-4.3-4.3"/>
                     </svg>
@@ -156,13 +157,19 @@
 
                 <p class="data-table__empty" id="vitrinaEmpty" hidden>No hay productos que coincidan con la búsqueda.</p>
             </div>
+
+            <div class="data-table__pagination" id="vitrinaPagination">
+                <button type="button" class="cliente-btn-ghost" id="vitrinaPrevPage">← Anterior</button>
+                <span class="data-table__pagination-info" id="vitrinaPageInfo">Página 1 de 1</span>
+                <button type="button" class="cliente-btn-ghost" id="vitrinaNextPage">Siguiente →</button>
+            </div>
         </div>
 
         <!-- ---------- BODEGA ---------- -->
         <div class="inventario-tab-panel" data-tab-panel="bodega" hidden>
             <div class="cliente-toolbar">
                 <div class="cliente-toolbar__search">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <circle cx="11" cy="11" r="7"/>
                         <path d="m21 21-4.3-4.3"/>
                     </svg>
@@ -209,13 +216,19 @@
 
                 <p class="data-table__empty" id="bodegaEmpty" hidden>No hay productos que coincidan con la búsqueda.</p>
             </div>
+
+            <div class="data-table__pagination" id="bodegaPagination">
+                <button type="button" class="cliente-btn-ghost" id="bodegaPrevPage">← Anterior</button>
+                <span class="data-table__pagination-info" id="bodegaPageInfo">Página 1 de 1</span>
+                <button type="button" class="cliente-btn-ghost" id="bodegaNextPage">Siguiente →</button>
+            </div>
         </div>
 
         <!-- ---------- COMPRAS ---------- -->
         <div class="inventario-tab-panel" data-tab-panel="compras" hidden>
             <div class="cliente-toolbar">
                 <div class="cliente-toolbar__search">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <circle cx="11" cy="11" r="7"/>
                         <path d="m21 21-4.3-4.3"/>
                     </svg>
@@ -225,7 +238,7 @@
                     <option value="">Todos los estados</option>
                     <option value="validada">Validada</option>
                     <option value="por_validar">Por validar</option>
-                    <option value="sin_factura">Sin factura</option>
+                    <option value="sin_factura">Compra informal</option>
                 </select>
             </div>
 
@@ -261,11 +274,18 @@
 
                 <p class="data-table__empty" id="comprasEmpty" hidden>No hay compras que coincidan con la búsqueda.</p>
             </div>
+
+            <div class="data-table__pagination" id="comprasPagination">
+                <button type="button" class="cliente-btn-ghost" id="comprasPrevPage">← Anterior</button>
+                <span class="data-table__pagination-info" id="comprasPageInfo">Página 1 de 1</span>
+                <button type="button" class="cliente-btn-ghost" id="comprasNextPage">Siguiente →</button>
+            </div>
         </div>
     </div>
 
     <script id="inventarioProductosData" type="application/json">{!! json_encode($productos) !!}</script>
     <script id="inventarioComprasData" type="application/json">{!! json_encode($compras) !!}</script>
+    <script id="inventarioCategoriasData" type="application/json">{!! json_encode($categorias) !!}</script>
 
     {{-- ==================================================================
          PANEL LATERAL — detalle de un producto (ambos stocks)
@@ -279,7 +299,7 @@
                 <span class="status-pill status-pill--sin-facturar" id="productoSlideOverCategoria">—</span>
             </div>
             <button type="button" class="slide-over__close" id="productoSlideOverClose" aria-label="Cerrar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M6 6l12 12M18 6 6 18"/>
                 </svg>
             </button>
@@ -299,11 +319,14 @@
                 <div class="slide-over__field"><span>Stock en bodega</span><strong id="productoSlideOverStockBodega">—</strong></div>
             </section>
 
+            <button type="button" class="cliente-btn-primary" id="productoSlideOverTransferirBtn" style="width:100%; margin-bottom:10px;">
+                Transferir de bodega a vitrina
+            </button>
             <button type="button" class="cliente-btn-ghost" id="productoSlideOverEditarBtn" style="width:100%; margin-bottom:10px;">
                 Editar producto
             </button>
-            <button type="button" class="cliente-btn-primary" id="productoSlideOverTransferirBtn" style="width:100%;">
-                Transferir de bodega a vitrina
+            <button type="button" class="cliente-btn-ghost cliente-btn-ghost--peligro" id="productoSlideOverEliminarBtn" style="width:100%;">
+                Eliminar producto
             </button>
         </div>
     </aside>
@@ -320,7 +343,7 @@
                 <span class="status-pill" id="compraSlideOverEstado">—</span>
             </div>
             <button type="button" class="slide-over__close" id="compraSlideOverClose" aria-label="Cerrar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M6 6l12 12M18 6 6 18"/>
                 </svg>
             </button>
@@ -330,16 +353,52 @@
             <section class="slide-over__section">
                 <h3 class="slide-over__section-title">Productos comprados</h3>
                 <div id="compraSlideOverLineas"></div>
+                <div class="data-table__pagination" id="compraSlideOverLineasPagination" hidden>
+                    <button type="button" class="cliente-btn-ghost" id="compraSlideOverLineasPrev">← Anterior</button>
+                    <span class="data-table__pagination-info" id="compraSlideOverLineasPageInfo">Página 1 de 1</span>
+                    <button type="button" class="cliente-btn-ghost" id="compraSlideOverLineasNext">Siguiente →</button>
+                </div>
             </section>
 
-            <section class="slide-over__section">
+            <section class="slide-over__section" id="compraSlideOverInfoSection">
                 <h3 class="slide-over__section-title">Compra</h3>
-                <div class="slide-over__field"><span>Origen</span><strong id="compraSlideOverOrigen">—</strong></div>
-                <div class="slide-over__field" id="compraSlideOverCufeRow"><span>CUFE</span><strong id="compraSlideOverCufe">—</strong></div>
-                <div class="slide-over__field"><span>Total</span><strong id="compraSlideOverTotal">—</strong></div>
+                <div class="slide-over__compra-info">
+                    <div class="slide-over__field"><span>Origen</span><strong id="compraSlideOverOrigen">—</strong></div>
+                    <div class="slide-over__field" id="compraSlideOverCufeRow"><span>CUFE</span><strong id="compraSlideOverCufe">—</strong></div>
+                    <div class="slide-over__compra-info-total">
+                        <span>Total de la compra</span>
+                        <strong id="compraSlideOverTotal">—</strong>
+                    </div>
+                </div>
             </section>
         </div>
     </aside>
+
+    {{-- ==================================================================
+         MODAL — Categorías (crear, renombrar, eliminar)
+         ================================================================== --}}
+    <div class="modal-overlay" id="categoriasOverlay"></div>
+
+    <div class="modal" id="categoriasModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="categoriasTitle">
+        <div class="modal__header">
+            <h2 class="modal__title" id="categoriasTitle">Categorías</h2>
+            <button type="button" class="modal__close" id="categoriasClose" aria-label="Cerrar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M6 6l12 12M18 6 6 18"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="modal__body">
+            <div class="nueva-categoria-row" style="margin-bottom:18px;">
+                <input type="text" id="categoriaNuevaInput" class="cliente-input" placeholder="Nombre de la nueva categoría" style="flex:1;">
+                <button type="button" class="cliente-btn-primary" id="categoriaNuevaConfirmar">Agregar</button>
+            </div>
+
+            <div class="categorias-lista" id="categoriasLista"></div>
+            <p class="data-table__empty" id="categoriasEmpty" hidden>Todavía no tienes categorías.</p>
+        </div>
+    </div>
 
     {{-- ==================================================================
          MODAL — Nuevo producto
@@ -350,7 +409,7 @@
         <div class="modal__header">
             <h2 class="modal__title" id="nuevoProductoTitle">Nuevo producto</h2>
             <button type="button" class="modal__close" id="nuevoProductoClose" aria-label="Cerrar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M6 6l12 12M18 6 6 18"/>
                 </svg>
             </button>
@@ -362,17 +421,13 @@
 
             <label for="prodCategoria" class="cliente-label">Categoría</label>
             <select id="prodCategoria" class="cliente-toolbar__select" style="width:100%; margin-bottom:14px;">
+                @if (count($categorias) === 0)
+                    <option value="" disabled selected>Primero crea una categoría...</option>
+                @endif
                 @foreach ($categorias as $categoria)
                     <option value="{{ $categoria }}">{{ $categoria }}</option>
                 @endforeach
-                <option value="__nueva__">+ Agregar categoría...</option>
             </select>
-
-            <div class="nueva-categoria-row" id="nuevaCategoriaRow" hidden>
-                <input type="text" id="nuevaCategoriaInput" class="cliente-input" placeholder="Nombre de la nueva categoría" style="flex:1;">
-                <button type="button" class="cliente-btn-primary" id="nuevaCategoriaConfirmar">Agregar</button>
-                <button type="button" class="cliente-btn-ghost" id="nuevaCategoriaCancelar">Cancelar</button>
-            </div>
 
             <div style="display:flex; gap:12px; margin-bottom:14px;">
                 <div style="flex:1;">
@@ -414,7 +469,7 @@
         <div class="modal__header">
             <h2 class="modal__title" id="registrarCompraTitle">Registrar compra</h2>
             <button type="button" class="modal__close" id="registrarCompraClose" aria-label="Cerrar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M6 6l12 12M18 6 6 18"/>
                 </svg>
             </button>
@@ -427,8 +482,19 @@
             </div>
 
             <div id="compraProveedorFields">
-                <label for="compraProveedorNombre" class="cliente-label">Nombre del proveedor</label>
-                <input type="text" id="compraProveedorNombre" class="cliente-input" placeholder="Ej: Licorera Continental S.A.S." style="margin-bottom:14px;">
+                <label for="compraProveedorSelect" class="cliente-label">Proveedor</label>
+                <select id="compraProveedorSelect" class="cliente-toolbar__select" style="width:100%; margin-bottom:6px;">
+                    @if (count($proveedores) === 0)
+                        <option value="" disabled selected>No tienes proveedores todavía</option>
+                    @else
+                        @foreach ($proveedores as $proveedor)
+                            <option value="{{ $proveedor->id }}">{{ $proveedor->nombre }}</option>
+                        @endforeach
+                    @endif
+                </select>
+                <p class="compra-proveedor-hint">
+                    ¿No está en la lista? <a href="{{ url('/cliente/proveedores') }}">Regístralo en Proveedores</a> con sus datos fiscales.
+                </p>
 
                 <label for="compraCufeInput" class="cliente-label">CUFE o código de la factura</label>
                 <div style="display:flex; gap:8px; margin-bottom:6px;">
@@ -472,7 +538,7 @@
         <div class="modal__header">
             <h2 class="modal__title" id="transferirTitle">Transferir a vitrina</h2>
             <button type="button" class="modal__close" id="transferirClose" aria-label="Cerrar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M6 6l12 12M18 6 6 18"/>
                 </svg>
             </button>

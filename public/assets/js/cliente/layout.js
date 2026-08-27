@@ -77,6 +77,57 @@ function valorDineroInput(input) {
     return parseInt(input.value.replace(/\D/g, ''), 10) || 0;
 }
 
+/**
+ * Confirmación estilizada (SweetAlert2 con la paleta de Stockly) en vez
+ * de window.confirm() -para acciones destructivas como eliminar. Se le
+ * puede pasar { peligro: true } para que el botón de confirmar salga en
+ * rojo. Devuelve una Promise<boolean> -true si la persona confirmó.
+ */
+function confirmarAccion(opciones) {
+    opciones = opciones || {};
+
+    if (typeof Swal === 'undefined') {
+        return Promise.resolve(window.confirm(opciones.texto || opciones.titulo || ''));
+    }
+
+    return Swal.fire({
+        icon: opciones.icon || 'warning',
+        title: opciones.titulo || '¿Estás seguro?',
+        text: opciones.texto || '',
+        showCancelButton: true,
+        confirmButtonText: opciones.textoConfirmar || 'Sí, continuar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true,
+        focusCancel: !!opciones.peligro,
+        customClass: {
+            popup: 'stockly-swal',
+            container: 'stockly-swal-backdrop',
+            confirmButton: opciones.peligro ? 'stockly-swal-confirm--peligro' : ''
+        }
+    }).then(function (resultado) {
+        return resultado.isConfirmed;
+    });
+}
+
+/** Mensaje de error estilizado en vez de window.alert(). */
+function mostrarError(mensaje) {
+    if (typeof Swal === 'undefined') {
+        window.alert(mensaje);
+        return;
+    }
+
+    Swal.fire({
+        icon: 'error',
+        title: 'No se pudo completar',
+        text: mensaje,
+        confirmButtonText: 'Entendido',
+        customClass: {
+            popup: 'stockly-swal',
+            container: 'stockly-swal-backdrop'
+        }
+    });
+}
+
 /* --------------------------------------------------------------------
  * 1. Sidebar en móvil
  * ------------------------------------------------------------------ */

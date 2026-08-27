@@ -23,7 +23,7 @@
     <div class="modal__header">
         <h2 class="modal__title" id="nuevaVentaTitle">Nueva venta</h2>
         <button type="button" class="modal__close" id="nuevaVentaClose" aria-label="Cerrar">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M6 6l12 12M18 6 6 18"/>
             </svg>
         </button>
@@ -62,7 +62,7 @@
 
         <div class="venta-payment-panel" id="ventaPagoDigital" hidden>
             <div class="venta-qr-box" id="ventaQrBox">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <rect x="3" y="3" width="7" height="7" rx="1"/>
                     <rect x="14" y="3" width="7" height="7" rx="1"/>
                     <rect x="3" y="14" width="7" height="7" rx="1"/>

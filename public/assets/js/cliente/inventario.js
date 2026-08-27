@@ -10,6 +10,7 @@
  *   4. initBodegaTable         -> búsqueda/filtro + botón "Transferir"
  *   5. initComprasTable        -> búsqueda/filtro + slide-over de compra
  *   6. initNuevoProductoModal  -> crear o editar un producto del catálogo
+ *   6b. initCategoriasModal    -> crear, renombrar y eliminar categorías
  *   7. initRegistrarCompraModal -> compra a proveedor (con validación de
  *      factura) o informal -se agrega al historial y siempre suma a
  *      bodega, nunca a vitrina
@@ -24,6 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initBodegaTable();
     initComprasTable();
     initNuevoProductoModal();
+    initCategoriasModal();
     initRegistrarCompraModal();
     initTransferirModal();
 });
@@ -74,10 +76,12 @@ var inventarioProductos = [];
 var inventarioProductosById = {};
 var inventarioCompras = [];
 var inventarioComprasById = {};
+var inventarioCategorias = [];
 
 function cargarInventarioData() {
     var productosScript = document.getElementById('inventarioProductosData');
     var comprasScript = document.getElementById('inventarioComprasData');
+    var categoriasScript = document.getElementById('inventarioCategoriasData');
     if (!productosScript || !comprasScript) {
         return false;
     }
@@ -87,6 +91,8 @@ function cargarInventarioData() {
 
     inventarioCompras = JSON.parse(comprasScript.textContent);
     inventarioCompras.forEach(function (c) { inventarioComprasById[c.id] = c; });
+
+    inventarioCategorias = categoriasScript ? JSON.parse(categoriasScript.textContent) : [];
 
     return true;
 }
@@ -149,29 +155,69 @@ function initVitrinaTable() {
     var searchInput = document.getElementById('vitrinaSearch');
     var categoriaFilter = document.getElementById('vitrinaCategoriaFilter');
     var emptyState = document.getElementById('vitrinaEmpty');
+    var paginationEl = document.getElementById('vitrinaPagination');
+    var pageInfoEl = document.getElementById('vitrinaPageInfo');
+    var prevBtn = document.getElementById('vitrinaPrevPage');
+    var nextBtn = document.getElementById('vitrinaNextPage');
 
-    function render() {
+    var PAGE_SIZE = 10;
+    var currentPage = 1;
+
+    // Se vuelve a consultar el DOM en cada render (no se guarda una sola
+    // vez al inicio) porque crear un producto nuevo agrega filas después
+    // -si se guardara una sola lista al cargar la página, esas filas
+    // nuevas quedarían fuera de la paginación.
+    function getMatchingRows() {
         var term = normalizarTexto(searchInput.value.trim());
         var categoria = categoriaFilter.value;
-        var visibleCount = 0;
 
-        table.querySelectorAll('.data-table__row').forEach(function (row) {
+        return Array.prototype.filter.call(table.querySelectorAll('.data-table__row'), function (row) {
             var id = parseInt(row.getAttribute('data-producto-id'), 10);
             var producto = inventarioProductosById[id];
             var matchesTerm = !term || normalizarTexto(producto.nombre).indexOf(term) !== -1;
             var matchesCategoria = !categoria || producto.categoria === categoria;
-            var visible = matchesTerm && matchesCategoria;
-            row.hidden = !visible;
-            if (visible) {
-                visibleCount++;
-            }
+            return matchesTerm && matchesCategoria;
         });
-
-        emptyState.hidden = visibleCount !== 0;
     }
 
-    searchInput.addEventListener('input', render);
-    categoriaFilter.addEventListener('change', render);
+    function render() {
+        var matching = getMatchingRows();
+        var totalPages = Math.max(1, Math.ceil(matching.length / PAGE_SIZE));
+        currentPage = Math.min(currentPage, totalPages);
+
+        var start = (currentPage - 1) * PAGE_SIZE;
+        var pageRows = matching.slice(start, start + PAGE_SIZE);
+
+        table.querySelectorAll('.data-table__row').forEach(function (row) {
+            row.hidden = pageRows.indexOf(row) === -1;
+        });
+
+        emptyState.hidden = matching.length !== 0;
+        paginationEl.hidden = matching.length === 0;
+        pageInfoEl.textContent = 'Página ' + currentPage + ' de ' + totalPages;
+        prevBtn.disabled = currentPage <= 1;
+        nextBtn.disabled = currentPage >= totalPages;
+    }
+
+    function applyFilters() {
+        currentPage = 1;
+        render();
+    }
+
+    searchInput.addEventListener('input', applyFilters);
+    categoriaFilter.addEventListener('change', applyFilters);
+
+    prevBtn.addEventListener('click', function () {
+        if (currentPage > 1) {
+            currentPage--;
+            render();
+        }
+    });
+
+    nextBtn.addEventListener('click', function () {
+        currentPage++;
+        render();
+    });
 
     table.querySelectorAll('.data-table__row').forEach(function (row) {
         var id = parseInt(row.getAttribute('data-producto-id'), 10);
@@ -183,6 +229,12 @@ function initVitrinaTable() {
             }
         });
     });
+
+    // Expuesto para que crear un producto nuevo (otro módulo/función)
+    // pueda refrescar la paginación después de agregar su fila.
+    window.actualizarPaginacionVitrina = render;
+
+    render();
 }
 
 /* --------------------------------------------------------------------
@@ -197,29 +249,65 @@ function initBodegaTable() {
     var searchInput = document.getElementById('bodegaSearch');
     var categoriaFilter = document.getElementById('bodegaCategoriaFilter');
     var emptyState = document.getElementById('bodegaEmpty');
+    var paginationEl = document.getElementById('bodegaPagination');
+    var pageInfoEl = document.getElementById('bodegaPageInfo');
+    var prevBtn = document.getElementById('bodegaPrevPage');
+    var nextBtn = document.getElementById('bodegaNextPage');
 
-    function render() {
+    var PAGE_SIZE = 10;
+    var currentPage = 1;
+
+    function getMatchingRows() {
         var term = normalizarTexto(searchInput.value.trim());
         var categoria = categoriaFilter.value;
-        var visibleCount = 0;
 
-        table.querySelectorAll('.data-table__row').forEach(function (row) {
+        return Array.prototype.filter.call(table.querySelectorAll('.data-table__row'), function (row) {
             var id = parseInt(row.getAttribute('data-producto-id'), 10);
             var producto = inventarioProductosById[id];
             var matchesTerm = !term || normalizarTexto(producto.nombre).indexOf(term) !== -1;
             var matchesCategoria = !categoria || producto.categoria === categoria;
-            var visible = matchesTerm && matchesCategoria;
-            row.hidden = !visible;
-            if (visible) {
-                visibleCount++;
-            }
+            return matchesTerm && matchesCategoria;
         });
-
-        emptyState.hidden = visibleCount !== 0;
     }
 
-    searchInput.addEventListener('input', render);
-    categoriaFilter.addEventListener('change', render);
+    function render() {
+        var matching = getMatchingRows();
+        var totalPages = Math.max(1, Math.ceil(matching.length / PAGE_SIZE));
+        currentPage = Math.min(currentPage, totalPages);
+
+        var start = (currentPage - 1) * PAGE_SIZE;
+        var pageRows = matching.slice(start, start + PAGE_SIZE);
+
+        table.querySelectorAll('.data-table__row').forEach(function (row) {
+            row.hidden = pageRows.indexOf(row) === -1;
+        });
+
+        emptyState.hidden = matching.length !== 0;
+        paginationEl.hidden = matching.length === 0;
+        pageInfoEl.textContent = 'Página ' + currentPage + ' de ' + totalPages;
+        prevBtn.disabled = currentPage <= 1;
+        nextBtn.disabled = currentPage >= totalPages;
+    }
+
+    function applyFilters() {
+        currentPage = 1;
+        render();
+    }
+
+    searchInput.addEventListener('input', applyFilters);
+    categoriaFilter.addEventListener('change', applyFilters);
+
+    prevBtn.addEventListener('click', function () {
+        if (currentPage > 1) {
+            currentPage--;
+            render();
+        }
+    });
+
+    nextBtn.addEventListener('click', function () {
+        currentPage++;
+        render();
+    });
 
     table.querySelectorAll('.data-table__row').forEach(function (row) {
         var id = parseInt(row.getAttribute('data-producto-id'), 10);
@@ -239,6 +327,10 @@ function initBodegaTable() {
             abrirTransferirModal(id);
         });
     });
+
+    window.actualizarPaginacionBodega = render;
+
+    render();
 }
 
 /* --------------------------------------------------------------------
@@ -253,41 +345,79 @@ function initComprasTable() {
     var searchInput = document.getElementById('comprasSearch');
     var estadoFilter = document.getElementById('comprasEstadoFilter');
     var emptyState = document.getElementById('comprasEmpty');
+    var paginationEl = document.getElementById('comprasPagination');
+    var pageInfoEl = document.getElementById('comprasPageInfo');
+    var prevBtn = document.getElementById('comprasPrevPage');
+    var nextBtn = document.getElementById('comprasNextPage');
 
-    var facturaLabels = { validada: 'Validada', por_validar: 'Por validar', sin_factura: 'Sin factura' };
+    var PAGE_SIZE = 10;
+    var currentPage = 1;
 
-    function render() {
+    function getMatchingRows() {
         var term = normalizarTexto(searchInput.value.trim());
         var estado = estadoFilter.value;
-        var visibleCount = 0;
 
-        table.querySelectorAll('.data-table__row').forEach(function (row) {
+        return Array.prototype.filter.call(table.querySelectorAll('.data-table__row'), function (row) {
             var id = parseInt(row.getAttribute('data-compra-id'), 10);
             var compra = inventarioComprasById[id];
             var proveedorTexto = compra.proveedor || 'compra informal';
             var matchesTerm = !term || normalizarTexto(proveedorTexto).indexOf(term) !== -1;
             var matchesEstado = !estado || compra.facturaEstado === estado;
-            var visible = matchesTerm && matchesEstado;
-            row.hidden = !visible;
-            if (visible) {
-                visibleCount++;
-            }
+            return matchesTerm && matchesEstado;
         });
-
-        emptyState.hidden = visibleCount !== 0;
     }
 
-    searchInput.addEventListener('input', render);
-    estadoFilter.addEventListener('change', render);
+    function render() {
+        var matching = getMatchingRows();
+        var totalPages = Math.max(1, Math.ceil(matching.length / PAGE_SIZE));
+        currentPage = Math.min(currentPage, totalPages);
+
+        var start = (currentPage - 1) * PAGE_SIZE;
+        var pageRows = matching.slice(start, start + PAGE_SIZE);
+
+        table.querySelectorAll('.data-table__row').forEach(function (row) {
+            row.hidden = pageRows.indexOf(row) === -1;
+        });
+
+        emptyState.hidden = matching.length !== 0;
+        paginationEl.hidden = matching.length === 0;
+        pageInfoEl.textContent = 'Página ' + currentPage + ' de ' + totalPages;
+        prevBtn.disabled = currentPage <= 1;
+        nextBtn.disabled = currentPage >= totalPages;
+    }
+
+    function applyFilters() {
+        currentPage = 1;
+        render();
+    }
+
+    searchInput.addEventListener('input', applyFilters);
+    estadoFilter.addEventListener('change', applyFilters);
+
+    prevBtn.addEventListener('click', function () {
+        if (currentPage > 1) {
+            currentPage--;
+            render();
+        }
+    });
+
+    nextBtn.addEventListener('click', function () {
+        currentPage++;
+        render();
+    });
 
     wireFilaCompra(table);
+
+    window.actualizarPaginacionCompras = render;
+
+    render();
 }
 
 /* --------------------------------------------------------------------
  * Slide-over de compra + creación de filas nuevas (usado al listar y al
  * registrar una compra nueva).
  * ------------------------------------------------------------------ */
-var COMPRA_FACTURA_LABELS = { validada: 'Validada', por_validar: 'Por validar', sin_factura: 'Sin factura' };
+var COMPRA_FACTURA_LABELS = { validada: 'Validada', por_validar: 'Por validar', sin_factura: 'Compra informal' };
 var COMPRA_FACTURA_PILL_CLASS = { validada: 'status-pill--facturada', por_validar: 'status-pill--pendiente', sin_factura: 'status-pill--sin-facturar' };
 
 function wireFilaCompraRow(row) {
@@ -303,6 +433,21 @@ function wireFilaCompraRow(row) {
 
 function wireFilaCompra(scopeEl) {
     scopeEl.querySelectorAll('.data-table__row').forEach(wireFilaCompraRow);
+}
+
+/** Una fila "etiqueta - valor" (mismo look que .slide-over__field), para
+ * mostrar cantidad/precio unitario/total de una línea de compra sin
+ * meter el valor (texto libre en el caso del nombre) directo en innerHTML. */
+function crearCampoDetalleLinea(etiqueta, valor) {
+    var field = document.createElement('div');
+    field.className = 'slide-over__field';
+    var span = document.createElement('span');
+    span.textContent = etiqueta;
+    var strong = document.createElement('strong');
+    strong.textContent = valor;
+    field.appendChild(span);
+    field.appendChild(strong);
+    return field;
 }
 
 function abrirCompraSlideOver(id) {
@@ -328,21 +473,76 @@ function abrirCompraSlideOver(id) {
         document.getElementById('compraSlideOverCufe').textContent = compra.cufe;
     } else {
         cufeRow.hidden = true;
+        // Si por algo la fila no llegara a ocultarse, que al menos no
+        // se quede mostrando el CUFE de la última compra que sí tenía.
+        document.getElementById('compraSlideOverCufe').textContent = '—';
     }
 
+    // Con muchos productos en una sola compra, mostrarlos todos de un
+    // tirón obligaba a hacer scroll dentro del panel -en vez de eso, se
+    // paginan de a 4 (el tamaño del panel se queda igual siempre).
     var lineasContainer = document.getElementById('compraSlideOverLineas');
-    lineasContainer.innerHTML = '';
-    compra.lineas.forEach(function (linea) {
-        var item = document.createElement('div');
-        item.className = 'venta-detalle-item';
-        item.innerHTML =
-            '<div>' +
-                '<div class="venta-detalle-item__nombre">' + linea.nombre + '</div>' +
-                '<div class="venta-detalle-item__cantidad">' + linea.cantidad + ' x ' + formatCOP(linea.costo) + '</div>' +
-            '</div>' +
-            '<div class="venta-detalle-item__monto">' + formatCOP(linea.cantidad * linea.costo) + '</div>';
-        lineasContainer.appendChild(item);
-    });
+    var lineasPaginationEl = document.getElementById('compraSlideOverLineasPagination');
+    var lineasPageInfoEl = document.getElementById('compraSlideOverLineasPageInfo');
+    var lineasPrevBtn = document.getElementById('compraSlideOverLineasPrev');
+    var lineasNextBtn = document.getElementById('compraSlideOverLineasNext');
+    var LINEAS_PAGE_SIZE = 4;
+    var paginaLineas = 1;
+    var infoSectionEl = document.getElementById('compraSlideOverInfoSection');
+
+    function renderLineasPagina() {
+        var totalPaginas = Math.max(1, Math.ceil(compra.lineas.length / LINEAS_PAGE_SIZE));
+        paginaLineas = Math.min(paginaLineas, totalPaginas);
+
+        // El total/origen/CUFE son datos de TODA la compra, no de la página
+        // que se esté viendo -mostrarlos en cada página daba a entender
+        // que cada una tenía su propio total. Ahora solo aparecen al
+        // llegar a la última página de productos.
+        infoSectionEl.hidden = paginaLineas !== totalPaginas;
+        var start = (paginaLineas - 1) * LINEAS_PAGE_SIZE;
+        var lineasPagina = compra.lineas.slice(start, start + LINEAS_PAGE_SIZE);
+
+        lineasContainer.innerHTML = '';
+        lineasPagina.forEach(function (linea) {
+            // El nombre del producto es texto libre escrito por el negocio
+            // -si se metiera con innerHTML, un nombre malicioso ("<img
+            // onerror=...") se ejecutaría en la sesión de cualquiera que
+            // abra esta compra. Cantidad, precio unitario y total van cada
+            // uno en su propia fila "etiqueta - valor", igual que Precio
+            // de costo/venta en el panel del producto.
+            var wrapper = document.createElement('div');
+            wrapper.className = 'compra-linea-producto';
+
+            var nombreEl = document.createElement('div');
+            nombreEl.className = 'compra-linea-producto__nombre';
+            nombreEl.textContent = linea.nombre;
+            wrapper.appendChild(nombreEl);
+
+            wrapper.appendChild(crearCampoDetalleLinea('Cantidad', String(linea.cantidad)));
+            wrapper.appendChild(crearCampoDetalleLinea('Precio unitario', formatCOP(linea.costo)));
+            wrapper.appendChild(crearCampoDetalleLinea('Total', formatCOP(linea.cantidad * linea.costo)));
+
+            lineasContainer.appendChild(wrapper);
+        });
+
+        lineasPaginationEl.hidden = compra.lineas.length <= LINEAS_PAGE_SIZE;
+        lineasPageInfoEl.textContent = 'Página ' + paginaLineas + ' de ' + totalPaginas;
+        lineasPrevBtn.disabled = paginaLineas <= 1;
+        lineasNextBtn.disabled = paginaLineas >= totalPaginas;
+    }
+
+    lineasPrevBtn.onclick = function () {
+        if (paginaLineas > 1) {
+            paginaLineas--;
+            renderLineasPagina();
+        }
+    };
+    lineasNextBtn.onclick = function () {
+        paginaLineas++;
+        renderLineasPagina();
+    };
+
+    renderLineasPagina();
 
     slideOver.classList.add('is-open');
     slideOver.setAttribute('aria-hidden', 'false');
@@ -382,12 +582,31 @@ function crearFilaCompra(compra) {
 
     var proveedorTexto = compra.proveedor || 'Compra informal';
 
-    row.innerHTML =
-        '<td class="data-table__meta">' + compra.fecha + '</td>' +
-        '<td><div class="data-table__title">' + proveedorTexto + '</div></td>' +
-        '<td class="data-table__meta">' + compra.lineas.length + ' producto' + (compra.lineas.length === 1 ? '' : 's') + '</td>' +
-        '<td class="data-table__title">' + formatCOP(compra.total) + '</td>' +
-        '<td><span class="status-pill ' + COMPRA_FACTURA_PILL_CLASS[compra.facturaEstado] + '">' + COMPRA_FACTURA_LABELS[compra.facturaEstado] + '</span></td>';
+    var celdaFecha = row.insertCell();
+    celdaFecha.className = 'data-table__meta';
+    celdaFecha.textContent = compra.fecha;
+
+    // El nombre del proveedor es texto libre -mismo motivo que arriba, va
+    // por textContent y no por innerHTML.
+    var celdaProveedor = row.insertCell();
+    var tituloProveedor = document.createElement('div');
+    tituloProveedor.className = 'data-table__title';
+    tituloProveedor.textContent = proveedorTexto;
+    celdaProveedor.appendChild(tituloProveedor);
+
+    var celdaCantidad = row.insertCell();
+    celdaCantidad.className = 'data-table__meta';
+    celdaCantidad.textContent = compra.lineas.length + ' producto' + (compra.lineas.length === 1 ? '' : 's');
+
+    var celdaTotal = row.insertCell();
+    celdaTotal.className = 'data-table__title';
+    celdaTotal.textContent = formatCOP(compra.total);
+
+    var celdaEstado = row.insertCell();
+    var pill = document.createElement('span');
+    pill.className = 'status-pill ' + COMPRA_FACTURA_PILL_CLASS[compra.facturaEstado];
+    pill.textContent = COMPRA_FACTURA_LABELS[compra.facturaEstado];
+    celdaEstado.appendChild(pill);
 
     return row;
 }
@@ -458,9 +677,68 @@ function abrirProductoSlideOver(id) {
         window.abrirEditarProducto(id);
     };
 
+    var eliminarBtn = document.getElementById('productoSlideOverEliminarBtn');
+    eliminarBtn.onclick = function () { eliminarProducto(id); };
+
     slideOver.classList.add('is-open');
     slideOver.setAttribute('aria-hidden', 'false');
     overlay.classList.add('is-visible');
+}
+
+/**
+ * Baja lógica: el producto deja de aparecer en el catálogo (Vitrina,
+ * Bodega, buscador de "Registrar compra"), pero las compras que ya lo
+ * mencionan siguen intactas en el historial -por eso el backend hace un
+ * soft delete, no lo borra de verdad.
+ */
+function eliminarProducto(id) {
+    var producto = inventarioProductosById[id];
+    if (!producto) {
+        return;
+    }
+
+    confirmarAccion({
+        titulo: '¿Eliminar este producto?',
+        texto: '"' + producto.nombre + '" se quitará del catálogo. Esta acción no se puede deshacer.',
+        textoConfirmar: 'Sí, eliminar',
+        peligro: true
+    }).then(function (confirmado) {
+        if (!confirmado) {
+            return;
+        }
+
+        inventarioApiRequest('DELETE', '/cliente/inventario/productos/' + id)
+            .then(function () {
+                var vitrinaRow = document.querySelector('#vitrinaTable .data-table__row[data-producto-id="' + id + '"]');
+                var bodegaRow = document.querySelector('#bodegaTable .data-table__row[data-producto-id="' + id + '"]');
+                if (vitrinaRow) {
+                    vitrinaRow.remove();
+                }
+                if (bodegaRow) {
+                    bodegaRow.remove();
+                }
+
+                if (window.actualizarPaginacionVitrina) {
+                    window.actualizarPaginacionVitrina();
+                }
+                if (window.actualizarPaginacionBodega) {
+                    window.actualizarPaginacionBodega();
+                }
+
+                var idx = inventarioProductos.findIndex(function (p) { return p.id === id; });
+                if (idx !== -1) {
+                    inventarioProductos.splice(idx, 1);
+                }
+                delete inventarioProductosById[id];
+
+                cerrarProductoSlideOver();
+                actualizarStatProductos();
+                actualizarStatsValorInventario();
+            })
+            .catch(function (error) {
+                mostrarError(error.message);
+            });
+    });
 }
 
 function cerrarProductoSlideOver() {
@@ -501,16 +779,38 @@ function wireFilaProductoClick(row, id) {
     });
 }
 
+// El nombre, categoría y unidad de un producto son texto libre escrito por
+// el negocio (ver "+ Agregar categoría/unidad..."), así que arman la fila
+// con textContent en vez de innerHTML -si no, un nombre malicioso se
+// ejecutaría en el navegador de cualquiera que cargue Vitrina/Bodega.
 function crearFilaVitrina(producto) {
     var row = document.createElement('tr');
     row.className = 'data-table__row';
     row.setAttribute('data-producto-id', producto.id);
     row.tabIndex = 0;
-    row.innerHTML =
-        '<td><div class="data-table__title">' + producto.nombre + '</div><div class="data-table__meta">' + producto.unidad + '</div></td>' +
-        '<td class="data-table__meta">' + producto.categoria + '</td>' +
-        '<td class="data-table__title">' + formatCOP(producto.precioVenta) + '</td>' +
-        '<td class="data-table__meta">' + producto.stockVitrina + '</td>';
+
+    var celdaProducto = row.insertCell();
+    var titulo = document.createElement('div');
+    titulo.className = 'data-table__title';
+    titulo.textContent = producto.nombre;
+    var meta = document.createElement('div');
+    meta.className = 'data-table__meta';
+    meta.textContent = producto.unidad;
+    celdaProducto.appendChild(titulo);
+    celdaProducto.appendChild(meta);
+
+    var celdaCategoria = row.insertCell();
+    celdaCategoria.className = 'data-table__meta';
+    celdaCategoria.textContent = producto.categoria;
+
+    var celdaPrecio = row.insertCell();
+    celdaPrecio.className = 'data-table__title';
+    celdaPrecio.textContent = formatCOP(producto.precioVenta);
+
+    var celdaStock = row.insertCell();
+    celdaStock.className = 'data-table__meta';
+    celdaStock.textContent = producto.stockVitrina;
+
     wireFilaProductoClick(row, producto.id);
     return row;
 }
@@ -520,14 +820,39 @@ function crearFilaBodega(producto) {
     row.className = 'data-table__row';
     row.setAttribute('data-producto-id', producto.id);
     row.tabIndex = 0;
-    row.innerHTML =
-        '<td><div class="data-table__title">' + producto.nombre + '</div><div class="data-table__meta">' + producto.unidad + '</div></td>' +
-        '<td class="data-table__meta">' + producto.categoria + '</td>' +
-        '<td class="data-table__title">' + formatCOP(producto.precioCosto) + '</td>' +
-        '<td class="data-table__meta">' + producto.stockBodega + '</td>' +
-        '<td><button type="button" class="inventario-transfer-btn" data-producto-id="' + producto.id + '">Transferir</button></td>';
+
+    var celdaProducto = row.insertCell();
+    var titulo = document.createElement('div');
+    titulo.className = 'data-table__title';
+    titulo.textContent = producto.nombre;
+    var meta = document.createElement('div');
+    meta.className = 'data-table__meta';
+    meta.textContent = producto.unidad;
+    celdaProducto.appendChild(titulo);
+    celdaProducto.appendChild(meta);
+
+    var celdaCategoria = row.insertCell();
+    celdaCategoria.className = 'data-table__meta';
+    celdaCategoria.textContent = producto.categoria;
+
+    var celdaCosto = row.insertCell();
+    celdaCosto.className = 'data-table__title';
+    celdaCosto.textContent = formatCOP(producto.precioCosto);
+
+    var celdaStock = row.insertCell();
+    celdaStock.className = 'data-table__meta';
+    celdaStock.textContent = producto.stockBodega;
+
+    var celdaAccion = row.insertCell();
+    var transferirBtn = document.createElement('button');
+    transferirBtn.type = 'button';
+    transferirBtn.className = 'inventario-transfer-btn';
+    transferirBtn.setAttribute('data-producto-id', producto.id);
+    transferirBtn.textContent = 'Transferir';
+    celdaAccion.appendChild(transferirBtn);
+
     wireFilaProductoClick(row, producto.id);
-    row.querySelector('.inventario-transfer-btn').addEventListener('click', function (event) {
+    transferirBtn.addEventListener('click', function (event) {
         event.stopPropagation();
         abrirTransferirModal(producto.id);
     });
@@ -545,9 +870,7 @@ function actualizarStatProductos() {
         statProductos.textContent = formatNumber(inventarioProductos.length, 0);
     }
     if (statCategoriasMeta) {
-        var categoriasUnicas = {};
-        inventarioProductos.forEach(function (p) { categoriasUnicas[p.categoria] = true; });
-        var count = Object.keys(categoriasUnicas).length;
+        var count = inventarioCategorias.length;
         statCategoriasMeta.textContent = count + ' categoría' + (count === 1 ? '' : 's');
     }
 }
@@ -602,10 +925,6 @@ function initNuevoProductoModal() {
     var unidadSelect = document.getElementById('prodUnidad');
     var guardarBtn = document.getElementById('prodGuardarBtn');
     var categoriaSelect = document.getElementById('prodCategoria');
-    var nuevaCategoriaRow = document.getElementById('nuevaCategoriaRow');
-    var nuevaCategoriaInput = document.getElementById('nuevaCategoriaInput');
-    var nuevaCategoriaConfirmar = document.getElementById('nuevaCategoriaConfirmar');
-    var nuevaCategoriaCancelar = document.getElementById('nuevaCategoriaCancelar');
     var nuevaUnidadRow = document.getElementById('nuevaUnidadRow');
     var nuevaUnidadInput = document.getElementById('nuevaUnidadInput');
     var nuevaUnidadConfirmar = document.getElementById('nuevaUnidadConfirmar');
@@ -624,81 +943,6 @@ function initNuevoProductoModal() {
 
     [nombreInput, costoInput, ventaInput].forEach(function (input) {
         input.addEventListener('input', updateGuardarState);
-    });
-
-    /* ---------- Agregar categoría al vuelo ----------
-     * "+ Agregar categoría..." es una opción especial (no una categoría
-     * real) al final del selector. Elegirla abre un campo chiquito para
-     * escribir el nombre; al confirmar, se inserta como opción real
-     * antes del sentinel y también se agrega a los filtros de Vitrina y
-     * Bodega, para que quede disponible en todo el panel. */
-    categoriaSelect.addEventListener('change', function () {
-        if (categoriaSelect.value === '__nueva__') {
-            nuevaCategoriaRow.hidden = false;
-            nuevaCategoriaInput.value = '';
-            nuevaCategoriaInput.focus();
-        }
-    });
-
-    function cancelarNuevaCategoria() {
-        nuevaCategoriaRow.hidden = true;
-        categoriaSelect.selectedIndex = 0;
-    }
-
-    nuevaCategoriaCancelar.addEventListener('click', cancelarNuevaCategoria);
-
-    nuevaCategoriaInput.addEventListener('keydown', function (event) {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            nuevaCategoriaConfirmar.click();
-        }
-    });
-
-    nuevaCategoriaConfirmar.addEventListener('click', function () {
-        var nombre = nuevaCategoriaInput.value.trim();
-        if (!nombre) {
-            nuevaCategoriaInput.focus();
-            return;
-        }
-
-        var yaExiste = Array.prototype.some.call(categoriaSelect.options, function (opt) {
-            return opt.value.toLowerCase() === nombre.toLowerCase();
-        });
-        if (yaExiste) {
-            nuevaCategoriaInput.setCustomValidity('Ya existe una categoría con ese nombre.');
-            nuevaCategoriaInput.reportValidity();
-            nuevaCategoriaInput.focus();
-            return;
-        }
-        nuevaCategoriaInput.setCustomValidity('');
-
-        var originalText = nuevaCategoriaConfirmar.textContent;
-        nuevaCategoriaConfirmar.disabled = true;
-        nuevaCategoriaConfirmar.textContent = 'Agregando...';
-
-        inventarioApiRequest('POST', '/cliente/inventario/categorias', { nombre: nombre })
-            .then(function (json) {
-                var nombreCreado = json.categoria;
-                var sentinelOption = categoriaSelect.querySelector('option[value="__nueva__"]');
-                categoriaSelect.insertBefore(new Option(nombreCreado, nombreCreado), sentinelOption);
-                categoriaSelect.value = nombreCreado;
-
-                [document.getElementById('vitrinaCategoriaFilter'), document.getElementById('bodegaCategoriaFilter')].forEach(function (filterSelect) {
-                    if (filterSelect) {
-                        filterSelect.appendChild(new Option(nombreCreado, nombreCreado));
-                    }
-                });
-
-                nuevaCategoriaRow.hidden = true;
-            })
-            .catch(function (error) {
-                nuevaCategoriaInput.setCustomValidity(error.message);
-                nuevaCategoriaInput.reportValidity();
-            })
-            .finally(function () {
-                nuevaCategoriaConfirmar.disabled = false;
-                nuevaCategoriaConfirmar.textContent = originalText;
-            });
     });
 
     /* ---------- Agregar unidad de medida al vuelo ----------
@@ -757,7 +1001,6 @@ function initNuevoProductoModal() {
         ventaInput.value = '';
         categoriaSelect.selectedIndex = 0;
         unidadSelect.selectedIndex = 0;
-        nuevaCategoriaRow.hidden = true;
         nuevaUnidadRow.hidden = true;
         updateGuardarState();
     }
@@ -768,7 +1011,6 @@ function initNuevoProductoModal() {
         ventaInput.value = formatNumber(producto.precioVenta, 0);
         categoriaSelect.value = producto.categoria;
         unidadSelect.value = producto.unidad;
-        nuevaCategoriaRow.hidden = true;
         nuevaUnidadRow.hidden = true;
         updateGuardarState();
     }
@@ -816,11 +1058,6 @@ function initNuevoProductoModal() {
 
     guardarBtn.addEventListener('click', function () {
         if (guardarBtn.disabled) {
-            return;
-        }
-        if (categoriaSelect.value === '__nueva__') {
-            nuevaCategoriaRow.hidden = false;
-            nuevaCategoriaInput.focus();
             return;
         }
         if (unidadSelect.value === '__nueva__') {
@@ -871,6 +1108,16 @@ function initNuevoProductoModal() {
                         bodegaTbody.appendChild(crearFilaBodega(producto));
                     }
 
+                    // La fila ya está en el DOM -falta que la paginación se
+                    // entere de que ahora hay una más (si no, quedaría
+                    // agregada pero fuera de cualquier página visible).
+                    if (window.actualizarPaginacionVitrina) {
+                        window.actualizarPaginacionVitrina();
+                    }
+                    if (window.actualizarPaginacionBodega) {
+                        window.actualizarPaginacionBodega();
+                    }
+
                     actualizarStatProductos();
                 }
 
@@ -882,12 +1129,283 @@ function initNuevoProductoModal() {
                 closeModal();
             })
             .catch(function (error) {
-                window.alert(error.message);
+                mostrarError(error.message);
             })
             .finally(function () {
                 guardarBtn.disabled = false;
                 guardarBtn.textContent = originalText;
             });
+    });
+}
+
+/* --------------------------------------------------------------------
+ * 6b. Modal "Categorías" -crear, renombrar y eliminar. Aparte del modal
+ * de producto (donde solo se elige una categoría ya existente) para que
+ * ese formulario quede simple; gestionar el catálogo de categorías vive
+ * en su propio lugar, con acceso desde el botón "Categorías" del header.
+ * ------------------------------------------------------------------ */
+function initCategoriasModal() {
+    var openBtn = document.getElementById('categoriasBtn');
+    var modal = document.getElementById('categoriasModal');
+    var overlay = document.getElementById('categoriasOverlay');
+    if (!openBtn || !modal || !overlay) {
+        return;
+    }
+
+    var closeBtn = document.getElementById('categoriasClose');
+    var listaEl = document.getElementById('categoriasLista');
+    var emptyEl = document.getElementById('categoriasEmpty');
+    var nuevaInput = document.getElementById('categoriaNuevaInput');
+    var nuevaConfirmar = document.getElementById('categoriaNuevaConfirmar');
+
+    var TRASH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/></svg>';
+    var PENCIL_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+
+    /** Refleja un cambio de nombre/alta/baja de categoría en todos los
+     * selectores que la muestran (el de producto y los filtros de
+     * Vitrina/Bodega), para que no haga falta recargar la página. */
+    function sincronizarSelects(fn) {
+        [document.getElementById('prodCategoria'), document.getElementById('vitrinaCategoriaFilter'), document.getElementById('bodegaCategoriaFilter')].forEach(function (select) {
+            if (select) {
+                fn(select);
+            }
+        });
+    }
+
+    function agregarOpcion(select, nombre) {
+        var placeholder = select.querySelector('option[value=""]');
+        if (placeholder) {
+            placeholder.remove();
+        }
+        select.appendChild(new Option(nombre, nombre));
+    }
+
+    function renombrarOpcion(select, viejoNombre, nuevoNombre) {
+        var opcion = Array.prototype.find.call(select.options, function (opt) { return opt.value === viejoNombre; });
+        if (opcion) {
+            opcion.value = nuevoNombre;
+            opcion.textContent = nuevoNombre;
+        }
+    }
+
+    function quitarOpcion(select, nombre) {
+        var opcion = Array.prototype.find.call(select.options, function (opt) { return opt.value === nombre; });
+        if (opcion) {
+            opcion.remove();
+        }
+        if (select.id === 'prodCategoria' && select.options.length === 0) {
+            select.appendChild(new Option('Primero crea una categoría...', ''));
+            select.value = '';
+        }
+    }
+
+    /** Los productos ya cargados en memoria (y sus filas/slide-over)
+     * también muestran el nombre de categoría -si se renombra, hay que
+     * actualizarlos ahí también para que no queden con el nombre viejo. */
+    function renombrarEnProductos(viejoNombre, nuevoNombre) {
+        inventarioProductos.forEach(function (producto) {
+            if (producto.categoria === viejoNombre) {
+                producto.categoria = nuevoNombre;
+                actualizarFilaProducto(producto);
+            }
+        });
+    }
+
+    function renderLista() {
+        listaEl.innerHTML = '';
+        emptyEl.hidden = inventarioCategorias.length !== 0;
+
+        inventarioCategorias.forEach(function (nombre) {
+            listaEl.appendChild(crearFilaCategoria(nombre));
+        });
+    }
+
+    function crearFilaCategoria(nombre) {
+        var row = document.createElement('div');
+        row.className = 'categoria-row';
+        row.innerHTML =
+            '<span class="categoria-row__nombre"></span>' +
+            '<div class="categoria-row__actions">' +
+            '<button type="button" class="categoria-row__btn categoria-row__btn--editar" title="Renombrar">' + PENCIL_SVG + '</button>' +
+            '<button type="button" class="categoria-row__btn categoria-row__btn--eliminar" title="Eliminar">' + TRASH_SVG + '</button>' +
+            '</div>';
+        row.querySelector('.categoria-row__nombre').textContent = nombre;
+
+        row.querySelector('.categoria-row__btn--editar').addEventListener('click', function () {
+            activarEdicion(row, nombre);
+        });
+        row.querySelector('.categoria-row__btn--eliminar').addEventListener('click', function () {
+            eliminarCategoria(nombre);
+        });
+
+        return row;
+    }
+
+    function activarEdicion(row, nombreActual) {
+        row.className = 'categoria-row categoria-row--editando';
+        row.innerHTML =
+            '<input type="text" class="cliente-input categoria-row__input" style="flex:1;">' +
+            '<div class="categoria-row__actions" style="margin-left:8px;">' +
+            '<button type="button" class="categoria-row__btn categoria-row__btn--confirmar" title="Guardar">✓</button>' +
+            '<button type="button" class="categoria-row__btn categoria-row__btn--cancelar" title="Cancelar">✕</button>' +
+            '</div>';
+
+        var input = row.querySelector('.categoria-row__input');
+        input.value = nombreActual;
+        input.focus();
+        input.select();
+
+        function cancelar() {
+            row.replaceWith(crearFilaCategoria(nombreActual));
+        }
+
+        function confirmar() {
+            var nombreNuevo = input.value.trim();
+            if (!nombreNuevo || nombreNuevo === nombreActual) {
+                cancelar();
+                return;
+            }
+
+            var yaExiste = inventarioCategorias.some(function (c) { return c.toLowerCase() === nombreNuevo.toLowerCase() && c !== nombreActual; });
+            if (yaExiste) {
+                input.setCustomValidity('Ya existe una categoría con ese nombre.');
+                input.reportValidity();
+                return;
+            }
+            input.setCustomValidity('');
+
+            var botonConfirmar = row.querySelector('.categoria-row__btn--confirmar');
+            botonConfirmar.disabled = true;
+
+            inventarioApiRequest('PUT', '/cliente/inventario/categorias', { nombre_actual: nombreActual, nombre_nuevo: nombreNuevo })
+                .then(function () {
+                    var idx = inventarioCategorias.indexOf(nombreActual);
+                    if (idx !== -1) {
+                        inventarioCategorias[idx] = nombreNuevo;
+                    }
+
+                    sincronizarSelects(function (select) { renombrarOpcion(select, nombreActual, nombreNuevo); });
+                    renombrarEnProductos(nombreActual, nombreNuevo);
+
+                    row.replaceWith(crearFilaCategoria(nombreNuevo));
+                })
+                .catch(function (error) {
+                    input.setCustomValidity(error.message);
+                    input.reportValidity();
+                    botonConfirmar.disabled = false;
+                });
+        }
+
+        row.querySelector('.categoria-row__btn--confirmar').addEventListener('click', confirmar);
+        row.querySelector('.categoria-row__btn--cancelar').addEventListener('click', cancelar);
+        input.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                confirmar();
+            } else if (event.key === 'Escape') {
+                event.preventDefault();
+                cancelar();
+            }
+        });
+    }
+
+    function eliminarCategoria(nombre) {
+        confirmarAccion({
+            titulo: '¿Eliminar esta categoría?',
+            texto: '"' + nombre + '" se borrará. Solo se puede si ningún producto la está usando.',
+            textoConfirmar: 'Sí, eliminar',
+            peligro: true
+        }).then(function (confirmado) {
+            if (!confirmado) {
+                return;
+            }
+
+            inventarioApiRequest('DELETE', '/cliente/inventario/categorias', { nombre: nombre })
+                .then(function () {
+                    var idx = inventarioCategorias.indexOf(nombre);
+                    if (idx !== -1) {
+                        inventarioCategorias.splice(idx, 1);
+                    }
+
+                    sincronizarSelects(function (select) { quitarOpcion(select, nombre); });
+                    renderLista();
+                    actualizarStatProductos();
+                })
+                .catch(function (error) {
+                    mostrarError(error.message);
+                });
+        });
+    }
+
+    nuevaInput.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            nuevaConfirmar.click();
+        }
+    });
+
+    nuevaConfirmar.addEventListener('click', function () {
+        var nombre = nuevaInput.value.trim();
+        if (!nombre) {
+            nuevaInput.focus();
+            return;
+        }
+
+        var yaExiste = inventarioCategorias.some(function (c) { return c.toLowerCase() === nombre.toLowerCase(); });
+        if (yaExiste) {
+            nuevaInput.setCustomValidity('Ya existe una categoría con ese nombre.');
+            nuevaInput.reportValidity();
+            nuevaInput.focus();
+            return;
+        }
+        nuevaInput.setCustomValidity('');
+
+        var originalText = nuevaConfirmar.textContent;
+        nuevaConfirmar.disabled = true;
+        nuevaConfirmar.textContent = 'Agregando...';
+
+        inventarioApiRequest('POST', '/cliente/inventario/categorias', { nombre: nombre })
+            .then(function (json) {
+                var nombreCreado = json.categoria;
+                inventarioCategorias.push(nombreCreado);
+
+                sincronizarSelects(function (select) { agregarOpcion(select, nombreCreado); });
+                renderLista();
+                actualizarStatProductos();
+
+                nuevaInput.value = '';
+            })
+            .catch(function (error) {
+                nuevaInput.setCustomValidity(error.message);
+                nuevaInput.reportValidity();
+            })
+            .finally(function () {
+                nuevaConfirmar.disabled = false;
+                nuevaConfirmar.textContent = originalText;
+            });
+    });
+
+    function openModal() {
+        renderLista();
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        overlay.classList.add('is-visible');
+        window.setTimeout(function () { nuevaInput.focus(); }, 250);
+    }
+
+    function closeModal() {
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+        overlay.classList.remove('is-visible');
+    }
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', closeModal);
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && modal.classList.contains('is-open')) {
+            closeModal();
+        }
     });
 }
 
@@ -911,7 +1429,7 @@ function initRegistrarCompraModal() {
     var tipoInformalBtn = document.getElementById('compraTipoInformalBtn');
     var proveedorFields = document.getElementById('compraProveedorFields');
     var informalHint = document.getElementById('compraInformalHint');
-    var proveedorNombreInput = document.getElementById('compraProveedorNombre');
+    var proveedorSelect = document.getElementById('compraProveedorSelect');
     var cufeInput = document.getElementById('compraCufeInput');
     var validarBtn = document.getElementById('compraValidarBtn');
     var validarStatus = document.getElementById('compraValidarStatus');
@@ -972,9 +1490,11 @@ function initRegistrarCompraModal() {
             lineas.forEach(function (linea, index) {
                 var row = document.createElement('div');
                 row.className = 'venta-line';
+                // linea.nombre es texto libre (nombre de producto) -va por
+                // textContent más abajo, nunca directo en el innerHTML.
                 row.innerHTML =
                     '<div class="venta-line__info">' +
-                        '<div class="venta-line__nombre">' + linea.nombre + '</div>' +
+                        '<div class="venta-line__nombre"></div>' +
                         '<div class="compra-line__costo-row">' +
                             '<span>$</span>' +
                             '<input type="text" class="compra-line__costo-input" value="' + formatNumber(linea.costo, 0) + '">' +
@@ -983,13 +1503,15 @@ function initRegistrarCompraModal() {
                     '</div>' +
                     '<div class="venta-line__qty">' +
                         '<button type="button" class="venta-line__qty-btn" data-action="dec">−</button>' +
-                        '<span class="venta-line__qty-value">' + linea.cantidad + '</span>' +
+                        '<input type="text" inputmode="numeric" class="venta-line__qty-value venta-line__qty-value--input" value="' + linea.cantidad + '">' +
                         '<button type="button" class="venta-line__qty-btn" data-action="inc">+</button>' +
                     '</div>' +
                     '<div class="venta-line__subtotal">' + formatCOP(linea.cantidad * linea.costo) + '</div>' +
                     '<button type="button" class="venta-line__remove" aria-label="Quitar">' +
                         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg>' +
                     '</button>';
+
+                row.querySelector('.venta-line__nombre').textContent = linea.nombre;
 
                 row.querySelector('[data-action="inc"]').addEventListener('click', function () {
                     linea.cantidad++;
@@ -1002,6 +1524,27 @@ function initRegistrarCompraModal() {
                 row.querySelector('.venta-line__remove').addEventListener('click', function () {
                     lineas.splice(index, 1);
                     renderLineas();
+                });
+
+                // La cantidad también se puede escribir directamente (más
+                // fácil que darle a "+" cien veces si son 100 unidades). Se
+                // actualiza en vivo sin reconstruir la fila -si no, el
+                // cursor/foco se perdería mientras escribes.
+                var qtyInputLinea = row.querySelector('.venta-line__qty-value--input');
+                qtyInputLinea.addEventListener('input', function (event) {
+                    var digitos = event.target.value.replace(/\D/g, '');
+                    event.target.value = digitos;
+                    linea.cantidad = digitos ? parseInt(digitos, 10) : 0;
+                    row.querySelector('.venta-line__subtotal').textContent = formatCOP(linea.cantidad * linea.costo);
+                    totalEl.textContent = formatCOP(getTotal());
+                });
+                qtyInputLinea.addEventListener('blur', function () {
+                    if (!linea.cantidad || linea.cantidad < 1) {
+                        linea.cantidad = 1;
+                        qtyInputLinea.value = '1';
+                        row.querySelector('.venta-line__subtotal').textContent = formatCOP(linea.cantidad * linea.costo);
+                        totalEl.textContent = formatCOP(getTotal());
+                    }
                 });
 
                 // El costo se edita en vivo sin reconstruir la fila -si
@@ -1046,9 +1589,12 @@ function initRegistrarCompraModal() {
             matches.forEach(function (producto) {
                 var item = document.createElement('div');
                 item.className = 'venta-product-result';
+                // producto.nombre es texto libre -va por textContent más
+                // abajo, nunca directo en el innerHTML.
                 item.innerHTML =
-                    '<span>' + producto.nombre + '</span>' +
+                    '<span class="venta-product-result__nombre"></span>' +
                     '<span class="venta-product-result__precio">' + formatCOP(producto.precioCosto) + ' c/u</span>';
+                item.querySelector('.venta-product-result__nombre').textContent = producto.nombre;
 
                 item.addEventListener('click', function () {
                     var existente = lineas.find(function (l) { return l.id === producto.id; });
@@ -1077,7 +1623,7 @@ function initRegistrarCompraModal() {
 
     function resetModal() {
         setTipo('proveedor');
-        proveedorNombreInput.value = '';
+        proveedorSelect.selectedIndex = 0;
         cufeInput.value = '';
         validarStatus.className = 'compra-validar-status';
         validarStatus.textContent = 'Sin validar todavía. El QR solo confirma que la factura existe ante la DIAN -los productos se agregan abajo, a mano.';
@@ -1121,7 +1667,7 @@ function initRegistrarCompraModal() {
 
         var payload = {
             tipo: tipo,
-            proveedor_nombre: tipo === 'proveedor' ? (proveedorNombreInput.value.trim() || null) : null,
+            proveedor_id: tipo === 'proveedor' ? (proveedorSelect.value || null) : null,
             cufe: tipo === 'proveedor' ? (cufeInput.value.trim() || null) : null,
             factura_validada: tipo === 'proveedor' && validarStatus.classList.contains('is-validada'),
             lineas: lineas.map(function (l) {
@@ -1140,6 +1686,9 @@ function initRegistrarCompraModal() {
                     var nuevaFila = crearFilaCompra(compra);
                     wireFilaCompraRow(nuevaFila);
                     comprasTbody.insertBefore(nuevaFila, comprasTbody.firstChild);
+                }
+                if (window.actualizarPaginacionCompras) {
+                    window.actualizarPaginacionCompras();
                 }
 
                 // Toda compra suma a BODEGA -nunca a vitrina directamente.
@@ -1161,7 +1710,7 @@ function initRegistrarCompraModal() {
                 closeModal();
             })
             .catch(function (error) {
-                window.alert(error.message);
+                mostrarError(error.message);
             })
             .finally(function () {
                 registrarBtn.disabled = false;
