@@ -17,6 +17,7 @@ class VentaDetalle extends Model
         'empresa_id',
         'venta_id',
         'producto_id',
+        'lote_inventario_id',
         'cantidad',
         'precio_unitario_venta',
         'precio_unitario_costo',
@@ -38,5 +39,10 @@ class VentaDetalle extends Model
     public function producto(): BelongsTo
     {
         return $this->belongsTo(Producto::class, 'producto_id');
+    }
+
+    public function loteInventario(): BelongsTo
+    {
+        return $this->belongsTo(LoteInventario::class, 'lote_inventario_id');
     }
 }

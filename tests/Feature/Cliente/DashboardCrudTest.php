@@ -3,12 +3,12 @@
 namespace Tests\Feature\Cliente;
 
 use App\Models\Cliente\Caja;
+use App\Models\Cliente\Gasto;
 use App\Models\Cliente\Producto;
 use App\Models\Empresa;
 use App\Models\Rol;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class DashboardCrudTest extends TestCase
@@ -113,20 +113,13 @@ class DashboardCrudTest extends TestCase
     public function test_la_ganancia_neta_no_mezcla_gastos_de_otra_empresa(): void
     {
         $usuarioB = $this->crearUsuarioCliente();
-        $categoriaGastoB = DB::table('categorias_gasto')->insertGetId([
-            'empresa_id' => $usuarioB->empresa_id,
-            'nombre' => 'Arriendo',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-        DB::table('gastos')->insert([
-            'empresa_id' => $usuarioB->empresa_id,
-            'categoria_gasto_id' => $categoriaGastoB,
+        Gasto::create([
+            'usuario_id' => $usuarioB->id,
+            'categoria' => 'arriendo',
+            'descripcion' => 'Arriendo de agosto',
             'monto' => 999999,
             'metodo_pago' => 'efectivo',
-            'fecha' => now()->toDateString(),
-            'created_at' => now(),
-            'updated_at' => now(),
+            'fecha' => now(),
         ]);
 
         $usuarioA = $this->crearUsuarioCliente();

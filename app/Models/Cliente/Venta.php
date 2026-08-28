@@ -59,6 +59,24 @@ class Venta extends Model
         return $this->belongsTo(User::class, 'usuario_id');
     }
 
+    public function caja(): BelongsTo
+    {
+        return $this->belongsTo(Caja::class);
+    }
+
+    /**
+     * A qué "día" pertenece para filtros/reportes -no es la fecha
+     * calendario de la venta, es el día en que se ABRIÓ la caja de ese
+     * turno (igual que ya hace el historial de Caja). Así una venta de la
+     * 1am de un turno que sigue abierto desde ayer no "se pasa" al día
+     * siguiente en los filtros. Sin caja asociada (ej. una venta digital
+     * registrada con la caja cerrada), cae de vuelta a su propia fecha.
+     */
+    public function fechaTurno(): string
+    {
+        return ($this->caja?->apertura_en ?? $this->fecha)->toDateString();
+    }
+
     /**
      * Solo está presente si el cliente pidió factura a su nombre al
      * momento de la venta -no implica que el documento DIAN ya se haya
@@ -72,6 +90,21 @@ class Venta extends Model
     public function detalles(): HasMany
     {
         return $this->hasMany(VentaDetalle::class, 'venta_id');
+    }
+
+    /**
+     * Igual que `detalles`, pero agrupado por producto -una venta puede
+     * tener varias filas del mismo producto si salió de más de un lote
+     * (costeo FIFO, ver LoteInventario), y eso es un detalle interno de
+     * costeo que no le compete mostrar al recibo del cliente.
+     */
+    public function detallesAgrupados(): \Illuminate\Support\Collection
+    {
+        return $this->detalles->groupBy('producto_id')->map(fn ($grupo) => (object) [
+            'producto' => $grupo->first()->producto,
+            'cantidad' => $grupo->sum('cantidad'),
+            'precio_unitario_venta' => $grupo->first()->precio_unitario_venta,
+        ])->values();
     }
 
     public function pagoEfectivo(): HasOne
@@ -108,6 +141,7 @@ class Venta extends Model
         return [
             'id' => $this->id,
             'fecha' => $this->fecha->toDateString(),
+            'fechaTurno' => $this->fechaTurno(),
             'hora' => $this->formatearHora(),
             'total' => (float) $this->total,
             'metodo' => $this->metodo_pago,
@@ -120,11 +154,15 @@ class Venta extends Model
                 'numeroDocumento' => $this->comprador->numero_documento,
             ] : null,
             'ganancia' => $this->gananciaBruta(),
-            'lineas' => $this->detalles->map(fn (VentaDetalle $detalle) => [
-                'nombre' => $detalle->producto->nombre,
-                'cantidad' => $detalle->cantidad,
-                'precio' => (float) $detalle->precio_unitario_venta,
-            ])->all(),
+            // Se agrupa por producto porque una sola línea de venta puede
+            // haber salido de varios lotes con costo distinto (FIFO) -eso
+            // es invisible para el cliente, que solo debe ver "Aguardiente
+            // x3", no tres filas repetidas del mismo producto.
+            'lineas' => $this->detalles->groupBy('producto_id')->map(fn ($grupo) => [
+                'nombre' => $grupo->first()->producto->nombre,
+                'cantidad' => $grupo->sum('cantidad'),
+                'precio' => (float) $grupo->first()->precio_unitario_venta,
+            ])->values()->all(),
         ];
     }
 

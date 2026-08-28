@@ -28,8 +28,9 @@ class ProfileTest extends TestCase
         $response = $this
             ->actingAs($user)
             ->patch('/profile', [
-                'name' => 'Test User',
-                'email' => 'test@example.com',
+                'nombres' => 'Test',
+                'apellidos' => 'User',
+                'correo' => 'test@example.com',
             ]);
 
         $response
@@ -38,27 +39,29 @@ class ProfileTest extends TestCase
 
         $user->refresh();
 
-        $this->assertSame('Test User', $user->name);
-        $this->assertSame('test@example.com', $user->email);
-        $this->assertNull($user->email_verified_at);
+        $this->assertSame('Test', $user->nombres);
+        $this->assertSame('User', $user->apellidos);
+        $this->assertSame('test@example.com', $user->correo);
     }
 
-    public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged(): void
+    // No hay verificación de correo en esta app (ni la columna existe en
+    // usuarios) -a diferencia del Breeze original, acá solo se prueba que
+    // guardar el perfil sin cambiar el correo funcione igual de bien.
+    public function test_profile_can_be_updated_without_changing_the_email(): void
     {
         $user = User::factory()->create();
 
         $response = $this
             ->actingAs($user)
             ->patch('/profile', [
-                'name' => 'Test User',
-                'email' => $user->email,
+                'nombres' => 'Test',
+                'apellidos' => 'User',
+                'correo' => $user->correo,
             ]);
 
         $response
             ->assertSessionHasNoErrors()
             ->assertRedirect('/profile');
-
-        $this->assertNotNull($user->refresh()->email_verified_at);
     }
 
     public function test_user_can_delete_their_account(): void

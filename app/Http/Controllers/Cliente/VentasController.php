@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Cliente;
 use App\Http\Controllers\Controller;
 use App\Models\Cliente\Caja;
 use App\Models\Cliente\Comprador;
+use App\Models\Cliente\LoteInventario;
 use App\Models\Cliente\PagoEfectivo;
 use App\Models\Cliente\PagoPasarela;
 use App\Models\Cliente\Producto;
@@ -22,7 +23,7 @@ class VentasController extends Controller
 {
     public function index()
     {
-        $ventas = Venta::with(['detalles.producto', 'comprador'])
+        $ventas = Venta::with(['detalles.producto', 'comprador', 'caja'])
             ->orderByDesc('fecha')
             ->get()
             ->map(fn (Venta $venta) => $venta->toResumenArray());
@@ -44,6 +45,12 @@ class VentasController extends Controller
         return view('cliente.ventas', [
             'ventas' => $ventas,
             'productosVenta' => $productosVenta,
+            // El filtro de fecha por defecto es el "hoy" de turno, no
+            // medianoche real -mismo criterio que el Dashboard (ver
+            // Caja::inicioDeHoy()), para que al entrar a Ventas ya se vean
+            // filtradas las del turno actual, sin importar si cruzó la
+            // medianoche.
+            'fechaHoyTurno' => Caja::inicioDeHoy()->toDateString(),
         ]);
     }
 
@@ -136,13 +143,25 @@ class VentasController extends Controller
             foreach ($validated['lineas'] as $linea) {
                 $producto = $productos[$linea['producto_id']];
 
-                VentaDetalle::create([
-                    'venta_id' => $venta->id,
-                    'producto_id' => $producto->id,
-                    'cantidad' => $linea['cantidad'],
-                    'precio_unitario_venta' => $producto->precio_venta,
-                    'precio_unitario_costo' => $producto->precio_costo,
-                ]);
+                // FIFO: se descuenta primero del lote más viejo en
+                // vitrina, y la ganancia de cada porción se calcula con el
+                // costo REAL de ese lote -no con precio_costo del
+                // producto, que es solo el valor mostrado por defecto en
+                // el catálogo. Si la venta abarca varios lotes con costo
+                // distinto, quedan varias líneas para el mismo producto
+                // (el recibo las agrupa de vuelta, ver Venta::toResumenArray()).
+                $consumo = LoteInventario::consumirFifo($producto->id, 'cantidad_vitrina', $linea['cantidad']);
+
+                foreach ($consumo as $item) {
+                    VentaDetalle::create([
+                        'venta_id' => $venta->id,
+                        'producto_id' => $producto->id,
+                        'lote_inventario_id' => $item['lote']->id,
+                        'cantidad' => $item['cantidad'],
+                        'precio_unitario_venta' => $producto->precio_venta,
+                        'precio_unitario_costo' => $item['costoUnitario'],
+                    ]);
+                }
 
                 $producto->inventarioVitrina->decrement('stock', $linea['cantidad']);
             }
@@ -170,7 +189,7 @@ class VentasController extends Controller
             return $venta;
         });
 
-        $venta->load('detalles.producto', 'comprador');
+        $venta->load('detalles.producto', 'comprador', 'caja');
 
         $productosActualizados = Producto::with('inventarioVitrina')
             ->whereIn('id', $productoIds)
@@ -200,11 +219,17 @@ class VentasController extends Controller
             return response()->json(['message' => 'Esta venta ya está anulada.'], 422);
         }
 
-        $venta->load('detalles.producto.inventarioVitrina');
+        $venta->load('detalles.producto.inventarioVitrina', 'detalles.loteInventario', 'caja');
 
         DB::transaction(function () use ($venta) {
             foreach ($venta->detalles as $detalle) {
                 $detalle->producto->inventarioVitrina->increment('stock', $detalle->cantidad);
+
+                // Regresa las unidades a su lote de origen -si no se hace,
+                // el lote quedaría "corto" y una venta futura de ese
+                // producto podría fallar por falta de stock en lotes,
+                // aunque el total agregado de vitrina sí alcance.
+                $detalle->loteInventario?->increment('cantidad_vitrina', $detalle->cantidad);
             }
 
             $venta->update(['anulada_en' => now()]);
