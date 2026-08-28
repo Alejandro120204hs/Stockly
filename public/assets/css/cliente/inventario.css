@@ -9,16 +9,6 @@
    esta vista: pestañas, botón de transferir, y el toggle proveedor/informal.
    ========================================================================== */
 
-/* ---------- Botón destructivo (eliminar producto/categoría) ---------- */
-.cliente-btn-ghost--peligro {
-    color: var(--color-error);
-    border-color: var(--color-error);
-}
-
-.cliente-btn-ghost--peligro:hover {
-    background-color: var(--color-error-soft);
-}
-
 /* ---------- Stat cards: 5 en una sola fila (más angostas que en
    Dashboard/Caja, que solo tienen 4) ---------- */
 .stat-grid--inventario {
@@ -290,27 +280,6 @@
 }
 
 .compra-line__costo-input:focus {
-    outline: none;
-    border-color: var(--color-sage);
-    box-shadow: 0 0 0 3px var(--color-sage-soft);
-}
-
-/* ---------- Cantidad escribible en "Registrar compra" ----------
-   .venta-line__qty-value (tamaño/tipografía base) vive en
-   nueva-venta-modal.css y la comparte el <span> de solo lectura de
-   "Nueva venta" -este modificador es solo para el <input> de acá,
-   para no ponerle borde/fondo de campo al de la venta. */
-.venta-line__qty-value--input {
-    border: 1px solid var(--color-border-16);
-    border-radius: 6px;
-    padding: 3px 2px;
-    background-color: var(--color-surface);
-    color: var(--color-slate);
-    font-family: inherit;
-    width: 36px;
-}
-
-.venta-line__qty-value--input:focus {
     outline: none;
     border-color: var(--color-sage);
     box-shadow: 0 0 0 3px var(--color-sage-soft);

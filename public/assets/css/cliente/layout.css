@@ -263,6 +263,18 @@ body.cliente-body {
     flex-shrink: 0;
 }
 
+/* Logo real de la empresa en vez de las iniciales -mismo círculo, con
+   fondo blanco (muchos logos vienen con fondo transparente y quedarían
+   "flotando" sobre el color oscuro del sidebar). object-fit: contain (no
+   cover) para que el logo se vea COMPLETO -cover recortaba los bordes
+   del logo si no era perfectamente cuadrado, cortando texto o partes del
+   diseño. */
+.cliente-user-card__avatar--img {
+    object-fit: contain;
+    background-color: var(--color-surface);
+    padding: 3px;
+}
+
 .cliente-user-card__info {
     min-width: 0;
 }
@@ -374,6 +386,12 @@ body.cliente-body {
     font-weight: 700;
     font-size: 0.82rem;
     flex-shrink: 0;
+}
+
+.cliente-topbar__avatar--img {
+    object-fit: contain;
+    background-color: var(--color-surface);
+    padding: 3px;
 }
 
 .cliente-content {
@@ -605,6 +623,18 @@ body.cliente-body {
 .cliente-btn-ghost:hover {
     border-color: var(--color-sage);
     background-color: var(--color-sage-soft);
+}
+
+/* Variante para acciones destructivas (eliminar producto/categoría,
+   anular venta...) -acá y no en una hoja de una sola página porque el
+   panel de detalle de venta se comparte entre Ventas y el Dashboard. */
+.cliente-btn-ghost--peligro {
+    color: var(--color-error);
+    border-color: var(--color-error);
+}
+
+.cliente-btn-ghost--peligro:hover {
+    background-color: var(--color-error-soft);
 }
 
 /* ==========================================================================
@@ -849,6 +879,25 @@ body.cliente-body {
     overflow-y: auto;
     overflow-x: hidden;
     flex: 1;
+}
+
+.venta-anulada-banner {
+    padding: 12px 14px;
+    margin-bottom: 20px;
+    border-radius: var(--radius-md);
+    background-color: var(--color-error-soft);
+    color: var(--color-error);
+    font-size: 0.84rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+/* Fila de una venta anulada -en la tabla de Ventas (<tr>) y en "Ventas
+   recientes" del Dashboard (<div>), por eso genérico y no atado a
+   .data-table__row. No se quita la fila, se atenúa -para que quede el
+   rastro visible de que existió y se canceló. */
+.venta-fila-anulada {
+    opacity: 0.5;
 }
 
 .slide-over__section {

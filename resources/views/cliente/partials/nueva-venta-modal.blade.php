@@ -1,21 +1,8 @@
 {{-- Modal "Nueva venta" — compartido entre el dashboard y la vista de
      Ventas (@include en ambos), un solo botón con id="nuevaVentaBtn" en
      cada página lo abre. Los campos siguen las columnas reales de
-     ventas/venta_detalle/pagos_efectivo/pagos_pasarela aunque todavía no
-     haya backend -para que sea fácil de conectar más adelante. Los
-     productos y precios son mock (Inventario no existe todavía). --}}
-
-<script id="ventaProductosData" type="application/json">
-    [
-        {"id": 1, "nombre": "Aguardiente Antioqueño 750ml", "precio": 45000},
-        {"id": 2, "nombre": "Ron Medellín Añejo 750ml", "precio": 62000},
-        {"id": 3, "nombre": "Cerveza Águila Lata 330ml", "precio": 3500},
-        {"id": 4, "nombre": "Whisky Old Parr 750ml", "precio": 185000},
-        {"id": 5, "nombre": "Vino Santa Rita 750ml", "precio": 58000},
-        {"id": 6, "nombre": "Cerveza Club Colombia 330ml", "precio": 4200},
-        {"id": 7, "nombre": "Ron Viejo de Caldas 750ml", "precio": 54000}
-    ]
-</script>
+     ventas/venta_detalle/pagos_efectivo/pagos_pasarela. $productosVenta
+     lo entregan tanto VentasController como DashboardController. --}}
 
 <div class="modal-overlay" id="nuevaVentaOverlay"></div>
 
@@ -45,6 +32,29 @@
             <strong id="ventaTotal">$0</strong>
         </div>
 
+        <label class="venta-factura-toggle">
+            <input type="checkbox" id="ventaQuiereFactura">
+            <span>¿El cliente necesita factura a su nombre?</span>
+        </label>
+
+        <div class="venta-factura-panel" id="ventaFacturaPanel" hidden>
+            <div class="venta-factura-panel__row">
+                <div>
+                    <label for="ventaCompradorTipoDocumento" class="cliente-label">Tipo de documento</label>
+                    <select id="ventaCompradorTipoDocumento" class="cliente-input">
+                        <option value="CC">Cédula</option>
+                        <option value="NIT">NIT</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="ventaCompradorNumeroDocumento" class="cliente-label">Número de documento</label>
+                    <input type="text" id="ventaCompradorNumeroDocumento" class="cliente-input" placeholder="Ej: 1020304050" autocomplete="off">
+                </div>
+            </div>
+            <label for="ventaCompradorNombre" class="cliente-label">Nombre completo</label>
+            <input type="text" id="ventaCompradorNombre" class="cliente-input" placeholder="Nombre de quien recibe la factura" autocomplete="off">
+        </div>
+
         <label class="cliente-label">Método de pago</label>
         <div class="venta-payment-toggle">
             <button type="button" class="venta-payment-btn is-active" data-metodo="efectivo" id="ventaBtnEfectivo">Efectivo</button>
@@ -53,7 +63,7 @@
 
         <div class="venta-payment-panel" id="ventaPagoEfectivo">
             <label for="ventaMontoRecibido" class="cliente-label">Monto recibido</label>
-            <input type="number" id="ventaMontoRecibido" class="cliente-input" placeholder="0" min="0" step="1000">
+            <input type="text" inputmode="numeric" id="ventaMontoRecibido" class="cliente-input" placeholder="0" autocomplete="off">
             <div class="venta-cambio-row">
                 <span>Cambio a devolver</span>
                 <strong id="ventaCambio">$0</strong>
@@ -77,3 +87,5 @@
         <button type="button" class="cliente-btn-primary" id="ventaRegistrarBtn" disabled>Registrar venta</button>
     </div>
 </div>
+
+<script id="ventaProductosData" type="application/json">{!! json_encode($productosVenta) !!}</script>

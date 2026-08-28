@@ -261,6 +261,27 @@ function initRegisterWizard() {
     }
 
     /* ------------------------------------------------------------------
+     * 3b. Logo del negocio (opcional) -solo cambia el texto de la caja
+     *     al nombre del archivo elegido, el input real sigue oculto.
+     * ------------------------------------------------------------------ */
+
+    var logoInput = wizard.querySelector('#logo');
+    var logoFileName = wizard.querySelector('#logo-file-name');
+
+    if (logoInput && logoFileName) {
+        logoInput.addEventListener('change', function () {
+            var picker = logoFileName.closest('.form-file-picker');
+            if (logoInput.files.length > 0) {
+                logoFileName.textContent = logoInput.files[0].name;
+                picker.classList.add('has-file');
+            } else {
+                logoFileName.textContent = 'Elegir imagen (JPG, PNG o SVG, máx. 2MB)';
+                picker.classList.remove('has-file');
+            }
+        });
+    }
+
+    /* ------------------------------------------------------------------
      * 4. Nombres y apellidos van al backend como campos separados
      *    (first_name / last_name), así que acá solo se leen para el
      *    resumen del paso 3 -no hace falta combinarlos.
