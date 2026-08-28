@@ -24,8 +24,10 @@ class ConfirmablePasswordController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        // La tabla usuarios guarda el correo en la columna "correo", no
+        // "email" -mismo motivo que en LoginRequest/NewPasswordController.
         if (! Auth::guard('web')->validate([
-            'email' => $request->user()->email,
+            'correo' => $request->user()->correo,
             'password' => $request->password,
         ])) {
             throw ValidationException::withMessages([

@@ -250,6 +250,7 @@
                             <th>Proveedor</th>
                             <th>Productos</th>
                             <th>Total</th>
+                            <th>Método</th>
                             <th>Factura</th>
                         </tr>
                     </thead>
@@ -262,6 +263,17 @@
                                 </td>
                                 <td class="data-table__meta">{{ count($compra['lineas']) }} producto{{ count($compra['lineas']) === 1 ? '' : 's' }}</td>
                                 <td class="data-table__title">${{ number_format($compra['total'], 0, ',', '.') }}</td>
+                                <td class="data-table__meta">
+                                    @if ($compra['metodo'] === 'efectivo')
+                                        Efectivo (caja)
+                                    @elseif ($compra['metodo'] === 'efectivo_externo')
+                                        Efectivo (aparte)
+                                    @elseif ($compra['metodo'] === 'digital')
+                                        Digital (de hoy)
+                                    @else
+                                        Digital (aparte)
+                                    @endif
+                                </td>
                                 <td>
                                     <span class="status-pill {{ $facturaPillClass[$compra['facturaEstado']] }}">
                                         {{ $facturaLabels[$compra['facturaEstado']] }}
@@ -364,6 +376,7 @@
                 <h3 class="slide-over__section-title">Compra</h3>
                 <div class="slide-over__compra-info">
                     <div class="slide-over__field"><span>Origen</span><strong id="compraSlideOverOrigen">—</strong></div>
+                    <div class="slide-over__field"><span>Método de pago</span><strong id="compraSlideOverMetodo">—</strong></div>
                     <div class="slide-over__field" id="compraSlideOverCufeRow"><span>CUFE</span><strong id="compraSlideOverCufe">—</strong></div>
                     <div class="slide-over__compra-info-total">
                         <span>Total de la compra</span>
@@ -460,74 +473,7 @@
         </div>
     </div>
 
-    {{-- ==================================================================
-         MODAL — Registrar compra
-         ================================================================== --}}
-    <div class="modal-overlay" id="registrarCompraOverlay"></div>
-
-    <div class="modal" id="registrarCompraModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="registrarCompraTitle">
-        <div class="modal__header">
-            <h2 class="modal__title" id="registrarCompraTitle">Registrar compra</h2>
-            <button type="button" class="modal__close" id="registrarCompraClose" aria-label="Cerrar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M6 6l12 12M18 6 6 18"/>
-                </svg>
-            </button>
-        </div>
-
-        <div class="modal__body">
-            <div class="compra-tipo-toggle">
-                <button type="button" class="compra-tipo-btn is-active" id="compraTipoProveedorBtn">Con proveedor</button>
-                <button type="button" class="compra-tipo-btn" id="compraTipoInformalBtn">Compra informal</button>
-            </div>
-
-            <div id="compraProveedorFields">
-                <label for="compraProveedorSelect" class="cliente-label">Proveedor</label>
-                <select id="compraProveedorSelect" class="cliente-toolbar__select" style="width:100%; margin-bottom:6px;">
-                    @if (count($proveedores) === 0)
-                        <option value="" disabled selected>No tienes proveedores todavía</option>
-                    @else
-                        @foreach ($proveedores as $proveedor)
-                            <option value="{{ $proveedor->id }}">{{ $proveedor->nombre }}</option>
-                        @endforeach
-                    @endif
-                </select>
-                <p class="compra-proveedor-hint">
-                    ¿No está en la lista? <a href="{{ url('/cliente/proveedores') }}">Regístralo en Proveedores</a> con sus datos fiscales.
-                </p>
-
-                <label for="compraCufeInput" class="cliente-label">CUFE o código de la factura</label>
-                <div style="display:flex; gap:8px; margin-bottom:6px;">
-                    <input type="text" id="compraCufeInput" class="cliente-input" placeholder="Escanea el QR o pega el CUFE" style="flex:1;">
-                    <button type="button" class="cliente-btn-ghost" id="compraValidarBtn">Validar</button>
-                </div>
-                <p class="compra-validar-status" id="compraValidarStatus">Sin validar todavía. El QR solo confirma que la factura existe ante la DIAN -los productos se agregan abajo, a mano.</p>
-            </div>
-
-            <p class="compra-informal-hint" id="compraInformalHint" hidden>
-                Compra sin factura formal -no se valida ante la DIAN, solo queda registrada internamente.
-            </p>
-
-            <div class="venta-product-search" style="margin-top:16px;">
-                <label for="compraProductoSearch" class="cliente-label">Buscar producto del catálogo</label>
-                <input type="text" id="compraProductoSearch" class="cliente-input" placeholder="Ej: aguardiente, ron, cerveza..." autocomplete="off">
-                <div class="venta-product-results" id="compraProductoResults" hidden></div>
-            </div>
-
-            <div class="venta-lines" id="compraLines">
-                <p class="venta-lines__empty" id="compraLinesEmpty">Todavía no has agregado productos.</p>
-            </div>
-
-            <div class="venta-total-row">
-                <span>Total de la compra</span>
-                <strong id="compraTotal">$0</strong>
-            </div>
-        </div>
-
-        <div class="modal__footer">
-            <button type="button" class="cliente-btn-primary" id="compraRegistrarBtn" disabled>Registrar compra</button>
-        </div>
-    </div>
+    @include('cliente.partials.registrar-compra-modal', ['productosCompra' => $productos])
 
     {{-- ==================================================================
          MODAL — Transferir de bodega a vitrina
@@ -565,6 +511,7 @@
 
     @push('scripts')
         <script src="{{ asset_v('assets/js/cliente/inventario.js') }}" defer></script>
+        <script src="{{ asset_v('assets/js/cliente/registrar-compra-modal.js') }}" defer></script>
     @endpush
 
 </x-cliente-layout>

@@ -128,6 +128,26 @@
     font-weight: 600;
 }
 
+/* ---------- Cantidad escribible (Nueva venta y Registrar compra) ----------
+   El tamaño/tipografía base es .venta-line__qty-value de arriba (lo
+   comparte el <input>); este modificador solo le pone borde/fondo de
+   campo, para no afectar otros usos futuros de .venta-line__qty-value. */
+.venta-line__qty-value--input {
+    border: 1px solid var(--color-border-16);
+    border-radius: 6px;
+    padding: 3px 2px;
+    background-color: var(--color-surface);
+    color: var(--color-slate);
+    font-family: inherit;
+    width: 36px;
+}
+
+.venta-line__qty-value--input:focus {
+    outline: none;
+    border-color: var(--color-sage);
+    box-shadow: 0 0 0 3px var(--color-sage-soft);
+}
+
 .venta-line__subtotal {
     flex-shrink: 0;
     width: 84px;
@@ -179,6 +199,46 @@
     color: var(--color-sage-dark);
 }
 
+/* ---------- ¿Necesita factura a su nombre? ----------
+   Estructura para cuando se conecte Factus más adelante: guarda quién
+   pidió la factura, pero no genera ningún documento DIAN todavía. */
+.venta-factura-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 0;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--color-slate);
+    cursor: pointer;
+}
+
+.venta-factura-toggle input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-sage);
+    cursor: pointer;
+}
+
+.venta-factura-panel {
+    margin-bottom: 16px;
+    padding: 14px;
+    border-radius: var(--radius-md);
+    background-color: var(--color-background);
+}
+
+.venta-factura-panel__row {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.venta-factura-panel .cliente-label {
+    display: block;
+    margin-bottom: 6px;
+}
+
 /* ---------- Método de pago ---------- */
 .venta-payment-toggle {
     display: flex;
@@ -204,6 +264,15 @@
     border-color: var(--color-sage);
     background-color: var(--color-sage-soft);
     color: var(--color-sage-dark);
+}
+
+/* Explica qué implica cada método en "Registrar compra" -compartido entre
+   Inventario y el Dashboard, por eso vive acá y no en inventario.css. */
+.compra-metodo-hint {
+    margin: -6px 0 16px;
+    font-size: 0.78rem;
+    color: var(--color-mist);
+    line-height: 1.4;
 }
 
 .venta-cambio-row {
@@ -270,6 +339,10 @@
         white-space: normal;
         overflow: visible;
         text-overflow: clip;
+    }
+
+    .venta-factura-panel__row {
+        grid-template-columns: 1fr;
     }
 }
 

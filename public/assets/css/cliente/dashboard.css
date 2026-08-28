@@ -26,6 +26,8 @@
     background-color: var(--color-surface);
     cursor: pointer;
     text-align: left;
+    text-decoration: none;
+    color: inherit;
     font-family: inherit;
     box-shadow: 0 12px 30px -22px rgba(30, 45, 61, 0.35);
     transition: transform 0.25s ease, box-shadow 0.25s ease;
@@ -199,6 +201,14 @@
     margin-right: -6px;
 }
 
+.sale-list__empty {
+    margin: 0;
+    padding: 24px 0;
+    text-align: center;
+    font-size: 0.86rem;
+    color: var(--color-mist);
+}
+
 .sale-row {
     display: flex;
     align-items: center;
@@ -206,10 +216,12 @@
     padding: 10px 12px;
     border-radius: var(--radius-md);
     border: 1px solid var(--color-border-07);
+    cursor: pointer;
     transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-.sale-row:hover {
+.sale-row:hover,
+.sale-row:focus-visible {
     background-color: var(--color-background);
     border-color: var(--color-border-10);
 }

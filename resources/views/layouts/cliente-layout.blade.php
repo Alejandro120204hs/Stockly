@@ -15,6 +15,13 @@
 </head>
 <body class="cliente-body">
 
+    @php
+        $iniciales = $authUser
+            ? strtoupper(mb_substr($authUser->nombres, 0, 1).mb_substr($authUser->apellidos, 0, 1))
+            : '';
+        $logoUrl = $empresa?->logoUrl();
+    @endphp
+
     <div class="cliente-shell">
 
         <!-- ==========================================================
@@ -29,7 +36,7 @@
                 </svg>
                 Stockly
             </a>
-            <span class="cliente-sidebar__badge">Licores El Roble</span>
+            <span class="cliente-sidebar__badge">{{ $empresa?->nombre_negocio }}</span>
 
             <nav class="cliente-sidebar__nav">
                 <a href="{{ url('/cliente/dashboard') }}" class="cliente-nav-item {{ request()->is('cliente/dashboard') ? 'is-active' : '' }}">
@@ -75,6 +82,15 @@
                     <span class="cliente-nav-item__label">Caja</span>
                 </a>
 
+                <a href="{{ url('/cliente/gastos') }}" class="cliente-nav-item {{ request()->is('cliente/gastos') ? 'is-active' : '' }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v3"/>
+                        <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2H5a2 2 0 0 1-2-2Z"/>
+                        <path d="M17 14h.01"/>
+                    </svg>
+                    <span class="cliente-nav-item__label">Gastos</span>
+                </a>
+
                
 
                 <a href="{{ url('/cliente/facturacion') }}" class="cliente-nav-item {{ request()->is('cliente/facturacion') ? 'is-active' : '' }}">
@@ -86,14 +102,7 @@
                     <span class="cliente-nav-item__label">Facturación</span>
                 </a>
 
-                <a href="#" class="cliente-nav-item" data-coming-soon="La sección de Gastos está en construcción.">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v3"/>
-                        <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2H5a2 2 0 0 1-2-2Z"/>
-                        <path d="M17 14h.01"/>
-                    </svg>
-                    <span class="cliente-nav-item__label">Gastos</span>
-                </a>
+                
 
                 <a href="#" class="cliente-nav-item" data-coming-soon="La sección de Reportes está en construcción.">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -102,7 +111,7 @@
                     <span class="cliente-nav-item__label">Reportes</span>
                 </a>
 
-                <a href="#" class="cliente-nav-item" data-coming-soon="La sección de Mi perfil está en construcción.">
+                <a href="{{ url('/cliente/perfil') }}" class="cliente-nav-item {{ request()->is('cliente/perfil') ? 'is-active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <circle cx="12" cy="12" r="3"/>
                         <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.35a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.65 15a1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.65 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.65a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.35 9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.04Z"/>
@@ -112,11 +121,15 @@
             </nav>
 
             <div class="cliente-sidebar__footer">
-                <a href="#" class="cliente-user-card" data-coming-soon="La sección de Mi perfil está en construcción.">
-                    <span class="cliente-user-card__avatar">LR</span>
+                <a href="{{ url('/cliente/perfil') }}" class="cliente-user-card">
+                    @if ($logoUrl)
+                        <img src="{{ $logoUrl }}" alt="" class="cliente-user-card__avatar cliente-user-card__avatar--img">
+                    @else
+                        <span class="cliente-user-card__avatar">{{ $iniciales }}</span>
+                    @endif
                     <div class="cliente-user-card__info">
-                        <p class="cliente-user-card__name">Laura Ramírez</p>
-                        <p class="cliente-user-card__role">Administradora</p>
+                        <p class="cliente-user-card__name">{{ $authUser?->nombres }} {{ $authUser?->apellidos }}</p>
+                        <p class="cliente-user-card__role">{{ $empresa?->tipo_negocio }}</p>
                     </div>
                 </a>
                 <form method="POST" action="{{ route('logout') }}">
@@ -149,7 +162,13 @@
                 <h1 class="cliente-topbar__title">{{ $title }}</h1>
 
                 <div class="cliente-topbar__actions">
-                    <span class="cliente-topbar__avatar">LR</span>
+                    <a href="{{ url('/cliente/perfil') }}" aria-label="Mi perfil">
+                        @if ($logoUrl)
+                            <img src="{{ $logoUrl }}" alt="" class="cliente-topbar__avatar cliente-topbar__avatar--img">
+                        @else
+                            <span class="cliente-topbar__avatar">{{ $iniciales }}</span>
+                        @endif
+                    </a>
                 </div>
             </header>
 

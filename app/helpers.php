@@ -18,3 +18,17 @@ if (! function_exists('asset_v')) {
         return asset($path).'?v='.$version;
     }
 }
+
+if (! function_exists('hora_es')) {
+    /**
+     * Carbon en español da "9:11 p. m." -con espacio normal ese "p. m."
+     * puede partirse en dos líneas ("p.\nm.") si el contenedor es angosto
+     * (pasó en las stat cards del Dashboard/Caja). Este espacio va con
+     * NBSP para que el meridiano siempre quede junto; el espacio entre la
+     * hora y el meridiano sí puede partirse, ese salto se ve bien.
+     */
+    function hora_es(\Carbon\Carbon $fecha): string
+    {
+        return preg_replace('/([ap])\. m\./', "$1.\u{00A0}m.", $fecha->locale('es')->translatedFormat('g:i a'));
+    }
+}

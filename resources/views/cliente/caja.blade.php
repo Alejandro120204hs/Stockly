@@ -1,40 +1,15 @@
 <x-cliente-layout title="Caja">
 
-    {{-- Caja — SOLO FRONTEND, datos mock. Sigue la regla de negocio real:
-         apertura define una base de efectivo (`caja_apertura`); el cierre
-         (`caja_cierre`) calcula base + ventas efectivo + ventas digitales
-         confirmadas − gastos en efectivo = total esperado, se compara
-         contra el conteo físico real, y se guarda la diferencia
-         (faltante/sobrante). Los montos de "hoy" (ventas/gastos) son fijos
-         acá porque no hay backend todavía -en producción vendrían de
-         ventas/gastos reales del día. --}}
-    @php
-        $ventasEfectivoHoy = 420000;
-        $ventasDigitalHoy = 680000;
-        $gastosEfectivoHoy = 45000;
-
-        $cierres = [
-            ['id' => 6, 'fecha' => '24 ago 2026', 'abrioPor' => 'Laura Ramírez', 'baseInicial' => 150000, 'ventasEfectivo' => 395000, 'ventasDigital' => 610000, 'gastosEfectivo' => 65000, 'totalEsperado' => 480000, 'conteoReal' => 480000, 'horaCierre' => '8:05 p.m.'],
-            ['id' => 5, 'fecha' => '23 ago 2026', 'abrioPor' => 'Laura Ramírez', 'baseInicial' => 150000, 'ventasEfectivo' => 402000, 'ventasDigital' => 590000, 'gastosEfectivo' => 42000, 'totalEsperado' => 510000, 'conteoReal' => 505000, 'horaCierre' => '7:52 p.m.'],
-            ['id' => 4, 'fecha' => '22 ago 2026', 'abrioPor' => 'Laura Ramírez', 'baseInicial' => 150000, 'ventasEfectivo' => 358000, 'ventasDigital' => 720000, 'gastosEfectivo' => 48000, 'totalEsperado' => 460000, 'conteoReal' => 465000, 'horaCierre' => '8:10 p.m.'],
-            ['id' => 3, 'fecha' => '21 ago 2026', 'abrioPor' => 'Laura Ramírez', 'baseInicial' => 150000, 'ventasEfectivo' => 390000, 'ventasDigital' => 655000, 'gastosEfectivo' => 45000, 'totalEsperado' => 495000, 'conteoReal' => 495000, 'horaCierre' => '7:48 p.m.'],
-            ['id' => 2, 'fecha' => '20 ago 2026', 'abrioPor' => 'Laura Ramírez', 'baseInicial' => 150000, 'ventasEfectivo' => 425000, 'ventasDigital' => 580000, 'gastosEfectivo' => 45000, 'totalEsperado' => 530000, 'conteoReal' => 520000, 'horaCierre' => '8:20 p.m.'],
-            ['id' => 1, 'fecha' => '19 ago 2026', 'abrioPor' => 'Laura Ramírez', 'baseInicial' => 150000, 'ventasEfectivo' => 368000, 'ventasDigital' => 602000, 'gastosEfectivo' => 48000, 'totalEsperado' => 470000, 'conteoReal' => 478000, 'horaCierre' => '7:55 p.m.'],
-        ];
-
-        foreach ($cierres as &$cierre) {
-            $cierre['totalGeneral'] = $cierre['totalEsperado'] + $cierre['ventasDigital'];
-            $cierre['diferencia'] = $cierre['conteoReal'] - $cierre['totalEsperado'];
-        }
-        unset($cierre);
-
-        $diasSinCuadrar = collect($cierres)->where('diferencia', '!=', 0)->count();
-    @endphp
-
+    {{-- Caja — datos reales (App\Http\Controllers\Cliente\CajaController).
+         Una caja es una SESIÓN (abrir -> cerrar), no un día calendario -si
+         el negocio cierra pasada la medianoche, esa sesión completa sigue
+         siendo la misma caja. Si se cierra por error, se puede reabrir
+         mientras siga siendo la más reciente ($ultimaCajaId): el mismo
+         reporte sigue vivo, solo se limpia el conteo físico/diferencia. --}}
     <div class="cliente-page-header cliente-reveal cliente-reveal-1">
         <div>
             <p class="cliente-page-header__eyebrow">Tu negocio</p>
-            <h1 class="cliente-page-header__title">Caja</h1>
+            <h1 class="cliente-page-header__title">Control de caja</h1>
             <p class="cliente-page-header__date">{{ count($cierres) }} cierres registrados</p>
         </div>
     </div>
@@ -43,7 +18,7 @@
          STAT CARDS
          ========================================================== -->
     <section class="stat-grid cliente-reveal cliente-reveal-2">
-        <div class="stat-card stat-card--mist" id="cajaEstadoCard">
+        <div class="stat-card {{ $cajaAbierta ? 'stat-card--sage' : 'stat-card--mist' }}" id="cajaEstadoCard">
             <div class="stat-card__icon" id="cajaEstadoIcono">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
@@ -51,9 +26,15 @@
                     <path d="M6 9v.01M18 15v.01"/>
                 </svg>
             </div>
-            <span class="stat-card__value stat-card__value--status" id="cajaEstadoValor">Cerrada</span>
-            <span class="stat-card__label">Estado de hoy</span>
-            <span class="stat-card__meta" id="cajaEstadoMeta">Todavía no la has abierto hoy</span>
+            <span class="stat-card__value stat-card__value--status" id="cajaEstadoValor">{{ $cajaAbierta ? 'Abierta' : 'Cerrada' }}</span>
+            <span class="stat-card__label">Estado actual</span>
+            <span class="stat-card__meta" id="cajaEstadoMeta">
+                @if ($cajaAbierta)
+                    Base ${{ number_format($cajaAbierta['baseInicial'], 0, ',', '.') }} · {{ $cajaAbierta['horaApertura'] }}
+                @else
+                    Todavía no la has abierto
+                @endif
+            </span>
         </div>
 
         <div class="stat-card stat-card--sage">
@@ -63,8 +44,8 @@
                     <path d="M4 7h16l-1.5 13.5a2 2 0 0 1-2 1.5H7.5a2 2 0 0 1-2-1.5L4 7Z"/>
                 </svg>
             </div>
-            <span class="stat-card__value" data-count="{{ $ventasEfectivoHoy + $ventasDigitalHoy }}" data-prefix="$">$0</span>
-            <span class="stat-card__label">Ventas de hoy</span>
+            <span class="stat-card__value" id="cajaStatVentas" data-count="{{ $cajaAbierta ? $cajaAbierta['ventasEfectivo'] + $cajaAbierta['ventasDigital'] : 0 }}" data-prefix="$">$0</span>
+            <span class="stat-card__label">Ventas de la caja actual</span>
             <span class="stat-card__meta">Efectivo + digital</span>
         </div>
 
@@ -76,9 +57,9 @@
                     <path d="M17 14h.01"/>
                 </svg>
             </div>
-            <span class="stat-card__value" data-count="{{ $gastosEfectivoHoy }}" data-prefix="$">$0</span>
-            <span class="stat-card__label">Gastos en efectivo de hoy</span>
-            <span class="stat-card__meta">Resta del efectivo esperado</span>
+            <span class="stat-card__value" id="cajaStatGastos" data-count="{{ $cajaAbierta ? $cajaAbierta['gastosEfectivo'] + $cajaAbierta['gastosDigital'] : 0 }}" data-prefix="$">$0</span>
+            <span class="stat-card__label">Gastos (efectivo + digital)</span>
+            <span class="stat-card__meta">Resta de lo esperado</span>
         </div>
 
         <div class="stat-card stat-card--mist">
@@ -89,7 +70,7 @@
                     <path d="M9 9h1M14 9h1M9 13h1M14 13h1M9 21v-4h6v4"/>
                 </svg>
             </div>
-            <span class="stat-card__value" data-count="{{ $diasSinCuadrar }}">0</span>
+            <span class="stat-card__value" id="cajaStatSinCuadrar" data-count="{{ $diasSinCuadrar }}">0</span>
             <span class="stat-card__label">Cierres sin cuadrar (últimos 6)</span>
             <span class="stat-card__meta">Con faltante o sobrante</span>
         </div>
@@ -100,7 +81,7 @@
          ========================================================== -->
     <div class="panel cliente-reveal cliente-reveal-3">
         <!-- ---------- Estado CERRADA: llamado a abrir caja ---------- -->
-        <div class="caja-hero" id="cajaHeroAbrir">
+        <div class="caja-hero" id="cajaHeroAbrir" @if ($cajaAbierta) hidden @endif>
             <div class="caja-hero__icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
@@ -108,22 +89,26 @@
                     <path d="M6 9v.01M18 15v.01"/>
                 </svg>
             </div>
-            <h2 class="caja-hero__title">Todavía no has abierto caja hoy</h2>
-            <p class="caja-hero__subtitle">Define la base de efectivo con la que arrancas el día para empezar a registrar ventas.</p>
+            <h2 class="caja-hero__title">Todavía no has abierto caja</h2>
+            <p class="caja-hero__subtitle">Define la base de efectivo con la que arrancas para empezar a registrar ventas en efectivo.</p>
 
             <div class="caja-hero__form">
                 <label for="cajaBaseInicial" class="cliente-label">Base de efectivo inicial</label>
                 <input type="text" id="cajaBaseInicial" class="cliente-input" placeholder="Ej: 150.000">
                 <button type="button" class="cliente-btn-primary" id="abrirCajaBtn">Abrir caja</button>
+
+                <button type="button" class="cliente-btn-ghost" id="reabrirCajaBtn" data-caja-id="{{ $ultimaCajaId }}" style="width:100%; margin-top:10px;" @unless ($ultimaCajaId) hidden @endunless>
+                    Reabrir la última caja (la cerré por error)
+                </button>
             </div>
         </div>
 
         <!-- ---------- Estado ABIERTA: recibo en vivo ---------- -->
-        <div class="caja-abierta" id="cajaAbiertaPanel" hidden>
+        <div class="caja-abierta" id="cajaAbiertaPanel" @unless ($cajaAbierta) hidden @endunless>
             <div class="caja-abierta__header">
                 <div>
                     <span class="status-pill status-pill--facturada">Caja abierta</span>
-                    <p class="caja-abierta__meta">Abierta por Laura Ramírez · desde <span id="cajaHoraApertura">—</span></p>
+                    <p class="caja-abierta__meta">Abierta por <span id="cajaAbrioPor">{{ $cajaAbierta['abrioPor'] ?? '—' }}</span> · desde <span id="cajaHoraApertura">{{ $cajaAbierta['horaApertura'] ?? '—' }}</span></p>
                 </div>
                 <button type="button" class="cliente-btn-primary" id="cerrarCajaBtn">Cerrar caja</button>
             </div>
@@ -131,28 +116,46 @@
             <div class="caja-recibo">
                 <div class="caja-recibo__row">
                     <span>Base inicial</span>
-                    <strong id="reciboBase">$0</strong>
+                    <strong id="reciboBase">{{ isset($cajaAbierta) ? '$'.number_format($cajaAbierta['baseInicial'], 0, ',', '.') : '$0' }}</strong>
                 </div>
                 <div class="caja-recibo__row caja-recibo__row--suma">
-                    <span>+ Ventas en efectivo (hoy)</span>
-                    <strong id="reciboVentasEfectivo">$0</strong>
+                    <span>+ Ventas en efectivo</span>
+                    <strong id="reciboVentasEfectivo">{{ isset($cajaAbierta) ? '$'.number_format($cajaAbierta['ventasEfectivo'], 0, ',', '.') : '$0' }}</strong>
                 </div>
                 <div class="caja-recibo__row caja-recibo__row--resta">
-                    <span>− Gastos en efectivo (hoy)</span>
-                    <strong id="reciboGastos">$0</strong>
+                    <span>− Gastos en efectivo</span>
+                    <strong id="reciboGastos">{{ isset($cajaAbierta) ? '$'.number_format($cajaAbierta['gastosEfectivo'], 0, ',', '.') : '$0' }}</strong>
+                </div>
+                <div class="caja-recibo__row caja-recibo__row--resta">
+                    <span>− Compras pagadas en efectivo</span>
+                    <strong id="reciboCompras">{{ isset($cajaAbierta) ? '$'.number_format($cajaAbierta['comprasEfectivo'], 0, ',', '.') : '$0' }}</strong>
                 </div>
                 <div class="caja-recibo__divider"></div>
                 <div class="caja-recibo__row caja-recibo__row--total">
                     <span>= Total esperado en caja</span>
-                    <strong id="reciboTotalEsperado">$0</strong>
+                    <strong id="reciboTotalEsperado">{{ isset($cajaAbierta) ? '$'.number_format($cajaAbierta['totalEsperado'], 0, ',', '.') : '$0' }}</strong>
                 </div>
+                <div class="caja-recibo__divider"></div>
                 <div class="caja-recibo__row caja-recibo__row--secundario">
-                    <span>+ Ventas digitales confirmadas (hoy)</span>
-                    <strong id="reciboVentasDigital">$0</strong>
+                    <span>Ventas digitales confirmadas</span>
+                    <strong id="reciboVentasDigital">{{ isset($cajaAbierta) ? '$'.number_format($cajaAbierta['ventasDigital'], 0, ',', '.') : '$0' }}</strong>
                 </div>
-                <div class="caja-recibo__row caja-recibo__row--secundario">
-                    <span>Total general del día</span>
-                    <strong id="reciboTotalGeneral">$0</strong>
+                <div class="caja-recibo__row caja-recibo__row--resta">
+                    <span>− Gastos en digital</span>
+                    <strong id="reciboGastosDigital">{{ isset($cajaAbierta) ? '$'.number_format($cajaAbierta['gastosDigital'], 0, ',', '.') : '$0' }}</strong>
+                </div>
+                <div class="caja-recibo__row caja-recibo__row--resta">
+                    <span>− Compras pagadas en digital</span>
+                    <strong id="reciboComprasDigital">{{ isset($cajaAbierta) ? '$'.number_format($cajaAbierta['comprasDigital'], 0, ',', '.') : '$0' }}</strong>
+                </div>
+                <div class="caja-recibo__row caja-recibo__row--total">
+                    <span>= Total esperado en digital</span>
+                    <strong id="reciboTotalEsperadoDigital">{{ isset($cajaAbierta) ? '$'.number_format($cajaAbierta['totalEsperadoDigital'], 0, ',', '.') : '$0' }}</strong>
+                </div>
+                <div class="caja-recibo__divider"></div>
+                <div class="caja-recibo__row caja-recibo__row--total">
+                    <span>Total general (efectivo + digital)</span>
+                    <strong id="reciboTotalGeneral">{{ isset($cajaAbierta) ? '$'.number_format($cajaAbierta['totalGeneral'], 0, ',', '.') : '$0' }}</strong>
                 </div>
             </div>
         </div>
@@ -186,9 +189,10 @@
                     <tr>
                         <th>Fecha</th>
                         <th>Base inicial</th>
-                        <th>Total esperado</th>
-                        <th>Conteo real</th>
-                        <th>Diferencia</th>
+                        <th>Esperado efectivo</th>
+                        <th>Dif. efectivo</th>
+                        <th>Esperado digital</th>
+                        <th>Dif. digital</th>
                     </tr>
                 </thead>
                 <tbody id="cajaTableBody">
@@ -200,7 +204,6 @@
                             </td>
                             <td class="data-table__meta">${{ number_format($cierre['baseInicial'], 0, ',', '.') }}</td>
                             <td class="data-table__title">${{ number_format($cierre['totalEsperado'], 0, ',', '.') }}</td>
-                            <td class="data-table__meta">${{ number_format($cierre['conteoReal'], 0, ',', '.') }}</td>
                             <td>
                                 @if ($cierre['diferencia'] > 0)
                                     <span class="status-pill status-pill--sobrante">+${{ number_format($cierre['diferencia'], 0, ',', '.') }}</span>
@@ -210,15 +213,27 @@
                                     <span class="status-pill status-pill--sin-facturar">Exacto</span>
                                 @endif
                             </td>
+                            <td class="data-table__title">${{ number_format($cierre['totalEsperadoDigital'], 0, ',', '.') }}</td>
+                            <td>
+                                @if ($cierre['diferenciaDigital'] > 0)
+                                    <span class="status-pill status-pill--sobrante">+${{ number_format($cierre['diferenciaDigital'], 0, ',', '.') }}</span>
+                                @elseif ($cierre['diferenciaDigital'] < 0)
+                                    <span class="status-pill status-pill--faltante">−${{ number_format(abs($cierre['diferenciaDigital']), 0, ',', '.') }}</span>
+                                @else
+                                    <span class="status-pill status-pill--sin-facturar">Exacto</span>
+                                @endif
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
+
+            <p class="data-table__empty" id="cajaEmpty" @unless (count($cierres) === 0) hidden @endunless>Todavía no hay cierres registrados.</p>
         </div>
     </div>
 
     <script id="cajaCierresData" type="application/json">{!! json_encode($cierres) !!}</script>
-    <script id="cajaHoyData" type="application/json">{!! json_encode(['ventasEfectivo' => $ventasEfectivoHoy, 'ventasDigital' => $ventasDigitalHoy, 'gastosEfectivo' => $gastosEfectivoHoy]) !!}</script>
+    <script id="cajaAbiertaData" type="application/json">{!! json_encode($cajaAbierta) !!}</script>
 
     {{-- ==================================================================
          PANEL LATERAL — detalle de un cierre
@@ -240,19 +255,25 @@
 
         <div class="slide-over__body">
             <section class="slide-over__section">
-                <h3 class="slide-over__section-title">Movimientos del día</h3>
+                <h3 class="slide-over__section-title">Movimientos de la caja</h3>
                 <div class="slide-over__field"><span>Base inicial</span><strong id="cierreSlideOverBase">—</strong></div>
                 <div class="slide-over__field"><span>Ventas en efectivo</span><strong id="cierreSlideOverVentasEfectivo">—</strong></div>
-                <div class="slide-over__field"><span>Ventas digitales</span><strong id="cierreSlideOverVentasDigital">—</strong></div>
                 <div class="slide-over__field"><span>Gastos en efectivo</span><strong id="cierreSlideOverGastos">—</strong></div>
+                <div class="slide-over__field"><span>Compras en efectivo</span><strong id="cierreSlideOverCompras">—</strong></div>
+                <div class="slide-over__field"><span>Ventas digitales</span><strong id="cierreSlideOverVentasDigital">—</strong></div>
+                <div class="slide-over__field"><span>Gastos digitales</span><strong id="cierreSlideOverGastosDigital">—</strong></div>
+                <div class="slide-over__field"><span>Compras pagadas en digital</span><strong id="cierreSlideOverComprasDigital">—</strong></div>
             </section>
 
             <section class="slide-over__section">
                 <h3 class="slide-over__section-title">Cierre</h3>
                 <div class="slide-over__field"><span>Total esperado (efectivo)</span><strong id="cierreSlideOverEsperado">—</strong></div>
-                <div class="slide-over__field"><span>Total general del día</span><strong id="cierreSlideOverGeneral">—</strong></div>
+                <div class="slide-over__field"><span>Total esperado (digital)</span><strong id="cierreSlideOverEsperadoDigital">—</strong></div>
+                <div class="slide-over__field"><span>Total general</span><strong id="cierreSlideOverGeneral">—</strong></div>
                 <div class="slide-over__field"><span>Conteo físico real</span><strong id="cierreSlideOverConteo">—</strong></div>
-                <div class="slide-over__field"><span>Diferencia</span><strong id="cierreSlideOverDiferencia">—</strong></div>
+                <div class="slide-over__field"><span>Diferencia (efectivo)</span><strong id="cierreSlideOverDiferencia">—</strong></div>
+                <div class="slide-over__field"><span>Conteo digital real</span><strong id="cierreSlideOverConteoDigital">—</strong></div>
+                <div class="slide-over__field"><span>Diferencia (digital)</span><strong id="cierreSlideOverDiferenciaDigital">—</strong></div>
                 <div class="slide-over__field"><span>Cerrada por</span><strong id="cierreSlideOverAbrioPor">—</strong></div>
             </section>
         </div>
@@ -281,6 +302,15 @@
 
             <div class="caja-modal-diferencia" id="cajaModalDiferencia" hidden>
                 <span id="cajaModalDiferenciaTexto">—</span>
+            </div>
+
+            <p class="caja-modal-esperado" style="margin-top:20px;">Total esperado en digital: <strong id="cerrarModalEsperadoDigital">$0</strong></p>
+
+            <label for="conteoDigitalInput" class="cliente-label">Conteo digital real (revisa tu Nequi/Bancolombia)</label>
+            <input type="text" id="conteoDigitalInput" class="cliente-input" placeholder="Cuánto entró de verdad por digital">
+
+            <div class="caja-modal-diferencia" id="cajaModalDiferenciaDigital" hidden>
+                <span id="cajaModalDiferenciaDigitalTexto">—</span>
             </div>
         </div>
 

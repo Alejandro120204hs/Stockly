@@ -73,7 +73,7 @@
                 </button>
             </div>
 
-            <form method="POST" action="{{ route('register') }}" class="auth-form" novalidate>
+            <form method="POST" action="{{ route('register') }}" class="auth-form" enctype="multipart/form-data" novalidate>
                 @csrf
 
                 <!-- ======================================================
@@ -163,6 +163,17 @@
                     <div class="form-field">
                         <input id="nit" name="nit" type="text" class="form-input" placeholder=" " value="{{ old('nit') }}" required inputmode="numeric">
                         <label for="nit" class="form-label">NIT</label>
+                    </div>
+
+                    <div class="form-field form-field--file">
+                        <label class="form-static-label">Logo del negocio (opcional)</label>
+                        <input id="logo" name="logo" type="file" accept="image/png,image/jpeg,image/svg+xml" class="form-file-input">
+                        <label for="logo" class="form-file-picker">
+                            <span id="logo-file-name">Elegir imagen (JPG, PNG o SVG, máx. 2MB)</span>
+                        </label>
+                        @error('logo')
+                            <span class="form-error">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div class="form-field form-field--select">

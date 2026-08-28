@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Cliente;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cliente\Caja;
 use App\Models\Cliente\CategoriaProducto;
 use App\Models\Cliente\Compra;
 use App\Models\Cliente\CompraDetalle;
 use App\Models\Cliente\FacturaProveedorValidada;
 use App\Models\Cliente\InventarioBodega;
 use App\Models\Cliente\InventarioVitrina;
+use App\Models\Cliente\LoteInventario;
 use App\Models\Cliente\MovimientoTransferencia;
 use App\Models\Cliente\Producto;
 use App\Models\Cliente\Proveedor;
@@ -204,6 +206,7 @@ class InventarioController extends Controller
             ],
             'cufe' => ['nullable', 'string', 'max:255'],
             'factura_validada' => ['required', 'boolean'],
+            'metodo_pago' => ['required', 'in:efectivo,efectivo_externo,digital,digital_externo'],
             'lineas' => ['required', 'array', 'min:1'],
             'lineas.*.producto_id' => [
                 'required', 'integer',
@@ -213,7 +216,20 @@ class InventarioController extends Controller
             'lineas.*.costo' => ['required', 'numeric', 'min:0'],
         ]);
 
-        $compra = DB::transaction(function () use ($validated) {
+        // "efectivo" (del cajón físico) y "digital" (de lo digital recibido
+        // hoy) descuentan del cierre de la caja actual, así que ambos
+        // necesitan una caja abierta y quedan asociados a ella.
+        // "efectivo_externo" y "digital_externo" son plata que nunca fue
+        // parte de esta caja (ahorros, otro momento) -no descuentan nada y
+        // pueden registrarse sin caja abierta.
+        $requiereCaja = in_array($validated['metodo_pago'], ['efectivo', 'digital'], true);
+        $cajaAbierta = $requiereCaja ? Caja::whereNull('cierre_en')->first() : null;
+
+        if ($requiereCaja && ! $cajaAbierta) {
+            return response()->json(['message' => 'Debes abrir la caja antes de registrar una compra con plata de hoy.'], 422);
+        }
+
+        $compra = DB::transaction(function () use ($validated, $cajaAbierta) {
             $proveedor = null;
             $facturaValidada = null;
             $total = collect($validated['lineas'])->sum(fn ($linea) => $linea['cantidad'] * $linea['costo']);
@@ -237,20 +253,35 @@ class InventarioController extends Controller
             }
 
             $compra = Compra::create([
+                'caja_id' => $cajaAbierta?->id,
                 'proveedor_id' => $proveedor?->id,
                 'factura_validada_id' => $facturaValidada?->id,
                 'tipo' => $validated['tipo'] === 'proveedor' ? 'con_factura' : 'sin_factura',
+                'metodo_pago' => $validated['metodo_pago'],
                 'total' => $total,
                 'usuario_id' => auth()->id(),
                 'fecha' => now(),
             ]);
 
             foreach ($validated['lineas'] as $linea) {
-                CompraDetalle::create([
+                $detalle = CompraDetalle::create([
                     'compra_id' => $compra->id,
                     'producto_id' => $linea['producto_id'],
                     'cantidad' => $linea['cantidad'],
                     'costo_unitario' => $linea['costo'],
+                ]);
+
+                // Cada compra es su propio lote, con su propio costo -así
+                // una compra puntual más cara (o más barata) no cambia el
+                // costo de las unidades que ya estaban en stock, y al
+                // vender se descuenta primero del lote más viejo (FIFO).
+                LoteInventario::create([
+                    'producto_id' => $linea['producto_id'],
+                    'compra_detalle_id' => $detalle->id,
+                    'costo_unitario' => $linea['costo'],
+                    'cantidad_bodega' => $linea['cantidad'],
+                    'cantidad_vitrina' => 0,
+                    'fecha' => now(),
                 ]);
 
                 // Toda compra suma a BODEGA -nunca a vitrina directamente.
@@ -296,6 +327,11 @@ class InventarioController extends Controller
         }
 
         DB::transaction(function () use ($producto, $validated) {
+            // Mueve las unidades del lote más viejo primero (FIFO) -las
+            // unidades siguen "recordando" su costo real de compra, solo
+            // cambian de bodega a vitrina.
+            LoteInventario::transferirFifo($producto->id, $validated['cantidad']);
+
             $producto->inventarioBodega->decrement('stock', $validated['cantidad']);
 
             $vitrina = InventarioVitrina::firstOrCreate(['producto_id' => $producto->id], ['stock' => 0]);
@@ -364,6 +400,7 @@ class InventarioController extends Controller
             'id' => $compra->id,
             'fecha' => $compra->fecha->locale('es')->translatedFormat('d M Y, g:i a'),
             'tipo' => $compra->tipo === 'con_factura' ? 'proveedor' : 'informal',
+            'metodo' => $compra->metodo_pago,
             'proveedor' => $compra->proveedor?->nombre,
             'facturaEstado' => $facturaEstado,
             'cufe' => $compra->facturaValidada?->cufe,

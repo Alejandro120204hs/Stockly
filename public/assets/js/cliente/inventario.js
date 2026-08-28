@@ -11,11 +11,14 @@
  *   5. initComprasTable        -> búsqueda/filtro + slide-over de compra
  *   6. initNuevoProductoModal  -> crear o editar un producto del catálogo
  *   6b. initCategoriasModal    -> crear, renombrar y eliminar categorías
- *   7. initRegistrarCompraModal -> compra a proveedor (con validación de
- *      factura) o informal -se agrega al historial y siempre suma a
- *      bodega, nunca a vitrina
- *   8. initTransferirModal     -> mover stock de bodega a vitrina (única
+ *   7. initTransferirModal     -> mover stock de bodega a vitrina (única
  *      acción que sí actualiza el stock mostrado, para dar feedback real)
+ *
+ * El modal "Registrar compra" en sí vive en registrar-compra-modal.js
+ * (compartido también con el Dashboard) -acá solo se registra el hook
+ * window.actualizarInventarioTrasCompra para que, cuando se registre una
+ * compra desde ESTA página, se actualice la tabla de Compras y el stock
+ * mostrado en Vitrina/Bodega.
  */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -26,9 +29,48 @@ document.addEventListener('DOMContentLoaded', function () {
     initComprasTable();
     initNuevoProductoModal();
     initCategoriasModal();
-    initRegistrarCompraModal();
     initTransferirModal();
+    initActualizarInventarioTrasCompra();
 });
+
+function initActualizarInventarioTrasCompra() {
+    if (!document.getElementById('comprasTable')) {
+        return;
+    }
+
+    window.actualizarInventarioTrasCompra = function (json) {
+        var compra = json.compra;
+        inventarioCompras.unshift(compra);
+        inventarioComprasById[compra.id] = compra;
+
+        var comprasTbody = document.querySelector('#comprasTable tbody');
+        if (comprasTbody) {
+            var nuevaFila = crearFilaCompra(compra);
+            wireFilaCompraRow(nuevaFila);
+            comprasTbody.insertBefore(nuevaFila, comprasTbody.firstChild);
+        }
+        if (window.actualizarPaginacionCompras) {
+            window.actualizarPaginacionCompras();
+        }
+
+        // Toda compra suma a BODEGA -nunca a vitrina directamente. El
+        // costo de referencia del producto NO se toca acá con un simple
+        // promedio hecho en JS: esa cuenta (costo promedio ponderado) ya
+        // vive en el backend real cuando haga falta, no se improvisa en
+        // el frontend.
+        (json.productosActualizados || []).forEach(function (actualizado) {
+            var producto = inventarioProductosById[actualizado.id];
+            if (producto) {
+                producto.stockVitrina = actualizado.stockVitrina;
+                producto.stockBodega = actualizado.stockBodega;
+                actualizarFilaProducto(producto);
+            }
+        });
+
+        actualizarStatsValorInventario();
+        incrementarStatComprasMes();
+    };
+}
 
 /* --------------------------------------------------------------------
  * 1. Contador animado en las stat cards
@@ -419,6 +461,12 @@ function initComprasTable() {
  * ------------------------------------------------------------------ */
 var COMPRA_FACTURA_LABELS = { validada: 'Validada', por_validar: 'Por validar', sin_factura: 'Compra informal' };
 var COMPRA_FACTURA_PILL_CLASS = { validada: 'status-pill--facturada', por_validar: 'status-pill--pendiente', sin_factura: 'status-pill--sin-facturar' };
+var COMPRA_METODO_LABELS = {
+    efectivo: 'Efectivo (caja)',
+    efectivo_externo: 'Efectivo (aparte)',
+    digital: 'Digital (de hoy)',
+    digital_externo: 'Digital (aparte)'
+};
 
 function wireFilaCompraRow(row) {
     var id = parseInt(row.getAttribute('data-compra-id'), 10);
@@ -465,6 +513,7 @@ function abrirCompraSlideOver(id) {
     estadoPill.textContent = COMPRA_FACTURA_LABELS[compra.facturaEstado];
 
     document.getElementById('compraSlideOverOrigen').textContent = compra.proveedor || 'Compra informal (sin proveedor)';
+    document.getElementById('compraSlideOverMetodo').textContent = COMPRA_METODO_LABELS[compra.metodo];
     document.getElementById('compraSlideOverTotal').textContent = formatCOP(compra.total);
 
     var cufeRow = document.getElementById('compraSlideOverCufeRow');
@@ -601,6 +650,10 @@ function crearFilaCompra(compra) {
     var celdaTotal = row.insertCell();
     celdaTotal.className = 'data-table__title';
     celdaTotal.textContent = formatCOP(compra.total);
+
+    var celdaMetodo = row.insertCell();
+    celdaMetodo.className = 'data-table__meta';
+    celdaMetodo.textContent = COMPRA_METODO_LABELS[compra.metodo];
 
     var celdaEstado = row.insertCell();
     var pill = document.createElement('span');
@@ -1410,317 +1463,7 @@ function initCategoriasModal() {
 }
 
 /* --------------------------------------------------------------------
- * 7. Modal "Registrar compra" -proveedor (con validación de factura) o
- * informal. Cualquiera de los dos casos suma a BODEGA, nunca a vitrina
- * directamente. Todo esto vive solo en memoria del navegador (sin
- * backend, se pierde al recargar), pero sí actualiza las tablas y
- * stat cards en vivo para que se sienta real.
- * ------------------------------------------------------------------ */
-function initRegistrarCompraModal() {
-    var openBtn = document.getElementById('registrarCompraBtn');
-    var modal = document.getElementById('registrarCompraModal');
-    var overlay = document.getElementById('registrarCompraOverlay');
-    if (!openBtn || !modal || !overlay) {
-        return;
-    }
-
-    var closeBtn = document.getElementById('registrarCompraClose');
-    var tipoProveedorBtn = document.getElementById('compraTipoProveedorBtn');
-    var tipoInformalBtn = document.getElementById('compraTipoInformalBtn');
-    var proveedorFields = document.getElementById('compraProveedorFields');
-    var informalHint = document.getElementById('compraInformalHint');
-    var proveedorSelect = document.getElementById('compraProveedorSelect');
-    var cufeInput = document.getElementById('compraCufeInput');
-    var validarBtn = document.getElementById('compraValidarBtn');
-    var validarStatus = document.getElementById('compraValidarStatus');
-    var searchInput = document.getElementById('compraProductoSearch');
-    var resultsBox = document.getElementById('compraProductoResults');
-    var linesContainer = document.getElementById('compraLines');
-    var linesEmpty = document.getElementById('compraLinesEmpty');
-    var totalEl = document.getElementById('compraTotal');
-    var registrarBtn = document.getElementById('compraRegistrarBtn');
-
-    var tipo = 'proveedor';
-    var lineas = [];
-    var validarTimeout = null;
-
-    function setTipo(nuevo) {
-        tipo = nuevo;
-        tipoProveedorBtn.classList.toggle('is-active', nuevo === 'proveedor');
-        tipoInformalBtn.classList.toggle('is-active', nuevo === 'informal');
-        proveedorFields.hidden = nuevo !== 'proveedor';
-        informalHint.hidden = nuevo !== 'informal';
-    }
-
-    tipoProveedorBtn.addEventListener('click', function () { setTipo('proveedor'); });
-    tipoInformalBtn.addEventListener('click', function () { setTipo('informal'); });
-
-    validarBtn.addEventListener('click', function () {
-        if (!cufeInput.value.trim()) {
-            validarStatus.className = 'compra-validar-status';
-            validarStatus.textContent = 'Ingresa el CUFE o escanea el QR de la factura antes de validar.';
-            return;
-        }
-
-        validarStatus.className = 'compra-validar-status is-validando';
-        validarStatus.textContent = 'Validando ante la DIAN...';
-
-        window.clearTimeout(validarTimeout);
-        validarTimeout = window.setTimeout(function () {
-            validarStatus.className = 'compra-validar-status is-validada';
-            validarStatus.textContent = '✓ Factura validada. Ahora agrega los productos de la compra abajo.';
-        }, 1400);
-    });
-
-    function getTotal() {
-        return lineas.reduce(function (sum, linea) {
-            return sum + linea.cantidad * linea.costo;
-        }, 0);
-    }
-
-    function renderLineas() {
-        linesContainer.innerHTML = '';
-
-        if (lineas.length === 0) {
-            linesContainer.appendChild(linesEmpty);
-            linesEmpty.hidden = false;
-        } else {
-            linesEmpty.hidden = true;
-
-            lineas.forEach(function (linea, index) {
-                var row = document.createElement('div');
-                row.className = 'venta-line';
-                // linea.nombre es texto libre (nombre de producto) -va por
-                // textContent más abajo, nunca directo en el innerHTML.
-                row.innerHTML =
-                    '<div class="venta-line__info">' +
-                        '<div class="venta-line__nombre"></div>' +
-                        '<div class="compra-line__costo-row">' +
-                            '<span>$</span>' +
-                            '<input type="text" class="compra-line__costo-input" value="' + formatNumber(linea.costo, 0) + '">' +
-                            '<span>c/u</span>' +
-                        '</div>' +
-                    '</div>' +
-                    '<div class="venta-line__qty">' +
-                        '<button type="button" class="venta-line__qty-btn" data-action="dec">−</button>' +
-                        '<input type="text" inputmode="numeric" class="venta-line__qty-value venta-line__qty-value--input" value="' + linea.cantidad + '">' +
-                        '<button type="button" class="venta-line__qty-btn" data-action="inc">+</button>' +
-                    '</div>' +
-                    '<div class="venta-line__subtotal">' + formatCOP(linea.cantidad * linea.costo) + '</div>' +
-                    '<button type="button" class="venta-line__remove" aria-label="Quitar">' +
-                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg>' +
-                    '</button>';
-
-                row.querySelector('.venta-line__nombre').textContent = linea.nombre;
-
-                row.querySelector('[data-action="inc"]').addEventListener('click', function () {
-                    linea.cantidad++;
-                    renderLineas();
-                });
-                row.querySelector('[data-action="dec"]').addEventListener('click', function () {
-                    linea.cantidad = Math.max(1, linea.cantidad - 1);
-                    renderLineas();
-                });
-                row.querySelector('.venta-line__remove').addEventListener('click', function () {
-                    lineas.splice(index, 1);
-                    renderLineas();
-                });
-
-                // La cantidad también se puede escribir directamente (más
-                // fácil que darle a "+" cien veces si son 100 unidades). Se
-                // actualiza en vivo sin reconstruir la fila -si no, el
-                // cursor/foco se perdería mientras escribes.
-                var qtyInputLinea = row.querySelector('.venta-line__qty-value--input');
-                qtyInputLinea.addEventListener('input', function (event) {
-                    var digitos = event.target.value.replace(/\D/g, '');
-                    event.target.value = digitos;
-                    linea.cantidad = digitos ? parseInt(digitos, 10) : 0;
-                    row.querySelector('.venta-line__subtotal').textContent = formatCOP(linea.cantidad * linea.costo);
-                    totalEl.textContent = formatCOP(getTotal());
-                });
-                qtyInputLinea.addEventListener('blur', function () {
-                    if (!linea.cantidad || linea.cantidad < 1) {
-                        linea.cantidad = 1;
-                        qtyInputLinea.value = '1';
-                        row.querySelector('.venta-line__subtotal').textContent = formatCOP(linea.cantidad * linea.costo);
-                        totalEl.textContent = formatCOP(getTotal());
-                    }
-                });
-
-                // El costo se edita en vivo sin reconstruir la fila -si
-                // hiciéramos renderLineas() en cada tecla, el input se
-                // recrearía y el cursor/foco se perdería mientras escribes.
-                var costoInputLinea = row.querySelector('.compra-line__costo-input');
-                formatearInputDinero(costoInputLinea);
-                costoInputLinea.addEventListener('input', function (event) {
-                    linea.costo = valorDineroInput(event.target);
-                    row.querySelector('.venta-line__subtotal').textContent = formatCOP(linea.cantidad * linea.costo);
-                    totalEl.textContent = formatCOP(getTotal());
-                });
-
-                linesContainer.appendChild(row);
-            });
-        }
-
-        totalEl.textContent = formatCOP(getTotal());
-        registrarBtn.disabled = lineas.length === 0;
-    }
-
-    searchInput.addEventListener('input', function () {
-        var term = normalizarTexto(searchInput.value.trim());
-
-        if (!term) {
-            resultsBox.hidden = true;
-            return;
-        }
-
-        var matches = inventarioProductos.filter(function (producto) {
-            return normalizarTexto(producto.nombre).indexOf(term) !== -1;
-        });
-
-        resultsBox.innerHTML = '';
-
-        if (matches.length === 0) {
-            var empty = document.createElement('div');
-            empty.className = 'venta-product-results__empty';
-            empty.textContent = 'No se encontró ningún producto en el catálogo.';
-            resultsBox.appendChild(empty);
-        } else {
-            matches.forEach(function (producto) {
-                var item = document.createElement('div');
-                item.className = 'venta-product-result';
-                // producto.nombre es texto libre -va por textContent más
-                // abajo, nunca directo en el innerHTML.
-                item.innerHTML =
-                    '<span class="venta-product-result__nombre"></span>' +
-                    '<span class="venta-product-result__precio">' + formatCOP(producto.precioCosto) + ' c/u</span>';
-                item.querySelector('.venta-product-result__nombre').textContent = producto.nombre;
-
-                item.addEventListener('click', function () {
-                    var existente = lineas.find(function (l) { return l.id === producto.id; });
-                    if (existente) {
-                        existente.cantidad++;
-                    } else {
-                        lineas.push({ id: producto.id, nombre: producto.nombre, costo: producto.precioCosto, cantidad: 1 });
-                    }
-                    renderLineas();
-                    searchInput.value = '';
-                    resultsBox.hidden = true;
-                });
-
-                resultsBox.appendChild(item);
-            });
-        }
-
-        resultsBox.hidden = false;
-    });
-
-    document.addEventListener('click', function (event) {
-        if (!resultsBox.contains(event.target) && event.target !== searchInput) {
-            resultsBox.hidden = true;
-        }
-    });
-
-    function resetModal() {
-        setTipo('proveedor');
-        proveedorSelect.selectedIndex = 0;
-        cufeInput.value = '';
-        validarStatus.className = 'compra-validar-status';
-        validarStatus.textContent = 'Sin validar todavía. El QR solo confirma que la factura existe ante la DIAN -los productos se agregan abajo, a mano.';
-        window.clearTimeout(validarTimeout);
-        lineas = [];
-        searchInput.value = '';
-        resultsBox.hidden = true;
-        renderLineas();
-    }
-
-    function openModal() {
-        resetModal();
-        modal.classList.add('is-open');
-        modal.setAttribute('aria-hidden', 'false');
-        overlay.classList.add('is-visible');
-    }
-
-    function closeModal() {
-        modal.classList.remove('is-open');
-        modal.setAttribute('aria-hidden', 'true');
-        overlay.classList.remove('is-visible');
-        window.clearTimeout(validarTimeout);
-    }
-
-    openBtn.addEventListener('click', openModal);
-    closeBtn.addEventListener('click', closeModal);
-    overlay.addEventListener('click', closeModal);
-    document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape' && modal.classList.contains('is-open')) {
-            closeModal();
-        }
-    });
-
-    registrarBtn.addEventListener('click', function () {
-        if (registrarBtn.disabled) {
-            return;
-        }
-        var originalText = registrarBtn.textContent;
-        registrarBtn.disabled = true;
-        registrarBtn.textContent = 'Registrando...';
-
-        var payload = {
-            tipo: tipo,
-            proveedor_id: tipo === 'proveedor' ? (proveedorSelect.value || null) : null,
-            cufe: tipo === 'proveedor' ? (cufeInput.value.trim() || null) : null,
-            factura_validada: tipo === 'proveedor' && validarStatus.classList.contains('is-validada'),
-            lineas: lineas.map(function (l) {
-                return { producto_id: l.id, cantidad: l.cantidad, costo: l.costo };
-            })
-        };
-
-        inventarioApiRequest('POST', '/cliente/inventario/compras', payload)
-            .then(function (json) {
-                var compra = json.compra;
-                inventarioCompras.unshift(compra);
-                inventarioComprasById[compra.id] = compra;
-
-                var comprasTbody = document.querySelector('#comprasTable tbody');
-                if (comprasTbody) {
-                    var nuevaFila = crearFilaCompra(compra);
-                    wireFilaCompraRow(nuevaFila);
-                    comprasTbody.insertBefore(nuevaFila, comprasTbody.firstChild);
-                }
-                if (window.actualizarPaginacionCompras) {
-                    window.actualizarPaginacionCompras();
-                }
-
-                // Toda compra suma a BODEGA -nunca a vitrina directamente.
-                // El costo de referencia del producto NO se toca acá con
-                // un simple promedio hecho en JS: esa cuenta (costo
-                // promedio ponderado) ya vive en el backend real cuando
-                // haga falta, no se improvisa en el frontend.
-                (json.productosActualizados || []).forEach(function (actualizado) {
-                    var producto = inventarioProductosById[actualizado.id];
-                    if (producto) {
-                        producto.stockVitrina = actualizado.stockVitrina;
-                        producto.stockBodega = actualizado.stockBodega;
-                        actualizarFilaProducto(producto);
-                    }
-                });
-
-                actualizarStatsValorInventario();
-                incrementarStatComprasMes();
-                closeModal();
-            })
-            .catch(function (error) {
-                mostrarError(error.message);
-            })
-            .finally(function () {
-                registrarBtn.disabled = false;
-                registrarBtn.textContent = originalText;
-            });
-    });
-}
-
-/* --------------------------------------------------------------------
- * 8. Modal "Transferir" -bodega a vitrina. Es la única acción del panel
+ * 7. Modal "Transferir" -bodega a vitrina. Es la única acción del panel
  * que sí actualiza el stock mostrado en vivo (misma idea que "Abrir
  * caja" en el dashboard): da feedback real aunque no haya backend.
  * ------------------------------------------------------------------ */
