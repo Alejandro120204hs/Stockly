@@ -115,12 +115,7 @@ function initFlashAlerts() {
         return;
     }
 
-    var mensajes = {
-        'login-exitoso': {
-            title: '¡Bienvenido de nuevo!',
-            text: 'Iniciaste sesión correctamente.'
-        }
-    };
+    var mensajes = {};
 
     var mensaje = mensajes[status];
     if (!mensaje) {

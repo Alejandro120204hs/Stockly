@@ -33,7 +33,7 @@ class InventarioController extends Controller
 
     public function index()
     {
-        $productos = Producto::with(['categoria', 'inventarioVitrina', 'inventarioBodega'])
+        $productos = Producto::with(['categoria', 'inventarioVitrina', 'inventarioBodega', 'lotesInventario'])
             ->orderBy('nombre')
             ->get()
             ->map(fn (Producto $producto) => $this->shapeProducto($producto));
@@ -97,6 +97,16 @@ class InventarioController extends Controller
     {
         $validated = $this->validarProducto($request);
 
+        // Mismo criterio que las categorías: sin importar mayúsculas o
+        // minúsculas, no se puede repetir el nombre -si no, se termina con
+        // dos productos separados (cada uno con su propio stock y lotes)
+        // que en la práctica son "el mismo" para el negocio.
+        $yaExiste = Producto::whereRaw('LOWER(nombre) = ?', [mb_strtolower($validated['nombre'])])->exists();
+
+        if ($yaExiste) {
+            return response()->json(['message' => 'Ya existe un producto con ese nombre.'], 422);
+        }
+
         $producto = DB::transaction(function () use ($validated) {
             $categoria = CategoriaProducto::firstOrCreate(['nombre' => $validated['categoria']]);
 
@@ -114,7 +124,7 @@ class InventarioController extends Controller
             return $producto;
         });
 
-        $producto->load(['categoria', 'inventarioVitrina', 'inventarioBodega']);
+        $producto->load(['categoria', 'inventarioVitrina', 'inventarioBodega', 'lotesInventario']);
 
         return response()->json(['producto' => $this->shapeProducto($producto)]);
     }
@@ -122,6 +132,14 @@ class InventarioController extends Controller
     public function updateProducto(Request $request, Producto $producto): JsonResponse
     {
         $validated = $this->validarProducto($request);
+
+        $yaExiste = Producto::whereRaw('LOWER(nombre) = ?', [mb_strtolower($validated['nombre'])])
+            ->where('id', '!=', $producto->id)
+            ->exists();
+
+        if ($yaExiste) {
+            return response()->json(['message' => 'Ya existe un producto con ese nombre.'], 422);
+        }
 
         $categoria = CategoriaProducto::firstOrCreate(['nombre' => $validated['categoria']]);
 
@@ -133,7 +151,7 @@ class InventarioController extends Controller
             'unidad_medida' => $validated['unidad_medida'],
         ]);
 
-        $producto->load(['categoria', 'inventarioVitrina', 'inventarioBodega']);
+        $producto->load(['categoria', 'inventarioVitrina', 'inventarioBodega', 'lotesInventario']);
 
         return response()->json(['producto' => $this->shapeProducto($producto)]);
     }
@@ -298,13 +316,15 @@ class InventarioController extends Controller
         $compra->load(['proveedor', 'facturaValidada', 'detalles.producto']);
 
         $productosIds = collect($validated['lineas'])->pluck('producto_id');
-        $productosActualizados = Producto::with(['inventarioVitrina', 'inventarioBodega'])
+        $productosActualizados = Producto::with(['inventarioVitrina', 'inventarioBodega', 'lotesInventario'])
             ->whereIn('id', $productosIds)
             ->get()
             ->map(fn (Producto $producto) => [
                 'id' => $producto->id,
                 'stockVitrina' => $producto->stockVitrina(),
                 'stockBodega' => $producto->stockBodega(),
+                'valorCostoBodega' => $producto->valorCostoBodega(),
+                'valorCostoVitrina' => $producto->valorCostoVitrina(),
             ]);
 
         return response()->json([
@@ -320,7 +340,7 @@ class InventarioController extends Controller
             'cantidad' => ['required', 'integer', 'min:1'],
         ]);
 
-        $producto = Producto::with(['inventarioVitrina', 'inventarioBodega'])->findOrFail($validated['producto_id']);
+        $producto = Producto::with(['inventarioVitrina', 'inventarioBodega', 'lotesInventario'])->findOrFail($validated['producto_id']);
 
         if ($validated['cantidad'] > $producto->stockBodega()) {
             return response()->json(['message' => 'No puedes transferir más de lo que hay en bodega.'], 422);
@@ -353,6 +373,8 @@ class InventarioController extends Controller
                 'id' => $producto->id,
                 'stockVitrina' => $producto->stockVitrina(),
                 'stockBodega' => $producto->stockBodega(),
+                'valorCostoBodega' => $producto->valorCostoBodega(),
+                'valorCostoVitrina' => $producto->valorCostoVitrina(),
             ],
         ]);
     }
@@ -386,6 +408,8 @@ class InventarioController extends Controller
             'unidad' => $producto->unidad_medida,
             'stockVitrina' => $producto->stockVitrina(),
             'stockBodega' => $producto->stockBodega(),
+            'valorCostoBodega' => $producto->valorCostoBodega(),
+            'valorCostoVitrina' => $producto->valorCostoVitrina(),
         ];
     }
 

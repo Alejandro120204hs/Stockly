@@ -63,6 +63,8 @@ function initActualizarInventarioTrasCompra() {
             if (producto) {
                 producto.stockVitrina = actualizado.stockVitrina;
                 producto.stockBodega = actualizado.stockBodega;
+                producto.valorCostoBodega = actualizado.valorCostoBodega;
+                producto.valorCostoVitrina = actualizado.valorCostoVitrina;
                 actualizarFilaProducto(producto);
             }
         });
@@ -935,8 +937,8 @@ function actualizarStatsValorInventario() {
     if (!statValorBodega || !statValorVitrina) {
         return;
     }
-    var valorBodega = inventarioProductos.reduce(function (sum, p) { return sum + p.stockBodega * p.precioCosto; }, 0);
-    var valorVitrina = inventarioProductos.reduce(function (sum, p) { return sum + p.stockVitrina * p.precioCosto; }, 0);
+    var valorBodega = inventarioProductos.reduce(function (sum, p) { return sum + p.valorCostoBodega; }, 0);
+    var valorVitrina = inventarioProductos.reduce(function (sum, p) { return sum + p.valorCostoVitrina; }, 0);
     statValorBodega.textContent = formatCOP(valorBodega);
     statValorVitrina.textContent = formatCOP(valorVitrina);
     if (statValorTotal) {
@@ -1539,6 +1541,8 @@ function initTransferirModal() {
             .then(function (json) {
                 producto.stockVitrina = json.producto.stockVitrina;
                 producto.stockBodega = json.producto.stockBodega;
+                producto.valorCostoBodega = json.producto.valorCostoBodega;
+                producto.valorCostoVitrina = json.producto.valorCostoVitrina;
                 actualizarFilaProducto(producto);
                 actualizarStatsValorInventario();
 

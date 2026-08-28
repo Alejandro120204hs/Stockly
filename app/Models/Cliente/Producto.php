@@ -53,6 +53,11 @@ class Producto extends Model
         return $this->hasMany(CompraDetalle::class, 'producto_id');
     }
 
+    public function lotesInventario(): HasMany
+    {
+        return $this->hasMany(LoteInventario::class, 'producto_id');
+    }
+
     public function movimientosTransferencia(): HasMany
     {
         return $this->hasMany(MovimientoTransferencia::class, 'producto_id');
@@ -66,5 +71,25 @@ class Producto extends Model
     public function stockBodega(): int
     {
         return $this->inventarioBodega?->stock ?? 0;
+    }
+
+    /**
+     * Valor real en bodega/vitrina -suma el costo de CADA lote (ver
+     * LoteInventario), no cantidad × precio_costo del producto. precio_costo
+     * es solo el valor sugerido para la próxima compra; editarlo no cambia
+     * lo que las unidades que ya están en stock costaron de verdad.
+     */
+    public function valorCostoBodega(): float
+    {
+        return (float) $this->lotesInventario->sum(
+            fn (LoteInventario $lote) => $lote->cantidad_bodega * (float) $lote->costo_unitario
+        );
+    }
+
+    public function valorCostoVitrina(): float
+    {
+        return (float) $this->lotesInventario->sum(
+            fn (LoteInventario $lote) => $lote->cantidad_vitrina * (float) $lote->costo_unitario
+        );
     }
 }

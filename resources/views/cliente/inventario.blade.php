@@ -21,8 +21,12 @@
             'sin_factura' => 'status-pill--sin-facturar',
         ];
 
-        $valorBodega = collect($productos)->sum(fn ($p) => $p['stockBodega'] * $p['precioCosto']);
-        $valorVitrina = collect($productos)->sum(fn ($p) => $p['stockVitrina'] * $p['precioCosto']);
+        // Suma el costo REAL de cada lote (LoteInventario), no
+        // stock × precio_costo del producto -ese precio es solo el valor
+        // sugerido para la próxima compra, no necesariamente lo que las
+        // unidades que ya están en stock costaron de verdad.
+        $valorBodega = collect($productos)->sum(fn ($p) => $p['valorCostoBodega']);
+        $valorVitrina = collect($productos)->sum(fn ($p) => $p['valorCostoVitrina']);
     @endphp
 
     <div class="cliente-page-header cliente-reveal cliente-reveal-1" style="display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap;">

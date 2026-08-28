@@ -32,19 +32,69 @@ function initPerfilPage() {
 
     var claveNueva = document.getElementById('perfilClaveNueva');
     var claveConfirmar = document.getElementById('perfilClaveConfirmar');
-    var claveMismatch = document.getElementById('perfilClaveMismatch');
 
     passwordForm.addEventListener('submit', function (event) {
         if (claveNueva.value !== claveConfirmar.value) {
             event.preventDefault();
-            claveMismatch.hidden = false;
             claveConfirmar.style.borderColor = 'var(--color-error)';
             return;
         }
 
-        claveMismatch.hidden = true;
         claveConfirmar.style.borderColor = '';
     });
+
+    /* ---------- Tarjeta de seguridad: fortaleza + checklist en vivo ----------
+       Solo "mínimo 8 caracteres" es un requisito real (ver
+       Rules\Password::defaults() en ProfileController) -la fortaleza es una
+       guía informativa aparte, no bloquea el envío. */
+    var strengthWrap = document.querySelector('.perfil-strength');
+    var strengthLabel = document.getElementById('perfilStrengthLabel');
+    var checkLength = document.getElementById('perfilCheckLength');
+    var checkMatch = document.getElementById('perfilCheckMatch');
+
+    function calcularFortaleza(valor) {
+        if (!valor) {
+            return 0;
+        }
+
+        var puntos = 0;
+        if (valor.length >= 8) puntos++;
+        if (valor.length >= 12) puntos++;
+        if (/[a-z]/.test(valor) && /[A-Z]/.test(valor)) puntos++;
+        if (/[0-9]/.test(valor)) puntos++;
+        if (/[^a-zA-Z0-9]/.test(valor)) puntos++;
+
+        return puntos;
+    }
+
+    function actualizarSeguridad() {
+        if (!strengthWrap) {
+            return;
+        }
+
+        var valor = claveNueva.value;
+        var puntos = calcularFortaleza(valor);
+
+        if (!valor) {
+            strengthWrap.removeAttribute('data-level');
+            strengthLabel.textContent = 'Sin escribir';
+        } else if (puntos <= 1) {
+            strengthWrap.setAttribute('data-level', 'debil');
+            strengthLabel.textContent = 'Débil';
+        } else if (puntos <= 3) {
+            strengthWrap.setAttribute('data-level', 'media');
+            strengthLabel.textContent = 'Media';
+        } else {
+            strengthWrap.setAttribute('data-level', 'fuerte');
+            strengthLabel.textContent = 'Fuerte';
+        }
+
+        checkLength.classList.toggle('is-met', valor.length >= 8);
+        checkMatch.classList.toggle('is-met', valor.length > 0 && valor === claveConfirmar.value);
+    }
+
+    claveNueva.addEventListener('input', actualizarSeguridad);
+    claveConfirmar.addEventListener('input', actualizarSeguridad);
 
     /* ---------- Mostrar/ocultar contraseña ---------- */
     document.querySelectorAll('.cliente-form-toggle-password').forEach(function (toggle) {
