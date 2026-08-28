@@ -1,0 +1,348 @@
+/* ==========================================================================
+   Stockly — Panel cliente: Facturación electrónica
+   Los componentes base (panel, data-table, stat-grid, slide-over, modal,
+   status-pill, toolbar, botones, inputs) viven en layout.css. Aquí solo
+   lo exclusivo de esta vista.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Stat grid — 5 columnas
+   -------------------------------------------------------------------------- */
+.stat-grid--facturacion {
+    grid-template-columns: repeat(5, 1fr);
+}
+
+.stat-card--alerta {
+    background: var(--color-sand-soft);
+}
+
+.stat-card--alerta .stat-card__value {
+    color: var(--color-sand-dark);
+}
+
+.stat-card__sub {
+    font-size: 11px;
+    color: var(--color-mist);
+    margin-top: 2px;
+}
+
+@media (max-width: 1100px) {
+    .stat-grid--facturacion {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .stat-grid--facturacion {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Status pill adicional — Anulada (rojo/error, no existe en layout.css)
+   -------------------------------------------------------------------------- */
+.status-pill--error {
+    background-color: var(--color-error-soft);
+    color: var(--color-error);
+}
+
+/* --------------------------------------------------------------------------
+   Píldoras de tipo de documento
+   -------------------------------------------------------------------------- */
+.doc-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+}
+
+.doc-pill--individual {
+    background: var(--color-sage-soft);
+    color: var(--color-sage-dark);
+}
+
+.doc-pill--consolidada {
+    background: var(--color-sand-soft);
+    color: var(--color-sand-dark);
+}
+
+.doc-pill--dee {
+    background: var(--color-mist-soft);
+    color: var(--color-mist);
+}
+
+/* --------------------------------------------------------------------------
+   CUFE en la tabla (texto truncado con tooltip nativo)
+   -------------------------------------------------------------------------- */
+.cufe-snippet {
+    font-family: 'Courier New', 'Consolas', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.03em;
+    color: var(--color-mist);
+    cursor: help;
+    user-select: all;
+}
+
+/* --------------------------------------------------------------------------
+   CUFE completo en el slide-over
+   -------------------------------------------------------------------------- */
+.cufe-block {
+    background: var(--color-background);
+    border: 1px solid var(--color-border-08);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    font-family: 'Courier New', 'Consolas', monospace;
+    font-size: 10px;
+    line-height: 1.6;
+    color: var(--color-mist);
+    word-break: break-all;
+    user-select: all;
+    margin-bottom: 16px;
+}
+
+/* --------------------------------------------------------------------------
+   Placeholder del QR en el slide-over
+   -------------------------------------------------------------------------- */
+.qr-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 20px;
+    border: 1.5px dashed var(--color-border-08);
+    border-radius: var(--radius-md);
+    background: var(--color-background);
+}
+
+.qr-box {
+    width: 96px;
+    height: 96px;
+    border-radius: 8px;
+    background:
+        repeating-linear-gradient(0deg,
+            var(--color-border-06) 0px, var(--color-border-06) 1px,
+            transparent 1px, transparent 8px),
+        repeating-linear-gradient(90deg,
+            var(--color-border-06) 0px, var(--color-border-06) 1px,
+            transparent 1px, transparent 8px);
+    position: relative;
+    overflow: hidden;
+}
+
+.qr-box::before,
+.qr-box::after {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--color-slate);
+    border-radius: 4px;
+}
+
+.qr-box::before { top: 8px; left: 8px; }
+.qr-box::after  { bottom: 8px; right: 8px; }
+
+.qr-hint {
+    font-size: 11px;
+    color: var(--color-mist);
+    text-align: center;
+}
+
+/* --------------------------------------------------------------------------
+   Modal — tipo de factura (cards de selección)
+   -------------------------------------------------------------------------- */
+.factura-tipo-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.factura-tipo-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 10px;
+    border: 1.5px solid var(--color-border-08);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+    user-select: none;
+}
+
+.factura-tipo-card svg {
+    width: 22px;
+    height: 22px;
+    stroke: var(--color-mist);
+    transition: stroke 180ms ease;
+    flex-shrink: 0;
+}
+
+.factura-tipo-card__name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-slate);
+}
+
+.factura-tipo-card__desc {
+    font-size: 11px;
+    color: var(--color-mist);
+    line-height: 1.4;
+}
+
+.factura-tipo-card:hover {
+    border-color: var(--color-border-16);
+    background: var(--color-background);
+}
+
+.factura-tipo-card.is-selected {
+    border-color: var(--color-sage);
+    background: var(--color-sage-soft);
+    box-shadow: 0 0 0 3px rgba(74, 124, 111, 0.12);
+}
+
+.factura-tipo-card.is-selected svg {
+    stroke: var(--color-sage-dark);
+}
+
+/* --------------------------------------------------------------------------
+   Modal — comprador
+   -------------------------------------------------------------------------- */
+.factura-comprador-grid {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 8px;
+}
+
+/* --------------------------------------------------------------------------
+   Modal — lista de ventas pendientes
+   -------------------------------------------------------------------------- */
+.ventas-pendientes-list {
+    border: 1px solid var(--color-border-08);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    max-height: 220px;
+    overflow-y: auto;
+    margin-top: 6px;
+}
+
+.venta-check-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background 120ms ease;
+    border-bottom: 1px solid var(--color-border-06);
+}
+
+.venta-check-row:last-child {
+    border-bottom: none;
+}
+
+.venta-check-row:hover {
+    background: var(--color-background);
+}
+
+.venta-check-row input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--color-sage);
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.venta-check-row__info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex: 1;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.venta-check-row__info span:first-child {
+    color: var(--color-slate);
+    font-weight: 500;
+}
+
+.venta-check-row__info span:last-child {
+    color: var(--color-mist);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.venta-check-row:has(input:checked) {
+    background: var(--color-sage-soft);
+}
+
+/* --------------------------------------------------------------------------
+   Modal — total seleccionado
+   -------------------------------------------------------------------------- */
+.factura-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px;
+    margin-top: 10px;
+    background: var(--color-background);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border-06);
+    font-size: 13px;
+}
+
+.factura-total-row span {
+    color: var(--color-mist);
+}
+
+.factura-total-row strong {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--color-slate);
+}
+
+/* --------------------------------------------------------------------------
+   Slide-over: ventas incluidas
+   -------------------------------------------------------------------------- */
+.doc-venta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--color-border-06);
+    font-size: 13px;
+}
+
+.doc-venta-row:last-child {
+    border-bottom: none;
+}
+
+.doc-venta-row__num {
+    font-weight: 600;
+    color: var(--color-slate);
+}
+
+.doc-venta-row__total {
+    color: var(--color-mist);
+    font-size: 12px;
+}
+
+/* --------------------------------------------------------------------------
+   Formulario helper
+   -------------------------------------------------------------------------- */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 20px;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}

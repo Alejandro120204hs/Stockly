@@ -73,6 +73,10 @@ Route::middleware(['auth', 'rol:cliente'])->group(function () {
     Route::get('/cliente/caja', function () {
         return view('cliente.caja');
     })->name('cliente.caja');
+
+    Route::get('/cliente/facturacion', function () {
+        return view('cliente.facturacion');
+    })->name('cliente.facturacion');
 });
 
 Route::middleware('auth')->group(function () {
