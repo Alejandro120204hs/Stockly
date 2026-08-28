@@ -13,7 +13,7 @@
     <div class="cliente-page-header cliente-reveal cliente-reveal-1">
         <div>
             <p class="cliente-page-header__eyebrow">Tu cuenta</p>
-            <h1 class="cliente-page-header__title">Mi perfil</h1>
+            <h1 class="cliente-page-header__title">Hola, {{ $user->nombres }}</h1>
         </div>
     </div>
 
@@ -102,69 +102,131 @@
             <div class="cliente-form-banner cliente-form-banner--success">Tu contraseña se actualizó correctamente.</div>
         @endif
 
-        <form method="POST" action="{{ route('cliente.perfil.password') }}" id="perfilPasswordForm" novalidate style="max-width: 420px;">
-            @csrf
-            @method('PUT')
+        <div class="perfil-password-grid">
+            <form method="POST" action="{{ route('cliente.perfil.password') }}" id="perfilPasswordForm" novalidate>
+                @csrf
+                @method('PUT')
 
-            <div class="cliente-form-field cliente-form-field--password">
-                <label for="perfilClaveActual" class="cliente-label">Contraseña actual</label>
-                <input type="password" id="perfilClaveActual" name="clave_actual" class="cliente-input">
-                <button type="button" class="cliente-form-toggle-password" aria-label="Mostrar contraseña" aria-pressed="false">
-                    <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/>
-                        <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                    <svg class="icon-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 3l18 18"/>
-                        <path d="M10.6 5.1A10.7 10.7 0 0 1 12 5c6.5 0 10 7 10 7a15.6 15.6 0 0 1-3.1 4.1M6.2 6.2C3.6 8 2 12 2 12s3.5 7 10 7a9.7 9.7 0 0 0 4.2-.9"/>
-                        <path d="M9.5 9.9A3 3 0 0 0 12 15a3 3 0 0 0 2.1-.9"/>
-                    </svg>
-                </button>
-                @error('clave_actual')
-                    <span class="cliente-form-error">{{ $message }}</span>
-                @enderror
-            </div>
+                <div class="cliente-form-field cliente-form-field--password">
+                    <label for="perfilClaveActual" class="cliente-label">Contraseña actual</label>
+                    <input type="password" id="perfilClaveActual" name="clave_actual" class="cliente-input" autocomplete="current-password">
+                    <button type="button" class="cliente-form-toggle-password" aria-label="Mostrar contraseña" aria-pressed="false">
+                        <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <svg class="icon-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 3l18 18"/>
+                            <path d="M10.6 5.1A10.7 10.7 0 0 1 12 5c6.5 0 10 7 10 7a15.6 15.6 0 0 1-3.1 4.1M6.2 6.2C3.6 8 2 12 2 12s3.5 7 10 7a9.7 9.7 0 0 0 4.2-.9"/>
+                            <path d="M9.5 9.9A3 3 0 0 0 12 15a3 3 0 0 0 2.1-.9"/>
+                        </svg>
+                    </button>
+                    @error('clave_actual')
+                        <span class="cliente-form-error">{{ $message }}</span>
+                    @enderror
+                </div>
 
-            <div class="cliente-form-field cliente-form-field--password">
-                <label for="perfilClaveNueva" class="cliente-label">Nueva contraseña</label>
-                <input type="password" id="perfilClaveNueva" name="clave_nueva" class="cliente-input">
-                <button type="button" class="cliente-form-toggle-password" aria-label="Mostrar contraseña" aria-pressed="false">
-                    <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/>
-                        <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                    <svg class="icon-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 3l18 18"/>
-                        <path d="M10.6 5.1A10.7 10.7 0 0 1 12 5c6.5 0 10 7 10 7a15.6 15.6 0 0 1-3.1 4.1M6.2 6.2C3.6 8 2 12 2 12s3.5 7 10 7a9.7 9.7 0 0 0 4.2-.9"/>
-                        <path d="M9.5 9.9A3 3 0 0 0 12 15a3 3 0 0 0 2.1-.9"/>
-                    </svg>
-                </button>
-                @error('clave_nueva')
-                    <span class="cliente-form-error">{{ $message }}</span>
-                @enderror
-            </div>
+                <div class="cliente-form-field cliente-form-field--password">
+                    <label for="perfilClaveNueva" class="cliente-label">Nueva contraseña</label>
+                    <input type="password" id="perfilClaveNueva" name="clave_nueva" class="cliente-input" autocomplete="new-password">
+                    <button type="button" class="cliente-form-toggle-password" aria-label="Mostrar contraseña" aria-pressed="false">
+                        <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <svg class="icon-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 3l18 18"/>
+                            <path d="M10.6 5.1A10.7 10.7 0 0 1 12 5c6.5 0 10 7 10 7a15.6 15.6 0 0 1-3.1 4.1M6.2 6.2C3.6 8 2 12 2 12s3.5 7 10 7a9.7 9.7 0 0 0 4.2-.9"/>
+                            <path d="M9.5 9.9A3 3 0 0 0 12 15a3 3 0 0 0 2.1-.9"/>
+                        </svg>
+                    </button>
+                    @error('clave_nueva')
+                        <span class="cliente-form-error">{{ $message }}</span>
+                    @enderror
+                </div>
 
-            <div class="cliente-form-field cliente-form-field--password">
-                <label for="perfilClaveConfirmar" class="cliente-label">Confirmar nueva contraseña</label>
-                <input type="password" id="perfilClaveConfirmar" name="clave_nueva_confirmation" class="cliente-input">
-                <button type="button" class="cliente-form-toggle-password" aria-label="Mostrar contraseña" aria-pressed="false">
-                    <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/>
-                        <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                    <svg class="icon-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 3l18 18"/>
-                        <path d="M10.6 5.1A10.7 10.7 0 0 1 12 5c6.5 0 10 7 10 7a15.6 15.6 0 0 1-3.1 4.1M6.2 6.2C3.6 8 2 12 2 12s3.5 7 10 7a9.7 9.7 0 0 0 4.2-.9"/>
-                        <path d="M9.5 9.9A3 3 0 0 0 12 15a3 3 0 0 0 2.1-.9"/>
-                    </svg>
-                </button>
-                <span class="cliente-form-error" id="perfilClaveMismatch" hidden>Las contraseñas no coinciden.</span>
-            </div>
+                <div class="cliente-form-field cliente-form-field--password">
+                    <label for="perfilClaveConfirmar" class="cliente-label">Confirmar nueva contraseña</label>
+                    <input type="password" id="perfilClaveConfirmar" name="clave_nueva_confirmation" class="cliente-input" autocomplete="new-password">
+                    <button type="button" class="cliente-form-toggle-password" aria-label="Mostrar contraseña" aria-pressed="false">
+                        <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <svg class="icon-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 3l18 18"/>
+                            <path d="M10.6 5.1A10.7 10.7 0 0 1 12 5c6.5 0 10 7 10 7a15.6 15.6 0 0 1-3.1 4.1M6.2 6.2C3.6 8 2 12 2 12s3.5 7 10 7a9.7 9.7 0 0 0 4.2-.9"/>
+                            <path d="M9.5 9.9A3 3 0 0 0 12 15a3 3 0 0 0 2.1-.9"/>
+                        </svg>
+                    </button>
+                </div>
 
-            <div class="cliente-form-actions">
-                <button type="submit" class="cliente-btn-primary">Actualizar contraseña</button>
-            </div>
-        </form>
+                <div class="cliente-form-actions">
+                    <button type="submit" class="cliente-btn-primary">Actualizar contraseña</button>
+                </div>
+            </form>
+
+            {{-- Tarjeta de seguridad -llena el espacio que antes quedaba
+                 vacío con feedback en vivo (perfil.js), en vez de solo
+                 decoración: el usuario ve al instante si la contraseña
+                 nueva alcanza el mínimo y si las dos coinciden, sin
+                 esperar a que el servidor se lo diga al enviar. --}}
+            <aside class="perfil-security-card">
+                <div class="perfil-security-card__head">
+                    <div class="perfil-security-card__icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="4" y="11" width="16" height="10" rx="2"/>
+                            <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+                            <circle cx="12" cy="16" r="1.5"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="perfil-security-card__title">Seguridad de la contraseña</h3>
+                        <p class="perfil-security-card__hint" style="margin:0;">Protege el acceso a tu negocio.</p>
+                    </div>
+                </div>
+
+                <div class="perfil-security-card__body">
+                    <div>
+                        <div class="perfil-strength">
+                            <div class="perfil-strength__top">
+                                <span class="perfil-strength__title">Fortaleza</span>
+                            </div>
+                            <div class="perfil-strength__bar">
+                                <span class="perfil-strength__segment" data-segment="1"></span>
+                                <span class="perfil-strength__segment" data-segment="2"></span>
+                                <span class="perfil-strength__segment" data-segment="3"></span>
+                            </div>
+                            <span class="perfil-strength__label" id="perfilStrengthLabel">Sin escribir</span>
+                        </div>
+
+                        <ul class="perfil-checklist">
+                            <li class="perfil-checklist__item" id="perfilCheckLength">
+                                <span class="perfil-checklist__icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                </span>
+                                Mínimo 8 caracteres
+                            </li>
+                            <li class="perfil-checklist__item" id="perfilCheckMatch">
+                                <span class="perfil-checklist__icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                </span>
+                                Las contraseñas coinciden
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="perfil-security-card__tips-col">
+                        <span class="perfil-strength__title" style="display:block; margin-bottom: 12px;">Buenas prácticas</span>
+                        <ul class="perfil-tips">
+                            <li class="perfil-tips__item">Evita datos fáciles de adivinar, como tu nombre o fecha de nacimiento.</li>
+                            <li class="perfil-tips__item">No repitas esta contraseña en otras cuentas o servicios.</li>
+                            <li class="perfil-tips__item">Cámbiala de inmediato si sospechas que alguien más la conoce.</li>
+                        </ul>
+                    </div>
+                </div>
+            </aside>
+        </div>
     </div>
 
     @push('styles')

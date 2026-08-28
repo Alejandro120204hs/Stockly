@@ -329,4 +329,87 @@ class InventarioCrudTest extends TestCase
         $this->assertSame(5, InventarioBodega::where('producto_id', $producto->id)->value('stock'));
         $this->assertSame(0, InventarioVitrina::where('producto_id', $producto->id)->value('stock'));
     }
+
+    public function test_editar_el_precio_de_costo_no_cambia_el_valor_real_del_stock_existente(): void
+    {
+        $this->crearUsuarioCliente();
+        $producto = $this->crearProducto();
+
+        // Se compra a 40.000 (queda su propio lote con ese costo real).
+        $this->postJson('/cliente/inventario/compras', [
+            'tipo' => 'informal',
+            'factura_validada' => false,
+            'metodo_pago' => 'efectivo',
+            'lineas' => [['producto_id' => $producto->id, 'cantidad' => 10, 'costo' => 40000]],
+        ])->assertOk();
+
+        // Editar el producto a 45.000 es solo el valor sugerido para la
+        // PRÓXIMA compra -no debe cambiar lo que esas 10 unidades ya
+        // compradas costaron de verdad (siguen valiendo 40.000 c/u).
+        $this->putJson("/cliente/inventario/productos/{$producto->id}", [
+            'nombre' => $producto->nombre,
+            'categoria' => 'Licores',
+            'precio_costo' => 45000,
+            'precio_venta' => 15000,
+            'unidad_medida' => 'Botella',
+        ])->assertOk();
+
+        $producto->refresh();
+        $producto->load('lotesInventario');
+
+        $this->assertSame(45000.0, (float) $producto->precio_costo);
+        $this->assertSame(400000.0, $producto->valorCostoBodega());
+    }
+
+    public function test_no_se_puede_crear_un_producto_duplicado_ignorando_mayusculas(): void
+    {
+        $this->crearUsuarioCliente();
+        $this->crearProducto('Aguardiente Amarillo', 'Licores');
+
+        $response = $this->postJson('/cliente/inventario/productos', [
+            'nombre' => 'aguardiente amarillo',
+            'categoria' => 'Licores',
+            'precio_costo' => 10000,
+            'precio_venta' => 15000,
+            'unidad_medida' => 'Botella',
+        ]);
+
+        $response->assertStatus(422);
+        $this->assertSame(1, Producto::count());
+    }
+
+    public function test_no_se_puede_renombrar_un_producto_al_nombre_de_otro_ya_existente(): void
+    {
+        $this->crearUsuarioCliente();
+        $this->crearProducto('Aguardiente Amarillo', 'Licores');
+        $ron = $this->crearProducto('Ron Viejo', 'Licores');
+
+        $response = $this->putJson("/cliente/inventario/productos/{$ron->id}", [
+            'nombre' => 'aguardiente amarillo',
+            'categoria' => 'Licores',
+            'precio_costo' => 10000,
+            'precio_venta' => 15000,
+            'unidad_medida' => 'Botella',
+        ]);
+
+        $response->assertStatus(422);
+        $this->assertSame('Ron Viejo', $ron->fresh()->nombre);
+    }
+
+    public function test_se_puede_editar_un_producto_sin_cambiar_su_propio_nombre(): void
+    {
+        $this->crearUsuarioCliente();
+        $producto = $this->crearProducto('Aguardiente Amarillo', 'Licores');
+
+        $response = $this->putJson("/cliente/inventario/productos/{$producto->id}", [
+            'nombre' => 'Aguardiente Amarillo',
+            'categoria' => 'Licores',
+            'precio_costo' => 12000,
+            'precio_venta' => 18000,
+            'unidad_medida' => 'Botella',
+        ]);
+
+        $response->assertOk();
+        $this->assertSame(12000.0, (float) $producto->fresh()->precio_costo);
+    }
 }
