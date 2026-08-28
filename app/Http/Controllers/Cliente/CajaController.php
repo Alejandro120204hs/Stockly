@@ -122,9 +122,8 @@ class CajaController extends Controller
      *     − compras pagadas con digital de hoy.
      *   total general = esperado efectivo + esperado digital.
      * Las variantes "_externo" (efectivo_externo/digital_externo) son
-     * plata que nunca fue parte de esta caja -no descuentan de ningún lado.
-     * Gastos todavía no existe como módulo -quedan en 0 acá y empiezan a
-     * sumar solo cuando se construya, sin tener que tocar esta fórmula.
+     * plata que nunca fue parte de esta caja -no descuentan de ningún lado,
+     * tanto en compras como en gastos.
      */
     private function calcularTotales(Caja $caja): array
     {
@@ -132,8 +131,8 @@ class CajaController extends Controller
         $ventasDigital = (float) $caja->ventas()->noAnuladas()->where('metodo_pago', 'digital')->where('estado_pago', 'pagada')->sum('total');
         $comprasEfectivo = (float) $caja->compras()->where('metodo_pago', 'efectivo')->sum('total');
         $comprasDigital = (float) $caja->compras()->where('metodo_pago', 'digital')->sum('total');
-        $gastosEfectivo = 0.0;
-        $gastosDigital = 0.0;
+        $gastosEfectivo = (float) $caja->gastos()->where('metodo_pago', 'efectivo')->sum('monto');
+        $gastosDigital = (float) $caja->gastos()->where('metodo_pago', 'digital')->sum('monto');
 
         $totalEsperado = (float) $caja->base_inicial + $ventasEfectivo - $gastosEfectivo - $comprasEfectivo;
         $totalEsperadoDigital = $ventasDigital - $gastosDigital - $comprasDigital;

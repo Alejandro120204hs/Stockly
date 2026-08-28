@@ -141,7 +141,11 @@
                     <strong id="reciboVentasDigital">{{ isset($cajaAbierta) ? '$'.number_format($cajaAbierta['ventasDigital'], 0, ',', '.') : '$0' }}</strong>
                 </div>
                 <div class="caja-recibo__row caja-recibo__row--resta">
-                    <span>− Compras pagadas con digital de hoy</span>
+                    <span>− Gastos en digital</span>
+                    <strong id="reciboGastosDigital">{{ isset($cajaAbierta) ? '$'.number_format($cajaAbierta['gastosDigital'], 0, ',', '.') : '$0' }}</strong>
+                </div>
+                <div class="caja-recibo__row caja-recibo__row--resta">
+                    <span>− Compras pagadas en digital</span>
                     <strong id="reciboComprasDigital">{{ isset($cajaAbierta) ? '$'.number_format($cajaAbierta['comprasDigital'], 0, ',', '.') : '$0' }}</strong>
                 </div>
                 <div class="caja-recibo__row caja-recibo__row--total">
@@ -258,7 +262,7 @@
                 <div class="slide-over__field"><span>Compras en efectivo</span><strong id="cierreSlideOverCompras">—</strong></div>
                 <div class="slide-over__field"><span>Ventas digitales</span><strong id="cierreSlideOverVentasDigital">—</strong></div>
                 <div class="slide-over__field"><span>Gastos digitales</span><strong id="cierreSlideOverGastosDigital">—</strong></div>
-                <div class="slide-over__field"><span>Compras con digital de hoy</span><strong id="cierreSlideOverComprasDigital">—</strong></div>
+                <div class="slide-over__field"><span>Compras pagadas en digital</span><strong id="cierreSlideOverComprasDigital">—</strong></div>
             </section>
 
             <section class="slide-over__section">

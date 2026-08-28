@@ -298,7 +298,7 @@
          demostró tener suficiente contenido, y rellenar la última hoja
          con cuadros vacíos se ve al revés de profesional. --}}
     @php
-        $paginasProductos = $venta->detalles->chunk(12);
+        $paginasProductos = $venta->detallesAgrupados()->chunk(12);
         $esUnaSolaPagina = $paginasProductos->count() === 1;
     @endphp
     @foreach ($paginasProductos as $pagina)

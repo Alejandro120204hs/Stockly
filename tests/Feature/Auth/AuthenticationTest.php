@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\Empresa;
+use App\Models\Rol;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -19,15 +21,25 @@ class AuthenticationTest extends TestCase
 
     public function test_users_can_authenticate_using_the_login_screen(): void
     {
-        $user = User::factory()->create();
+        // RolFactory elige "cliente" o "admin" al azar -para probar el
+        // redirect de forma determinística hay que fijar el rol a mano,
+        // en vez de dejarlo en manos de User::factory()->create().
+        $rol = Rol::firstOrCreate(['nombre' => 'cliente']);
+        $user = User::factory()->create([
+            'rol_id' => $rol->id,
+            'empresa_id' => Empresa::factory()->create()->id,
+        ]);
 
         $response = $this->post('/login', [
-            'email' => $user->email,
+            'email' => $user->correo,
             'password' => 'password',
         ]);
 
+        // AuthenticatedSessionController redirige según el rol -un usuario
+        // "cliente" cae en su dashboard propio, nunca en el genérico
+        // "/dashboard".
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('cliente.dashboard', absolute: false));
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void
@@ -35,7 +47,7 @@ class AuthenticationTest extends TestCase
         $user = User::factory()->create();
 
         $this->post('/login', [
-            'email' => $user->email,
+            'email' => $user->correo,
             'password' => 'wrong-password',
         ]);
 

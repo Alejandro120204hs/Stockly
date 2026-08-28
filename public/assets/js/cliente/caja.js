@@ -361,6 +361,7 @@ function initCajaFlow() {
         document.getElementById('reciboCompras').textContent = formatCOP(caja.comprasEfectivo);
         document.getElementById('reciboTotalEsperado').textContent = formatCOP(caja.totalEsperado);
         document.getElementById('reciboVentasDigital').textContent = formatCOP(caja.ventasDigital);
+        document.getElementById('reciboGastosDigital').textContent = formatCOP(caja.gastosDigital);
         document.getElementById('reciboComprasDigital').textContent = formatCOP(caja.comprasDigital);
         document.getElementById('reciboTotalEsperadoDigital').textContent = formatCOP(caja.totalEsperadoDigital);
         document.getElementById('reciboTotalGeneral').textContent = formatCOP(caja.totalGeneral);

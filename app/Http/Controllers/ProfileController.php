@@ -26,13 +26,9 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
-
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
-        }
-
-        $request->user()->save();
+        // La tabla usuarios no tiene verificación de correo -a diferencia
+        // del Breeze original, acá no hay email_verified_at que resetear.
+        $request->user()->fill($request->validated())->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 class Caja extends Model
 {
@@ -80,5 +81,26 @@ class Caja extends Model
     public function compras(): HasMany
     {
         return $this->hasMany(Compra::class, 'caja_id');
+    }
+
+    public function gastos(): HasMany
+    {
+        return $this->hasMany(Gasto::class, 'caja_id');
+    }
+
+    /**
+     * "Hoy" para Dashboard/Ventas/Gastos no es medianoche real -es desde
+     * que abriste tu turno actual. Si el negocio cierra pasada la
+     * medianoche, esa venta de la 1am sigue contando como parte del mismo
+     * "hoy" mientras el turno siga abierto (igual que ya funciona el
+     * historial de Caja, que agrupa por apertura, no por calendario). Sin
+     * caja abierta, no hay turno al cual referenciar -se cae de vuelta a
+     * la medianoche real de siempre.
+     */
+    public static function inicioDeHoy(): Carbon
+    {
+        $abierta = static::whereNull('cierre_en')->first();
+
+        return $abierta ? $abierta->apertura_en->copy() : now()->startOfDay();
     }
 }
