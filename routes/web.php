@@ -3,9 +3,11 @@
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Cliente\CajaController;
 use App\Http\Controllers\Cliente\DashboardController;
+use App\Http\Controllers\Cliente\FacturacionController;
 use App\Http\Controllers\Cliente\GastoController;
 use App\Http\Controllers\Cliente\InventarioController;
 use App\Http\Controllers\Cliente\ProfileController as ClienteProfileController;
+use App\Http\Controllers\Cliente\ReportesController;
 use App\Http\Controllers\Cliente\ProveedorController;
 use App\Http\Controllers\Cliente\VentasController;
 use App\Http\Controllers\ProfileController;
@@ -79,12 +81,15 @@ Route::middleware(['auth', 'rol:cliente'])->group(function () {
     Route::post('/cliente/caja/{caja}/cerrar', [CajaController::class, 'cerrar'])->name('cliente.caja.cerrar');
     Route::post('/cliente/caja/{caja}/reabrir', [CajaController::class, 'reabrir'])->name('cliente.caja.reabrir');
 
-    Route::get('/cliente/facturacion', function () {
-        return view('cliente.facturacion');
-    })->name('cliente.facturacion');
+    Route::get('/cliente/facturacion', [FacturacionController::class, 'index'])->name('cliente.facturacion');
+    Route::post('/cliente/facturacion', [FacturacionController::class, 'store'])->name('cliente.facturacion.store');
+    Route::post('/cliente/facturacion/{documento}/anular', [FacturacionController::class, 'anular'])->name('cliente.facturacion.anular');
 
     Route::get('/cliente/gastos', [GastoController::class, 'index'])->name('cliente.gastos');
     Route::post('/cliente/gastos', [GastoController::class, 'store'])->name('cliente.gastos.store');
+
+    Route::get('/cliente/reportes', [ReportesController::class, 'index'])->name('cliente.reportes');
+    Route::get('/cliente/reportes/pdf', [ReportesController::class, 'pdf'])->name('cliente.reportes.pdf');
 
     Route::get('/cliente/perfil', [ClienteProfileController::class, 'edit'])->name('cliente.perfil');
     Route::patch('/cliente/perfil', [ClienteProfileController::class, 'updateInfo'])->name('cliente.perfil.update');

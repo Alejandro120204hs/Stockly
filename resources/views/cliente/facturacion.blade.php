@@ -1,56 +1,6 @@
 <x-cliente-layout title="Facturación">
 
     @php
-        $documentos = [
-            ['id' => 48, 'numero' => 'FI-2025-048', 'tipo' => 'factura_individual',
-             'comprador' => ['nombre' => 'Empresa Logística S.A.S', 'tipoDoc' => 'NIT', 'numDoc' => '900.512.887-1'],
-             'cufe' => 'a3f2c1e8b4d97f0e2a5c6b8d1e3f5a7b9c0d2e4f6a8b0c2d4e6f8a0b2c4d6e8f0a2c4d6e8b0f2a4c6e8d0f2a4c6',
-             'valorTotal' => 210000, 'ventasIds' => [125], 'fecha' => '27/08/2025', 'estado' => 'emitida'],
-
-            ['id' => 47, 'numero' => 'FI-2025-047', 'tipo' => 'factura_individual',
-             'comprador' => ['nombre' => 'Carlos Mendoza Ríos', 'tipoDoc' => 'CC', 'numDoc' => '1.023.445.678'],
-             'cufe' => 'b5e3d1f9a7c2b4e6d8f0a2c4e6b8d0f2a4c6e8b0d2f4a6c8e0b2d4f6a8c0e2b4d6f8a0c2e4b6d8f0a2c4e6b8d0f2',
-             'valorTotal' => 54000, 'ventasIds' => [119], 'fecha' => '27/08/2025', 'estado' => 'emitida'],
-
-            ['id' => 46, 'numero' => 'FC-2025-046', 'tipo' => 'factura_consolidada',
-             'comprador' => ['nombre' => 'Tienda Vecinos Ltda', 'tipoDoc' => 'NIT', 'numDoc' => '830.217.543-2'],
-             'cufe' => 'c7d9e1f3a5b7c9d1e3f5a7b9c1d3e5f7a9b1c3d5e7f9a1b3c5d7e9f1a3b5c7d9e1f3a5b7c9d1e3f5a7b9c1d3e5f7',
-             'valorTotal' => 203000, 'ventasIds' => [121, 112], 'fecha' => '26/08/2025', 'estado' => 'emitida'],
-
-            ['id' => 45, 'numero' => 'DEE-2025-045', 'tipo' => 'dee_pos',
-             'comprador' => null,
-             'cufe' => 'd9f1a3b5c7e9d1f3a5b7d9f1a3b5c7e9d1f3a5b7d9f1a3b5c7e9d1f3a5b7d9f1a3b5c7e9d1f3a5b7d9f1a3b5c7e9',
-             'valorTotal' => 90000, 'ventasIds' => [115], 'fecha' => '26/08/2025', 'estado' => 'emitida'],
-
-            ['id' => 44, 'numero' => 'FI-2025-044', 'tipo' => 'factura_individual',
-             'comprador' => ['nombre' => 'María Torres Castaño', 'tipoDoc' => 'CC', 'numDoc' => '43.892.156'],
-             'cufe' => 'e1c3a5b7d9f1e3c5a7b9d1f3e5c7a9b1d3f5e7c9a1b3d5f7e9c1a3b5d7f9e1c3a5b7d9f1e3c5a7b9d1f3e5c7a9b1',
-             'valorTotal' => 62000, 'ventasIds' => [110], 'fecha' => '26/08/2025', 'estado' => 'emitida'],
-
-            ['id' => 43, 'numero' => 'FC-2025-043', 'tipo' => 'factura_consolidada',
-             'comprador' => ['nombre' => 'Distribuciones Norte S.A.S', 'tipoDoc' => 'NIT', 'numDoc' => '901.234.567-8'],
-             'cufe' => 'f3e5c7a9b1d3f5e7c9a1b3d5f7e9c1a3b5d7f9e1c3a5b7d9f1e3c5a7b9d1f3e5c7a9b1d3f5e7c9a1b3d5f7e9c1a3',
-             'valorTotal' => 185000, 'ventasIds' => [114], 'fecha' => '25/08/2025', 'estado' => 'anulada'],
-
-            ['id' => 42, 'numero' => 'DEE-2025-042', 'tipo' => 'dee_pos',
-             'comprador' => null,
-             'cufe' => 'a2b4c6d8e0f2a4b6c8d0e2f4a6b8c0d2e4f6a8b0c2d4e6f8a0b2c4d6e8f0a2b4c6d8e0f2a4b6c8d0e2f4a6b8c0d2',
-             'valorTotal' => 45000, 'ventasIds' => [111], 'fecha' => '25/08/2025', 'estado' => 'emitida'],
-
-            ['id' => 41, 'numero' => 'FI-2025-041', 'tipo' => 'factura_individual',
-             'comprador' => ['nombre' => 'Restaurante El Jardín', 'tipoDoc' => 'NIT', 'numDoc' => '800.123.456-3'],
-             'cufe' => 'b0c2d4e6f8a0b2c4d6e8f0a2b4c6d8e0f2a4b6c8d0e2f4a6b8c0d2e4f6a8b0c2d4e6f8a0b2c4d6e8f0a2b4c6d8e0',
-             'valorTotal' => 116000, 'ventasIds' => [117], 'fecha' => '25/08/2025', 'estado' => 'emitida'],
-        ];
-
-        $totalFacturado = array_sum(array_column(
-            array_filter($documentos, fn($d) => $d['estado'] === 'emitida'), 'valorTotal'
-        ));
-        $countIndividual  = count(array_filter($documentos, fn($d) => $d['tipo'] === 'factura_individual' && $d['estado'] === 'emitida'));
-        $countConsolidada = count(array_filter($documentos, fn($d) => $d['tipo'] === 'factura_consolidada' && $d['estado'] === 'emitida'));
-        $countDeePos      = count(array_filter($documentos, fn($d) => $d['tipo'] === 'dee_pos' && $d['estado'] === 'emitida'));
-        $ventasSinFacturar = 9;
-
         $tipoLabels = [
             'factura_individual'  => 'Individual',
             'factura_consolidada' => 'Consolidada',
@@ -75,7 +25,7 @@
         <div>
             <p class="cliente-page-header__eyebrow">Tu negocio</p>
             <h1 class="cliente-page-header__title">Facturación electrónica</h1>
-            <p class="cliente-page-header__date">{{ count($documentos) }} documentos emitidos</p>
+            <p class="cliente-page-header__date">{{ $documentos->count() }} {{ $documentos->count() === 1 ? 'documento emitido' : 'documentos emitidos' }}</p>
         </div>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
             <button type="button" class="cliente-btn-ghost" id="nuevaDeePosBtn">DEE / POS</button>
@@ -90,25 +40,25 @@
     <div class="stat-grid stat-grid--facturacion cliente-reveal cliente-reveal-2">
         <div class="stat-card">
             <p class="stat-card__label">Total facturado</p>
-            <p class="stat-card__value" data-count="{{ $totalFacturado }}" data-prefix="$" data-format="money">
-                ${{ number_format($totalFacturado, 0, ',', '.') }}
+            <p class="stat-card__value" data-count="{{ $stats['totalFacturado'] }}" data-prefix="$" data-format="money">
+                ${{ number_format($stats['totalFacturado'], 0, ',', '.') }}
             </p>
         </div>
         <div class="stat-card">
             <p class="stat-card__label">Individuales</p>
-            <p class="stat-card__value" data-count="{{ $countIndividual }}">{{ $countIndividual }}</p>
+            <p class="stat-card__value" data-count="{{ $stats['countIndividual'] }}">{{ $stats['countIndividual'] }}</p>
         </div>
         <div class="stat-card">
             <p class="stat-card__label">Consolidadas</p>
-            <p class="stat-card__value" data-count="{{ $countConsolidada }}">{{ $countConsolidada }}</p>
+            <p class="stat-card__value" data-count="{{ $stats['countConsolidada'] }}">{{ $stats['countConsolidada'] }}</p>
         </div>
         <div class="stat-card">
             <p class="stat-card__label">DEE / POS</p>
-            <p class="stat-card__value" data-count="{{ $countDeePos }}">{{ $countDeePos }}</p>
+            <p class="stat-card__value" data-count="{{ $stats['countDeePos'] }}">{{ $stats['countDeePos'] }}</p>
         </div>
         <div class="stat-card stat-card--alerta">
             <p class="stat-card__label">Sin facturar</p>
-            <p class="stat-card__value" data-count="{{ $ventasSinFacturar }}">{{ $ventasSinFacturar }}</p>
+            <p class="stat-card__value" data-count="{{ $ventasSinFacturar->count() }}">{{ $ventasSinFacturar->count() }}</p>
             <p class="stat-card__sub">ventas pendientes</p>
         </div>
     </div>
@@ -160,9 +110,11 @@
                         <tr class="data-table__row" data-doc-id="{{ $doc['id'] }}" tabindex="0">
                             <td>
                                 <div class="data-table__title">{{ $doc['numero'] }}</div>
-                                <div class="data-table__meta cufe-snippet" title="{{ $doc['cufe'] }}">
-                                    {{ substr($doc['cufe'], 0, 18) }}&hellip;
-                                </div>
+                                @if ($doc['cufe'])
+                                    <div class="data-table__meta cufe-snippet" title="{{ $doc['cufe'] }}">
+                                        {{ substr($doc['cufe'], 0, 18) }}&hellip;
+                                    </div>
+                                @endif
                             </td>
                             <td>
                                 <span class="doc-pill {{ $tipoPillClass[$doc['tipo']] }}">
@@ -196,8 +148,13 @@
                     @endforeach
                 </tbody>
             </table>
-            <p class="data-table__empty" id="facturacionEmpty" hidden>
-                No hay documentos que coincidan con la búsqueda.
+            <p class="data-table__empty" id="facturacionEmpty"
+               @unless ($documentos->isEmpty()) hidden @endunless>
+                @if ($documentos->isEmpty())
+                    Todavía no hay documentos emitidos.
+                @else
+                    No hay documentos que coincidan con la búsqueda.
+                @endif
             </p>
         </div>
 
@@ -208,7 +165,10 @@
         </div>
     </div>
 
+    {{-- Islands de datos para el JS --}}
     <script id="facturacionData" type="application/json">{!! json_encode($documentos) !!}</script>
+    <script id="ventasSinFacturarData" type="application/json">{!! json_encode($ventasSinFacturar) !!}</script>
+    <meta name="facturacion-store-url" content="{{ route('cliente.facturacion.store') }}">
 
     {{-- ================================================================
          PANEL LATERAL — detalle de documento
@@ -346,73 +306,24 @@
                 <input type="text" id="compradorNombre" class="cliente-input" placeholder="Nombre o razón social" style="margin-top:8px;">
             </div>
 
-            {{-- Ventas sin facturar --}}
+            {{-- Ventas sin facturar (cargadas desde el servidor) --}}
             <div class="form-group">
                 <label class="cliente-label">Ventas a incluir</label>
                 <div class="ventas-pendientes-list" id="ventasPendientesList">
-                    <label class="venta-check-row">
-                        <input type="checkbox" value="128" class="venta-check">
-                        <div class="venta-check-row__info">
-                            <span>Venta #128 — Hoy, 2:45 p.m.</span>
-                            <span>$85.000 · Digital</span>
-                        </div>
-                    </label>
-                    <label class="venta-check-row">
-                        <input type="checkbox" value="127" class="venta-check">
-                        <div class="venta-check-row__info">
-                            <span>Venta #127 — Hoy, 2:10 p.m.</span>
-                            <span>$124.000 · Efectivo</span>
-                        </div>
-                    </label>
-                    <label class="venta-check-row">
-                        <input type="checkbox" value="126" class="venta-check">
-                        <div class="venta-check-row__info">
-                            <span>Venta #126 — Hoy, 1:30 p.m.</span>
-                            <span>$45.000 · Efectivo</span>
-                        </div>
-                    </label>
-                    <label class="venta-check-row">
-                        <input type="checkbox" value="124" class="venta-check">
-                        <div class="venta-check-row__info">
-                            <span>Venta #124 — Hoy, 11:40 a.m.</span>
-                            <span>$68.000 · Efectivo</span>
-                        </div>
-                    </label>
-                    <label class="venta-check-row">
-                        <input type="checkbox" value="123" class="venta-check">
-                        <div class="venta-check-row__info">
-                            <span>Venta #123 — Hoy, 10:55 a.m.</span>
-                            <span>$156.000 · Digital</span>
-                        </div>
-                    </label>
-                    <label class="venta-check-row">
-                        <input type="checkbox" value="122" class="venta-check">
-                        <div class="venta-check-row__info">
-                            <span>Venta #122 — Hoy, 10:12 a.m.</span>
-                            <span>$32.000 · Efectivo</span>
-                        </div>
-                    </label>
-                    <label class="venta-check-row">
-                        <input type="checkbox" value="120" class="venta-check">
-                        <div class="venta-check-row__info">
-                            <span>Venta #120 — Hoy, 9:15 a.m.</span>
-                            <span>$178.000 · Digital</span>
-                        </div>
-                    </label>
-                    <label class="venta-check-row">
-                        <input type="checkbox" value="118" class="venta-check">
-                        <div class="venta-check-row__info">
-                            <span>Venta #118 — Hoy, 8:15 a.m.</span>
-                            <span>$23.000 · Efectivo</span>
-                        </div>
-                    </label>
-                    <label class="venta-check-row">
-                        <input type="checkbox" value="117" class="venta-check">
-                        <div class="venta-check-row__info">
-                            <span>Venta #117 — Hoy, 8:05 a.m.</span>
-                            <span>$116.000 · Digital</span>
-                        </div>
-                    </label>
+                    @forelse ($ventasSinFacturar as $venta)
+                        <label class="venta-check-row">
+                            <input type="checkbox" value="{{ $venta['id'] }}" class="venta-check"
+                                   data-total="{{ $venta['total'] }}">
+                            <div class="venta-check-row__info">
+                                <span>{{ $venta['label'] }}</span>
+                                <span>{{ $venta['monto'] }}</span>
+                            </div>
+                        </label>
+                    @empty
+                        <p class="data-table__empty" style="margin:0; padding:16px 0; text-align:center;">
+                            No hay ventas sin facturar en este momento.
+                        </p>
+                    @endforelse
                 </div>
 
                 <div class="factura-total-row" id="facturaTotalRow">
@@ -424,7 +335,7 @@
 
         <div class="modal__footer">
             <button type="button" class="cliente-btn-ghost" id="nuevaFacturaCancelar">Cancelar</button>
-            <button type="button" class="cliente-btn-primary" id="nuevaFacturaEmitir">Emitir a la DIAN</button>
+            <button type="button" class="cliente-btn-primary" id="nuevaFacturaEmitir" disabled>Emitir a la DIAN</button>
         </div>
     </div>
 

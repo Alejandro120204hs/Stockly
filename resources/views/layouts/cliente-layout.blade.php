@@ -104,7 +104,7 @@
 
                 
 
-                <a href="#" class="cliente-nav-item" data-coming-soon="La sección de Reportes está en construcción.">
+                <a href="{{ url('/cliente/reportes') }}" class="cliente-nav-item {{ request()->is('cliente/reportes*') ? 'is-active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M4 20V10M12 20V4M20 20v-7"/>
                     </svg>
