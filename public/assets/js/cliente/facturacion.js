@@ -2,26 +2,55 @@
    Stockly — Facturación electrónica
    Módulos: countUp, tabla con filtros y paginación, slide-over de detalle,
    modal de nueva factura (tipo + comprador + ventas seleccionadas).
+   Emitir y Anular: POST al backend real; recarga la página al confirmar.
    ========================================================================== */
 
 'use strict';
 
 const ROWS_PER_PAGE = 10;
 
-let facturacionDocs   = [];
-let facturacionById   = {};
-let filteredDocs      = [];
-let currentPage       = 1;
+let facturacionDocs = [];
+let facturacionById = {};
+let filteredDocs    = [];
+let currentPage     = 1;
+let docAbiertoId    = null; // id del documento abierto en el slide-over
 
 /* --------------------------------------------------------------------------
-   Helpers de formato
+   Helpers
    -------------------------------------------------------------------------- */
 function formatMoney(n) {
     return '$' + Number(n).toLocaleString('es-CO');
 }
 
+function csrfToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.content || '';
+}
+
+function storeUrl() {
+    return document.querySelector('meta[name="facturacion-store-url"]')?.content || '/cliente/facturacion';
+}
+
+function anularUrl(id) {
+    return `/cliente/facturacion/${id}/anular`;
+}
+
+async function postJSON(url, body) {
+    const res = await fetch(url, {
+        method:  'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken(),
+            'Accept':       'application/json',
+        },
+        body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Error inesperado');
+    return data;
+}
+
 /* --------------------------------------------------------------------------
-   Carga de datos desde la isla JSON
+   Carga de datos desde las islas JSON
    -------------------------------------------------------------------------- */
 function cargarFacturacionData() {
     const el = document.getElementById('facturacionData');
@@ -36,18 +65,16 @@ function cargarFacturacionData() {
    -------------------------------------------------------------------------- */
 function initCountUp() {
     document.querySelectorAll('[data-count]').forEach(el => {
-        const target = parseFloat(el.dataset.count) || 0;
-        const isMoney = el.dataset.format === 'money';
+        const target   = parseFloat(el.dataset.count) || 0;
+        const isMoney  = el.dataset.format === 'money';
         const duration = 1100;
-        const start = performance.now();
+        const start    = performance.now();
 
         function tick(now) {
             const progress = Math.min((now - start) / duration, 1);
-            const eased = 1 - Math.pow(1 - progress, 5);
-            const value = Math.round(target * eased);
-
+            const eased    = 1 - Math.pow(1 - progress, 5);
+            const value    = Math.round(target * eased);
             el.textContent = isMoney ? formatMoney(value) : String(value);
-
             if (progress < 1) requestAnimationFrame(tick);
         }
         requestAnimationFrame(tick);
@@ -58,31 +85,24 @@ function initCountUp() {
    Tabla: renderizar página actual
    -------------------------------------------------------------------------- */
 function renderTabla() {
-    const tbody = document.querySelector('#facturacionTable tbody');
-    const emptyEl = document.getElementById('facturacionEmpty');
+    const tbody    = document.querySelector('#facturacionTable tbody');
+    const emptyEl  = document.getElementById('facturacionEmpty');
     const pageInfo = document.getElementById('facturacionPageInfo');
     const prevBtn  = document.getElementById('facturacionPrevPage');
     const nextBtn  = document.getElementById('facturacionNextPage');
-
     if (!tbody) return;
 
     const totalPages = Math.max(1, Math.ceil(filteredDocs.length / ROWS_PER_PAGE));
     currentPage = Math.min(currentPage, totalPages);
 
-    const slice = filteredDocs.slice(
-        (currentPage - 1) * ROWS_PER_PAGE,
-        currentPage * ROWS_PER_PAGE
-    );
+    const slice  = filteredDocs.slice((currentPage - 1) * ROWS_PER_PAGE, currentPage * ROWS_PER_PAGE);
+    const docIds = new Set(slice.map(d => String(d.id)));
 
-    const allRows = tbody.querySelectorAll('tr.data-table__row');
-    const docIds  = new Set(slice.map(d => String(d.id)));
-
-    allRows.forEach(row => {
+    tbody.querySelectorAll('tr.data-table__row').forEach(row => {
         row.style.display = docIds.has(row.dataset.docId) ? '' : 'none';
     });
 
-    const hasResults = filteredDocs.length > 0;
-    emptyEl.hidden = hasResults;
+    if (emptyEl) emptyEl.hidden = filteredDocs.length > 0;
 
     pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
     prevBtn.disabled = currentPage <= 1;
@@ -100,12 +120,7 @@ function applyFilters() {
     filteredDocs = facturacionDocs.filter(doc => {
         const matchTipo   = !tipo   || doc.tipo   === tipo;
         const matchEstado = !estado || doc.estado === estado;
-        const haystack    = [
-            doc.numero,
-            doc.comprador?.nombre  || '',
-            doc.comprador?.numDoc  || '',
-            doc.comprador?.tipoDoc || '',
-        ].join(' ').toLowerCase();
+        const haystack    = [doc.numero, doc.comprador?.nombre || '', doc.comprador?.numDoc || ''].join(' ').toLowerCase();
         const matchQuery  = !query  || haystack.includes(query);
         return matchTipo && matchEstado && matchQuery;
     });
@@ -114,22 +129,15 @@ function applyFilters() {
     renderTabla();
 }
 
-/* --------------------------------------------------------------------------
-   Tabla: paginación y eventos de filtro
-   -------------------------------------------------------------------------- */
 function initDocumentosTable() {
     document.getElementById('facturacionSearch')?.addEventListener('input', applyFilters);
     document.getElementById('facturacionTipoFilter')?.addEventListener('change', applyFilters);
     document.getElementById('facturacionEstadoFilter')?.addEventListener('change', applyFilters);
-
-    document.getElementById('facturacionPrevPage')?.addEventListener('click', () => {
-        if (currentPage > 1) { currentPage--; renderTabla(); }
-    });
+    document.getElementById('facturacionPrevPage')?.addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderTabla(); } });
     document.getElementById('facturacionNextPage')?.addEventListener('click', () => {
         const totalPages = Math.ceil(filteredDocs.length / ROWS_PER_PAGE);
         if (currentPage < totalPages) { currentPage++; renderTabla(); }
     });
-
     renderTabla();
 }
 
@@ -139,64 +147,51 @@ function initDocumentosTable() {
 function openDocSlideOver(docId) {
     const doc = facturacionById[docId];
     if (!doc) return;
+    docAbiertoId = docId;
 
-    const overlay   = document.getElementById('docSlideOverOverlay');
-    const slideOver = document.getElementById('docSlideOver');
-
-    // Número y estado
-    document.getElementById('docSlideOverNumero').textContent = doc.numero;
-    const estadoEl = document.getElementById('docSlideOverEstado');
-    estadoEl.textContent  = doc.estado === 'emitida' ? 'Emitida' : 'Anulada';
-    estadoEl.className    = 'status-pill ' + (doc.estado === 'emitida' ? 'status-pill--pagada' : 'status-pill--error');
-
-    // Tipo y fecha
     const tipoMap = { factura_individual: 'Factura individual', factura_consolidada: 'Factura consolidada', dee_pos: 'DEE / POS' };
+    document.getElementById('docSlideOverNumero').textContent = doc.numero;
+
+    const estadoEl = document.getElementById('docSlideOverEstado');
+    estadoEl.textContent = doc.estado === 'emitida' ? 'Emitida' : 'Anulada';
+    estadoEl.className   = 'status-pill ' + (doc.estado === 'emitida' ? 'status-pill--pagada' : 'status-pill--error');
+
     document.getElementById('docSlideOverTipo').textContent  = tipoMap[doc.tipo] || doc.tipo;
     document.getElementById('docSlideOverFecha').textContent = doc.fecha;
 
-    // Comprador
     const compradorSection = document.getElementById('docSlideOverCompradorSection');
     const compradorEl      = document.getElementById('docSlideOverComprador');
     if (doc.comprador) {
         compradorSection.hidden = false;
         compradorEl.innerHTML   = `
             <div class="slide-over__field"><span>Nombre</span><strong>${doc.comprador.nombre}</strong></div>
-            <div class="slide-over__field"><span>${doc.comprador.tipoDoc}</span><strong>${doc.comprador.numDoc}</strong></div>
-        `;
+            <div class="slide-over__field"><span>${doc.comprador.tipoDoc}</span><strong>${doc.comprador.numDoc}</strong></div>`;
     } else {
         compradorSection.hidden = true;
     }
 
-    // Ventas incluidas
-    const ventasEl = document.getElementById('docSlideOverVentas');
-    ventasEl.innerHTML = doc.ventasIds.map(vid => `
-        <div class="doc-venta-row">
-            <span class="doc-venta-row__num">Venta #${vid}</span>
-        </div>
-    `).join('');
+    document.getElementById('docSlideOverVentas').innerHTML = doc.ventasIds.map(vid =>
+        `<div class="doc-venta-row"><span class="doc-venta-row__num">Venta #${vid}</span></div>`
+    ).join('');
 
     document.getElementById('docSlideOverTotal').textContent = formatMoney(doc.valorTotal);
+    document.getElementById('docSlideOverCufe').textContent  = doc.cufe || '—';
 
-    // CUFE
-    document.getElementById('docSlideOverCufe').textContent = doc.cufe;
-
-    // Botón anular — ocultar si ya está anulada
     const anularSection = document.getElementById('docAnularSection');
     if (anularSection) anularSection.hidden = doc.estado === 'anulada';
 
-    overlay.classList.add('is-visible');
-    slideOver.classList.add('is-open');
-    slideOver.removeAttribute('aria-hidden');
+    document.getElementById('docSlideOverOverlay').classList.add('is-visible');
+    document.getElementById('docSlideOver').classList.add('is-open');
+    document.getElementById('docSlideOver').removeAttribute('aria-hidden');
     document.body.style.overflow = 'hidden';
 }
 
 function closeDocSlideOver() {
-    const overlay   = document.getElementById('docSlideOverOverlay');
-    const slideOver = document.getElementById('docSlideOver');
-    overlay.classList.remove('is-visible');
-    slideOver.classList.remove('is-open');
-    slideOver.setAttribute('aria-hidden', 'true');
+    document.getElementById('docSlideOverOverlay').classList.remove('is-visible');
+    document.getElementById('docSlideOver').classList.remove('is-open');
+    document.getElementById('docSlideOver').setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
+    docAbiertoId = null;
 }
 
 function initDocSlideOver() {
@@ -207,7 +202,6 @@ function initDocSlideOver() {
         const row = e.target.closest('[data-doc-id]');
         if (row) openDocSlideOver(Number(row.dataset.docId));
     });
-
     document.getElementById('facturacionTable')?.addEventListener('keydown', e => {
         if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset.docId) {
             e.preventDefault();
@@ -215,24 +209,36 @@ function initDocSlideOver() {
         }
     });
 
-    document.getElementById('docAnularBtn')?.addEventListener('click', () => {
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
+    document.getElementById('docAnularBtn')?.addEventListener('click', async () => {
+        if (!docAbiertoId) return;
+
+        const confirmar = typeof Swal !== 'undefined'
+            ? (await Swal.fire({
                 title: '¿Anular documento?',
-                text: 'Esta acción no se puede deshacer. El documento quedará marcado como anulado ante la DIAN.',
+                text: 'El documento quedará marcado como anulado y las ventas incluidas volverán al estado sin facturar.',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: 'Sí, anular',
                 cancelButtonText: 'Cancelar',
                 confirmButtonColor: '#B3473C',
-            }).then(result => {
-                if (result.isConfirmed) {
-                    Swal.fire('Anulado', 'El documento ha sido anulado (demo).',  'success');
-                    closeDocSlideOver();
-                }
-            });
-        } else {
-            if (confirm('¿Anular este documento?')) closeDocSlideOver();
+            })).isConfirmed
+            : confirm('¿Anular este documento?');
+
+        if (!confirmar) return;
+
+        try {
+            await postJSON(anularUrl(docAbiertoId), {});
+            closeDocSlideOver();
+            if (typeof Swal !== 'undefined') {
+                await Swal.fire({ icon: 'success', title: 'Documento anulado', timer: 1800, showConfirmButton: false });
+            }
+            window.location.reload();
+        } catch (err) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'error', title: 'Error al anular', text: err.message });
+            } else {
+                alert('Error: ' + err.message);
+            }
         }
     });
 }
@@ -240,25 +246,17 @@ function initDocSlideOver() {
 /* --------------------------------------------------------------------------
    Modal: nueva factura
    -------------------------------------------------------------------------- */
-function openNuevaFacturaModal(tipoInicial) {
-    const overlay = document.getElementById('nuevaFacturaOverlay');
-    const modal   = document.getElementById('nuevaFacturaModal');
-    if (!overlay || !modal) return;
+function recalcularTotal() {
+    let total = 0;
+    document.querySelectorAll('.venta-check:checked').forEach(chk => {
+        total += parseFloat(chk.dataset.total) || 0;
+    });
+    const totalEl = document.getElementById('facturaTotalSeleccionado');
+    if (totalEl) totalEl.textContent = formatMoney(total);
 
-    // Seleccionar el tipo inicial
-    selectTipo(tipoInicial || 'factura_individual');
-
-    overlay.classList.add('is-visible');
-    modal.classList.add('is-open');
-    modal.removeAttribute('aria-hidden');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeNuevaFacturaModal() {
-    document.getElementById('nuevaFacturaOverlay')?.classList.remove('is-visible');
-    document.getElementById('nuevaFacturaModal')?.classList.remove('is-open');
-    document.getElementById('nuevaFacturaModal')?.setAttribute('aria-hidden', 'true');
-    document.body.style.overflow = '';
+    // Habilitar el botón solo si hay al menos una venta seleccionada
+    const emitirBtn = document.getElementById('nuevaFacturaEmitir');
+    if (emitirBtn) emitirBtn.disabled = !document.querySelector('.venta-check:checked');
 }
 
 function selectTipo(tipo) {
@@ -269,57 +267,62 @@ function selectTipo(tipo) {
         if (radio) radio.checked = isThis;
     });
 
-    // Mostrar/ocultar sección comprador para DEE/POS
     const compradorSection = document.getElementById('compradorSection');
     if (compradorSection) compradorSection.style.display = tipo === 'dee_pos' ? 'none' : '';
 
-    // Para individual: solo una venta seleccionable
+    // Individual: una sola venta → radio; Consolidada/DEE: múltiples → checkbox
     if (tipo === 'factura_individual') {
-        document.querySelectorAll('.venta-check').forEach(chk => {
-            chk.type = 'radio';
-            chk.name = 'ventaIndividual';
-        });
+        document.querySelectorAll('.venta-check').forEach(chk => { chk.type = 'radio'; chk.name = 'ventaIndividual'; });
     } else {
-        document.querySelectorAll('.venta-check').forEach(chk => {
-            chk.type = 'checkbox';
-        });
+        document.querySelectorAll('.venta-check').forEach(chk => { chk.type = 'checkbox'; });
     }
 
     recalcularTotal();
 }
 
-const VENTA_MONTOS = { 128: 85000, 127: 124000, 126: 45000, 124: 68000, 123: 156000, 122: 32000, 120: 178000, 118: 23000, 117: 116000 };
+function openNuevaFacturaModal(tipoInicial) {
+    selectTipo(tipoInicial || 'factura_individual');
 
-function recalcularTotal() {
-    let total = 0;
-    document.querySelectorAll('.venta-check:checked').forEach(chk => {
-        total += VENTA_MONTOS[parseInt(chk.value)] || 0;
+    // Limpiar campos
+    ['compradorNumDoc', 'compradorNombre'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
     });
-    const totalEl = document.getElementById('facturaTotalSeleccionado');
-    if (totalEl) totalEl.textContent = formatMoney(total);
+    document.querySelectorAll('.venta-check').forEach(chk => { chk.checked = false; });
+    recalcularTotal();
+
+    document.getElementById('nuevaFacturaOverlay').classList.add('is-visible');
+    document.getElementById('nuevaFacturaModal').classList.add('is-open');
+    document.getElementById('nuevaFacturaModal').removeAttribute('aria-hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeNuevaFacturaModal() {
+    document.getElementById('nuevaFacturaOverlay')?.classList.remove('is-visible');
+    document.getElementById('nuevaFacturaModal')?.classList.remove('is-open');
+    document.getElementById('nuevaFacturaModal')?.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
 }
 
 function initNuevaFacturaModal() {
     document.getElementById('nuevaIndividualBtn')?.addEventListener('click',   () => openNuevaFacturaModal('factura_individual'));
     document.getElementById('nuevaConsolidadaBtn')?.addEventListener('click',  () => openNuevaFacturaModal('factura_consolidada'));
     document.getElementById('nuevaDeePosBtn')?.addEventListener('click',       () => openNuevaFacturaModal('dee_pos'));
-
     document.getElementById('nuevaFacturaClose')?.addEventListener('click',    closeNuevaFacturaModal);
     document.getElementById('nuevaFacturaCancelar')?.addEventListener('click', closeNuevaFacturaModal);
     document.getElementById('nuevaFacturaOverlay')?.addEventListener('click',  closeNuevaFacturaModal);
 
-    // Selección de tipo via cards
     document.querySelectorAll('.factura-tipo-card').forEach(card => {
         card.addEventListener('click', () => selectTipo(card.dataset.tipo));
     });
 
-    // Recalcular total al marcar/desmarcar ventas
     document.getElementById('ventasPendientesList')?.addEventListener('change', recalcularTotal);
 
-    // Emitir (demo)
-    document.getElementById('nuevaFacturaEmitir')?.addEventListener('click', () => {
-        const checks = document.querySelectorAll('.venta-check:checked');
-        if (checks.length === 0) {
+    document.getElementById('nuevaFacturaEmitir')?.addEventListener('click', async () => {
+        const tipo = document.querySelector('.factura-tipo-card.is-selected')?.dataset.tipo;
+        const ventasIds = [...document.querySelectorAll('.venta-check:checked')].map(c => parseInt(c.value));
+
+        if (ventasIds.length === 0) {
             if (typeof Swal !== 'undefined') {
                 Swal.fire({ icon: 'warning', title: 'Selecciona al menos una venta', timer: 2000, showConfirmButton: false });
             } else {
@@ -328,21 +331,39 @@ function initNuevaFacturaModal() {
             return;
         }
 
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                icon: 'success',
-                title: 'Documento emitido',
-                text: 'La factura fue enviada a la DIAN (demo).',
-                timer: 2200,
-                showConfirmButton: false,
-            }).then(() => closeNuevaFacturaModal());
-        } else {
-            alert('Factura emitida (demo).');
+        const body = {
+            tipo,
+            ventas_ids: ventasIds,
+        };
+
+        if (tipo !== 'dee_pos') {
+            body.comprador_tipo_documento   = document.getElementById('compradorTipoDoc')?.value;
+            body.comprador_numero_documento = document.getElementById('compradorNumDoc')?.value?.trim();
+            body.comprador_nombre           = document.getElementById('compradorNombre')?.value?.trim();
+        }
+
+        const emitirBtn = document.getElementById('nuevaFacturaEmitir');
+        emitirBtn.disabled = true;
+        emitirBtn.textContent = 'Emitiendo…';
+
+        try {
+            await postJSON(storeUrl(), body);
             closeNuevaFacturaModal();
+            if (typeof Swal !== 'undefined') {
+                await Swal.fire({ icon: 'success', title: 'Documento emitido', text: 'El documento fue registrado correctamente.', timer: 2000, showConfirmButton: false });
+            }
+            window.location.reload();
+        } catch (err) {
+            emitirBtn.disabled = false;
+            emitirBtn.textContent = 'Emitir a la DIAN';
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'error', title: 'No se pudo emitir', text: err.message });
+            } else {
+                alert('Error: ' + err.message);
+            }
         }
     });
 
-    // Cerrar con Escape
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
             if (document.getElementById('nuevaFacturaModal')?.classList.contains('is-open')) closeNuevaFacturaModal();

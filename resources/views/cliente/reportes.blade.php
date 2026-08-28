@@ -59,7 +59,7 @@
             </div>
             <span class="stat-card__value" id="statGanancia" data-prefix="$">$0</span>
             <span class="stat-card__label">Ganancia neta</span>
-            <span class="stat-card__meta">Ingresos menos todos los gastos</span>
+            <span class="stat-card__meta">Ganancia bruta menos todos los gastos</span>
         </div>
 
         <div class="stat-card">

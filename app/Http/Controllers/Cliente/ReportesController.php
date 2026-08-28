@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Cliente;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cliente\Caja;
 use App\Models\Cliente\Gasto;
 use App\Models\Cliente\Venta;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -40,14 +41,14 @@ class ReportesController extends Controller
             : 'semana';
 
         [$desde, $hasta] = $this->rangoParaPeriodo($periodoKey);
-        $data = $this->buildPeriodo($desde, $hasta, $periodoKey === 'anio');
+        $data    = $this->buildPeriodo($desde, $hasta, $periodoKey === 'anio');
         $empresa = auth()->user()->empresa;
 
         $pdf = Pdf::loadView('cliente.reportes-pdf', [
-            'data'          => $data,
-            'periodoLabel'  => self::PERIODOS[$periodoKey],
-            'empresa'       => $empresa,
-            'generadoEl'    => now()->locale('es')->translatedFormat('d \d\e F Y, h:i a'),
+            'data'         => $data,
+            'periodoLabel' => self::PERIODOS[$periodoKey],
+            'empresa'      => $empresa,
+            'generadoEl'   => now()->locale('es')->translatedFormat('d \d\e F Y, h:i a'),
         ])->setPaper('a4', 'portrait');
 
         $filename = 'reporte-'.str_replace(' ', '-', strtolower(self::PERIODOS[$periodoKey])).'-'.now()->format('Ymd').'.pdf';
@@ -58,7 +59,10 @@ class ReportesController extends Controller
     private function rangoParaPeriodo(string $periodo): array
     {
         return match ($periodo) {
-            'hoy'    => [now()->startOfDay(), now()],
+            // "Hoy" empieza cuando abrió el turno actual, no a medianoche.
+            // Así una venta de la 1am (misma caja abierta desde ayer)
+            // sigue contando como "hoy". Ver Caja::inicioDeHoy().
+            'hoy'    => [Caja::inicioDeHoy(), now()],
             'semana' => [now()->startOfWeek(Carbon::MONDAY), now()],
             'mes'    => [now()->startOfMonth(), now()],
             'anio'   => [now()->startOfYear(), now()],
@@ -67,15 +71,39 @@ class ReportesController extends Controller
 
     private function buildPeriodo(Carbon $desde, Carbon $hasta, bool $mensual = false): array
     {
-        $ventas = Venta::with('detalles.producto')
+        $desdeStr = $desde->toDateString();
+        $hastaStr = $hasta->toDateString();
+
+        // Cargamos 'caja' en eager para poder llamar fechaTurno() en PHP
+        // sin disparar N+1 queries. Luego filtramos en PHP porque fechaTurno()
+        // no es una columna real — es la fecha de apertura de la caja del turno.
+        //
+        // El filtro excluye registros cuya caja abrió ANTES del inicio del
+        // período (turno cruzando medianoche en el borde del rango). No
+        // necesitamos expandir el rango DB — si venta.fecha < $desde, su
+        // fechaTurno() tampoco puede ser >= $desdeStr (porque la caja siempre
+        // abre antes que la venta).
+        $ventas = Venta::with(['caja', 'detalles.producto'])
             ->noAnuladas()
             ->whereBetween('fecha', [$desde, $hasta])
-            ->get();
+            ->get()
+            ->filter(fn ($v) => $v->fechaTurno() >= $desdeStr && $v->fechaTurno() <= $hastaStr)
+            ->values();
 
-        $gastos = Gasto::whereBetween('fecha', [$desde, $hasta])->get();
+        $gastos = Gasto::with('caja')
+            ->whereBetween('fecha', [$desde, $hasta])
+            ->get()
+            ->filter(fn ($g) => $g->fechaTurno() >= $desdeStr && $g->fechaTurno() <= $hastaStr)
+            ->values();
 
+        // Ganancia bruta: usa los precios HISTÓRICOS congelados en venta_detalle
+        // (no el precio_costo actual del producto — puede haber cambiado).
+        $gananciaBruta = (float) $ventas->sum(fn ($v) => $v->gananciaBruta());
         $totalIngresos = (float) $ventas->sum('total');
-        $totalGastos   = (float) $gastos->sum('monto');
+        // Reportes sí incluye TODOS los gastos (de caja y "aparte"), a diferencia
+        // del Dashboard que solo resta los gastos pagados de la caja del día.
+        $totalGastos  = (float) $gastos->sum('monto');
+        $gananciaNeta = $gananciaBruta - $totalGastos;
 
         $pagoEfectivo = (float) $ventas->where('metodo_pago', 'efectivo')->sum('total');
         $pagoDigital  = (float) $ventas->where('metodo_pago', 'digital')->sum('total');
@@ -100,8 +128,9 @@ class ReportesController extends Controller
 
         return [
             'ingresos'         => $totalIngresos,
+            'gananciaBruta'    => $gananciaBruta,
             'gastos'           => $totalGastos,
-            'gananciaNeta'     => $totalIngresos - $totalGastos,
+            'gananciaNeta'     => $gananciaNeta,
             'cantidadVentas'   => $ventas->count(),
             'pagoEfectivo'     => $pagoEfectivo,
             'pagoDigital'      => $pagoDigital,
@@ -126,7 +155,9 @@ class ReportesController extends Controller
 
             return [
                 'label' => Carbon::parse($fecha)->locale('es')->translatedFormat('d M'),
-                'total' => (float) $ventas->filter(fn ($v) => $v->fecha->toDateString() === $fecha)->sum('total'),
+                // Agrupa por fechaTurno, no por fecha — un turno que cruza
+                // medianoche no parte sus ventas entre dos barras distintas.
+                'total' => (float) $ventas->filter(fn ($v) => $v->fechaTurno() === $fecha)->sum('total'),
                 'esHoy' => $fecha === now()->toDateString(),
             ];
         })->all();
@@ -134,12 +165,12 @@ class ReportesController extends Controller
 
     private function barrasMensuales($ventas): array
     {
-        $meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+        $meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
         return collect(range(1, now()->month))->map(function (int $m) use ($ventas, $meses) {
             return [
                 'label' => $meses[$m - 1],
-                'total' => (float) $ventas->filter(fn ($v) => $v->fecha->month === $m)->sum('total'),
+                'total' => (float) $ventas->filter(fn ($v) => Carbon::parse($v->fechaTurno())->month === $m)->sum('total'),
                 'esHoy' => $m === now()->month,
             ];
         })->all();
