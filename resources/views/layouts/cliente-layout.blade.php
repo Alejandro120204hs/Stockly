@@ -82,6 +82,15 @@
                     <span class="cliente-nav-item__label">Caja</span>
                 </a>
 
+                <a href="{{ url('/cliente/gastos') }}" class="cliente-nav-item {{ request()->is('cliente/gastos') ? 'is-active' : '' }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v3"/>
+                        <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2H5a2 2 0 0 1-2-2Z"/>
+                        <path d="M17 14h.01"/>
+                    </svg>
+                    <span class="cliente-nav-item__label">Gastos</span>
+                </a>
+
                
 
                 <a href="#" class="cliente-nav-item" data-coming-soon="La sección de Facturación está en construcción.">
@@ -93,14 +102,7 @@
                     <span class="cliente-nav-item__label">Facturación</span>
                 </a>
 
-                <a href="#" class="cliente-nav-item" data-coming-soon="La sección de Gastos está en construcción.">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v3"/>
-                        <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2H5a2 2 0 0 1-2-2Z"/>
-                        <path d="M17 14h.01"/>
-                    </svg>
-                    <span class="cliente-nav-item__label">Gastos</span>
-                </a>
+                
 
                 <a href="#" class="cliente-nav-item" data-coming-soon="La sección de Reportes está en construcción.">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

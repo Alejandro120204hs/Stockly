@@ -92,7 +92,10 @@ function initVentasTable() {
             var matchesTerm = !term || String(venta.id).indexOf(term) !== -1;
             var matchesMetodo = !metodo || venta.metodo === metodo;
             var matchesFacturacion = !facturacion || venta.estadoFacturacion === facturacion;
-            var matchesFecha = !fecha || venta.fecha === fecha;
+            // fechaTurno, no fecha -el filtro agrupa por turno de caja
+            // (día en que se abrió), no por fecha calendario, para que un
+            // turno que cruza la medianoche no se reparta entre dos días.
+            var matchesFecha = !fecha || venta.fechaTurno === fecha;
             return matchesTerm && matchesMetodo && matchesFacturacion && matchesFecha;
         });
     }

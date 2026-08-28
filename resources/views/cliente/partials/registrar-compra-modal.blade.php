@@ -71,8 +71,8 @@
 
         <label class="cliente-label">¿De dónde salió esa plata?</label>
         <div class="venta-payment-toggle">
-            <button type="button" class="venta-payment-btn is-active" data-valor="hoy" id="compraBtnOrigenHoy">De la caja de hoy</button>
-            <button type="button" class="venta-payment-btn" data-valor="externo" id="compraBtnOrigenExterno">Aparte (ahorros, otro día)</button>
+            <button type="button" class="venta-payment-btn is-active" data-valor="hoy" id="compraBtnOrigenHoy">De caja</button>
+            <button type="button" class="venta-payment-btn" data-valor="externo" id="compraBtnOrigenExterno">Fuera de caja</button>
         </div>
         <p class="compra-metodo-hint" id="compraMetodoHint">Pagaste con la plata física que está en la caja del negocio -se descuenta del cierre de caja de hoy.</p>
     </div>

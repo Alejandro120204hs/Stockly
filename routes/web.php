@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Cliente\CajaController;
 use App\Http\Controllers\Cliente\DashboardController;
+use App\Http\Controllers\Cliente\GastoController;
 use App\Http\Controllers\Cliente\InventarioController;
 use App\Http\Controllers\Cliente\ProfileController as ClienteProfileController;
 use App\Http\Controllers\Cliente\ProveedorController;
@@ -77,6 +78,9 @@ Route::middleware(['auth', 'rol:cliente'])->group(function () {
     Route::post('/cliente/caja/abrir', [CajaController::class, 'abrir'])->name('cliente.caja.abrir');
     Route::post('/cliente/caja/{caja}/cerrar', [CajaController::class, 'cerrar'])->name('cliente.caja.cerrar');
     Route::post('/cliente/caja/{caja}/reabrir', [CajaController::class, 'reabrir'])->name('cliente.caja.reabrir');
+
+    Route::get('/cliente/gastos', [GastoController::class, 'index'])->name('cliente.gastos');
+    Route::post('/cliente/gastos', [GastoController::class, 'store'])->name('cliente.gastos.store');
 
     Route::get('/cliente/perfil', [ClienteProfileController::class, 'edit'])->name('cliente.perfil');
     Route::patch('/cliente/perfil', [ClienteProfileController::class, 'updateInfo'])->name('cliente.perfil.update');

@@ -4,36 +4,40 @@ namespace App\Http\Controllers\Cliente;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cliente\Caja;
+use App\Models\Cliente\Gasto;
 use App\Models\Cliente\Producto;
 use App\Models\Cliente\Proveedor;
 use App\Models\Cliente\Venta;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
     public function index(): View
     {
-        $empresaId = auth()->user()->empresa_id;
-        $hoy = now()->toDateString();
+        $cajaAbierta = Caja::whereNull('cierre_en')->first();
 
-        // Venta y Caja ya aplican el EmpresaScope solas -pero gastos se
-        // consulta directo con DB::table() (todavía no tiene modelo propio,
-        // eso llega con el backend de Gastos), así que ESTA sí necesita el
-        // filtro de empresa a mano para no filtrar datos de otro negocio.
+        // "Hoy" es desde que abriste tu turno actual, no medianoche real
+        // -así un negocio que cierra pasada la medianoche no ve sus
+        // números resetearse a mitad de turno.
+        $inicioHoy = $cajaAbierta ? $cajaAbierta->apertura_en->copy() : now()->startOfDay();
+
         // noAnuladas() -una venta cancelada no cuenta como venta real para
         // ningún total del negocio, aunque el historial de Ventas la siga
         // mostrando marcada.
-        $ventasHoy = Venta::with('detalles.producto', 'comprador')->noAnuladas()->whereDate('fecha', $hoy)->get();
+        $ventasHoy = Venta::with('detalles.producto', 'comprador', 'caja')->noAnuladas()->where('fecha', '>=', $inicioHoy)->get();
         $gananciaBrutaHoy = (float) $ventasHoy->sum(fn (Venta $venta) => $venta->gananciaBruta());
 
-        $gastosHoy = (float) DB::table('gastos')
-            ->where('empresa_id', $empresaId)
-            ->whereDate('fecha', $hoy)
+        // La Ganancia neta del Dashboard es "la ganancia de la caja de
+        // hoy" -solo resta los gastos pagados con la caja de hoy (efectivo
+        // o digital "de hoy"). Los gastos "aparte" (pagados con plata que
+        // no era de esta caja) sí son reales y sí restan ganancia, pero
+        // eso se ve en Reportes -acá se mostraría el mismo día en que se
+        // pagaron, aunque la plata en realidad viene de otro momento, y
+        // eso confundía más de lo que aclaraba.
+        $gastosHoy = (float) Gasto::where('fecha', '>=', $inicioHoy)
+            ->whereIn('metodo_pago', ['efectivo', 'digital'])
             ->sum('monto');
-
-        $cajaAbierta = Caja::whereNull('cierre_en')->first();
 
         $productosVenta = Producto::with('inventarioVitrina')
             ->orderBy('nombre')

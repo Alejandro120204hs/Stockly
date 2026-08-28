@@ -10,6 +10,7 @@ use App\Models\Cliente\CompraDetalle;
 use App\Models\Cliente\FacturaProveedorValidada;
 use App\Models\Cliente\InventarioBodega;
 use App\Models\Cliente\InventarioVitrina;
+use App\Models\Cliente\LoteInventario;
 use App\Models\Cliente\MovimientoTransferencia;
 use App\Models\Cliente\Producto;
 use App\Models\Cliente\Proveedor;
@@ -263,11 +264,24 @@ class InventarioController extends Controller
             ]);
 
             foreach ($validated['lineas'] as $linea) {
-                CompraDetalle::create([
+                $detalle = CompraDetalle::create([
                     'compra_id' => $compra->id,
                     'producto_id' => $linea['producto_id'],
                     'cantidad' => $linea['cantidad'],
                     'costo_unitario' => $linea['costo'],
+                ]);
+
+                // Cada compra es su propio lote, con su propio costo -así
+                // una compra puntual más cara (o más barata) no cambia el
+                // costo de las unidades que ya estaban en stock, y al
+                // vender se descuenta primero del lote más viejo (FIFO).
+                LoteInventario::create([
+                    'producto_id' => $linea['producto_id'],
+                    'compra_detalle_id' => $detalle->id,
+                    'costo_unitario' => $linea['costo'],
+                    'cantidad_bodega' => $linea['cantidad'],
+                    'cantidad_vitrina' => 0,
+                    'fecha' => now(),
                 ]);
 
                 // Toda compra suma a BODEGA -nunca a vitrina directamente.
@@ -313,6 +327,11 @@ class InventarioController extends Controller
         }
 
         DB::transaction(function () use ($producto, $validated) {
+            // Mueve las unidades del lote más viejo primero (FIFO) -las
+            // unidades siguen "recordando" su costo real de compra, solo
+            // cambian de bodega a vitrina.
+            LoteInventario::transferirFifo($producto->id, $validated['cantidad']);
+
             $producto->inventarioBodega->decrement('stock', $validated['cantidad']);
 
             $vitrina = InventarioVitrina::firstOrCreate(['producto_id' => $producto->id], ['stock' => 0]);

@@ -54,7 +54,7 @@
                 <option value="incluida_en_consolidado">En consolidado</option>
             </select>
 
-            <input type="date" id="ventasFechaFilter" class="cliente-toolbar__select" value="{{ now()->toDateString() }}" max="{{ now()->toDateString() }}">
+            <input type="date" id="ventasFechaFilter" class="cliente-toolbar__select" value="{{ $fechaHoyTurno }}" max="{{ now()->toDateString() }}">
             <button type="button" class="cliente-btn-ghost" id="ventasVerTodas">Ver todas</button>
         </div>
 
