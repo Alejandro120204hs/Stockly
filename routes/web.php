@@ -79,6 +79,10 @@ Route::middleware(['auth', 'rol:cliente'])->group(function () {
     Route::post('/cliente/caja/{caja}/cerrar', [CajaController::class, 'cerrar'])->name('cliente.caja.cerrar');
     Route::post('/cliente/caja/{caja}/reabrir', [CajaController::class, 'reabrir'])->name('cliente.caja.reabrir');
 
+    Route::get('/cliente/facturacion', function () {
+        return view('cliente.facturacion');
+    })->name('cliente.facturacion');
+
     Route::get('/cliente/gastos', [GastoController::class, 'index'])->name('cliente.gastos');
     Route::post('/cliente/gastos', [GastoController::class, 'store'])->name('cliente.gastos.store');
 
