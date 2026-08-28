@@ -278,7 +278,6 @@
                     <p>{{ $venta->comprador->tipo_documento }} {{ $venta->comprador->numero_documento }}</p>
                 @else
                     <p class="nombre">Consumidor final</p>
-                    <p>No se pidió factura a nombre propio</p>
                 @endif
                 <p>{{ $venta->fecha->locale('es')->translatedFormat('d \d\e F \d\e Y, g:i a') }}</p>
             </td>
@@ -377,10 +376,8 @@
 
         <div class="pie">
             <p class="pie__gracias">¡Gracias por tu compra!</p>
-            @if ($venta->empresa->telefono_contacto || $venta->empresa->correo_contacto)
-                <p class="pie__contacto">
-                    {{ collect([$venta->empresa->telefono_contacto, $venta->empresa->correo_contacto])->filter()->implode('  •  ') }}
-                </p>
+            @if ($venta->empresa->telefono_contacto)
+                <p class="pie__contacto">{{ $venta->empresa->telefono_contacto }}</p>
             @endif
             <p class="pie__legal">Este recibo es un comprobante interno de {{ $venta->empresa->nombre_negocio }} y no tiene validez fiscal ante la DIAN.</p>
         </div>
