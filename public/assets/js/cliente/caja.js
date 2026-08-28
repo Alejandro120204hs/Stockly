@@ -1,15 +1,21 @@
 /**
  * Stockly — Panel del negocio cliente: vista Caja (vanilla JS)
- * Depende de cliente/layout.js (formatCOP, normalizarTexto) ya cargado
- * antes que este.
+ * Depende de cliente/layout.js (formatCOP, formatNumber, formatearInputDinero,
+ * valorDineroInput, mostrarError) ya cargado antes que este.
+ *
+ * Una caja es una SESIÓN (abrir -> cerrar), no un día calendario -si el
+ * negocio cierra pasada la medianoche, sigue siendo la misma caja. Este
+ * archivo solo refleja en pantalla lo que ya decidió el backend
+ * (App\Http\Controllers\Cliente\CajaController); no calcula esperado ni
+ * diferencia acá -esos números siempre vienen del servidor.
  *
  * Módulos:
  *   1. initCountUp        -> anima los números de las stat cards
  *   2. initDiffChart      -> línea de tendencia con área degradada
  *      (verde arriba de cero, roja abajo) para sobrante/faltante
  *   3. initCierreSlideOver -> detalle de un cierre en el panel lateral
- *   4. initCajaFlow       -> abrir caja -> recibo en vivo -> cerrar caja
- *      (con conteo físico y cálculo de diferencia) -> pasa al historial
+ *   4. initCajaFlow       -> abrir/reabrir caja -> recibo en vivo -> cerrar
+ *      caja (con conteo físico) -> pasa al historial
  */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -19,6 +25,26 @@ document.addEventListener('DOMContentLoaded', function () {
     initCierreSlideOver();
     initCajaFlow();
 });
+
+function cajaApiRequest(method, url, data) {
+    var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    return fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': csrfMeta ? csrfMeta.content : ''
+        },
+        body: data !== undefined ? JSON.stringify(data) : undefined
+    }).then(function (response) {
+        return response.json().catch(function () { return {}; }).then(function (json) {
+            if (!response.ok) {
+                throw new Error(json.message || 'Ocurrió un error inesperado.');
+            }
+            return json;
+        });
+    });
+}
 
 /* --------------------------------------------------------------------
  * 1. Contador animado en las stat cards
@@ -37,6 +63,14 @@ function initCountUp() {
         var start = null;
 
         function frame(timestamp) {
+            // Si algo ya actualizó este número a mano (abrir/cerrar/reabrir
+            // caja), esta animación quedó obsoleta -sin este freno, un
+            // frame tardío (pestaña en segundo plano throttlea rAF) puede
+            // llegar después y pisar el valor real con el de la carga
+            // inicial de la página.
+            if (el.dataset.countupCancelado) {
+                return;
+            }
             if (start === null) {
                 start = timestamp;
             }
@@ -59,24 +93,33 @@ function initCountUp() {
 
 /* --------------------------------------------------------------------
  * Estado compartido: historial de cierres (mutable -cerrar caja agrega
- * uno nuevo) y los montos fijos de "hoy" (ventas/gastos ya registrados
- * en otras partes del sistema, acá mock porque no hay backend).
+ * uno nuevo, reabrir quita el más reciente) y la caja abierta actual (o
+ * null si está cerrada), ambos ya calculados por el backend.
  * ------------------------------------------------------------------ */
 var cajaCierres = [];
 var cajaCierresById = {};
-var cajaHoy = { ventasEfectivo: 0, ventasDigital: 0, gastosEfectivo: 0 };
+var cajaActual = null;
 
 function cargarCajaData() {
     var cierresScript = document.getElementById('cajaCierresData');
-    var hoyScript = document.getElementById('cajaHoyData');
-    if (!cierresScript || !hoyScript) {
+    var abiertaScript = document.getElementById('cajaAbiertaData');
+    if (!cierresScript || !abiertaScript) {
         return;
     }
 
     cajaCierres = JSON.parse(cierresScript.textContent);
     cajaCierres.forEach(function (c) { cajaCierresById[c.id] = c; });
 
-    cajaHoy = JSON.parse(hoyScript.textContent);
+    cajaActual = JSON.parse(abiertaScript.textContent);
+}
+
+/** Pinta el status-pill de sobrante/faltante/exacto dentro de una celda de
+ * la tabla de historial -reutilizado para la columna de efectivo y la de
+ * digital, que llevan la misma lógica. */
+function pintarPillDiferencia(celda, diferencia) {
+    var pillClass = diferencia > 0 ? 'status-pill--sobrante' : (diferencia < 0 ? 'status-pill--faltante' : 'status-pill--sin-facturar');
+    var pillTexto = diferencia > 0 ? '+' + formatCOP(diferencia) : (diferencia < 0 ? '−' + formatCOP(Math.abs(diferencia)) : 'Exacto');
+    celda.innerHTML = '<span class="status-pill ' + pillClass + '">' + pillTexto + '</span>';
 }
 
 /** formatCOP no está pensado para negativos (daría "$-5.000"); esto
@@ -105,6 +148,19 @@ var CAJA_CHART_COLOR_SAGE_DARK = '#3C6459';
 var CAJA_CHART_COLOR_ERROR = '#B3473C';
 var CAJA_CHART_COLOR_MIST = '#8C9BAB';
 var CAJA_CHART_COLOR_SURFACE = '#FFFFFF';
+var CAJA_CHART_COLOR_DIGITAL = '#566573';
+
+/** Calcula los puntos (x, y) de una serie -misma escala/zero-line para
+ * poder dibujar efectivo y digital una encima de la otra. */
+function calcularPuntosSerie(ultimos, campo, marginX, stepX, zeroY, plotTop, maxDiferencia) {
+    return ultimos.map(function (cierre, i) {
+        var x = marginX + i * stepX;
+        var valor = cierre[campo];
+        var clamped = Math.max(-maxDiferencia, Math.min(maxDiferencia, valor));
+        var y = zeroY - (clamped / maxDiferencia) * (zeroY - plotTop);
+        return { x: x, y: y, valor: valor, cierre: cierre };
+    });
+}
 
 function renderDiffChart() {
     var container = document.getElementById('cajaDiffChart');
@@ -118,7 +174,14 @@ function renderDiffChart() {
         return;
     }
 
-    var MAX_DIFERENCIA = 15000;
+    // La escala se ajusta a la diferencia más grande de cualquiera de las
+    // dos series (con un mínimo para que el gráfico no quede plano si todo
+    // cuadra exacto).
+    var maxAbs = ultimos.reduce(function (max, c) {
+        return Math.max(max, Math.abs(c.diferencia), Math.abs(c.diferenciaDigital));
+    }, 0);
+    var MAX_DIFERENCIA = Math.max(5000, maxAbs);
+
     var W = 640;
     var H = 170;
     var plotTop = 20;
@@ -127,44 +190,51 @@ function renderDiffChart() {
     var marginX = 26;
     var stepX = ultimos.length > 1 ? (W - marginX * 2) / (ultimos.length - 1) : 0;
 
-    var puntos = ultimos.map(function (cierre, i) {
-        var x = marginX + i * stepX;
-        var clamped = Math.max(-MAX_DIFERENCIA, Math.min(MAX_DIFERENCIA, cierre.diferencia));
-        var y = zeroY - (clamped / MAX_DIFERENCIA) * (zeroY - plotTop);
-        return { x: x, y: y, cierre: cierre };
-    });
+    var puntosEfectivo = calcularPuntosSerie(ultimos, 'diferencia', marginX, stepX, zeroY, plotTop, MAX_DIFERENCIA);
+    var puntosDigital = calcularPuntosSerie(ultimos, 'diferenciaDigital', marginX, stepX, zeroY, plotTop, MAX_DIFERENCIA);
 
-    var lineaPath = puntos.map(function (p, i) {
+    var lineaEfectivoPath = puntosEfectivo.map(function (p, i) {
         return (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ',' + p.y.toFixed(1);
     }).join(' ');
 
-    var primero = puntos[0];
-    var ultimo = puntos[puntos.length - 1];
+    var lineaDigitalPath = puntosDigital.map(function (p, i) {
+        return (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ',' + p.y.toFixed(1);
+    }).join(' ');
+
+    var primero = puntosEfectivo[0];
+    var ultimo = puntosEfectivo[puntosEfectivo.length - 1];
     var areaPath = 'M' + primero.x.toFixed(1) + ',' + zeroY.toFixed(1) + ' ' +
-        puntos.map(function (p) { return 'L' + p.x.toFixed(1) + ',' + p.y.toFixed(1); }).join(' ') +
+        puntosEfectivo.map(function (p) { return 'L' + p.x.toFixed(1) + ',' + p.y.toFixed(1); }).join(' ') +
         ' L' + ultimo.x.toFixed(1) + ',' + zeroY.toFixed(1) + ' Z';
 
     var zeroOffsetPct = (((zeroY - plotTop) / (plotBottom - plotTop)) * 100).toFixed(1);
 
-    var puntosHtml = puntos.map(function (p) {
-        var d = p.cierre.diferencia;
-        var color = d > 0 ? CAJA_CHART_COLOR_SAGE_DARK : (d < 0 ? CAJA_CHART_COLOR_ERROR : CAJA_CHART_COLOR_MIST);
+    var puntosEfectivoHtml = puntosEfectivo.map(function (p) {
+        var color = p.valor > 0 ? CAJA_CHART_COLOR_SAGE_DARK : (p.valor < 0 ? CAJA_CHART_COLOR_ERROR : CAJA_CHART_COLOR_MIST);
         return '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="4.5" fill="' + color + '" stroke="' + CAJA_CHART_COLOR_SURFACE + '" stroke-width="2"></circle>';
     }).join('');
 
-    var valoresHtml = puntos.map(function (p) {
-        var d = p.cierre.diferencia;
+    var puntosDigitalHtml = puntosDigital.map(function (p) {
+        return '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3.5" fill="' + CAJA_CHART_COLOR_DIGITAL + '" stroke="' + CAJA_CHART_COLOR_SURFACE + '" stroke-width="2"></circle>';
+    }).join('');
+
+    var valoresHtml = puntosEfectivo.map(function (p) {
+        var d = p.valor;
         var texto = d > 0 ? '+' + formatNumber(d, 0) : (d < 0 ? '−' + formatNumber(Math.abs(d), 0) : 'Exacto');
         var color = d > 0 ? CAJA_CHART_COLOR_SAGE_DARK : (d < 0 ? CAJA_CHART_COLOR_ERROR : CAJA_CHART_COLOR_MIST);
         var labelY = d >= 0 ? p.y - 12 : p.y + 20;
         return '<text x="' + p.x.toFixed(1) + '" y="' + labelY.toFixed(1) + '" text-anchor="middle" class="caja-line-chart__value" fill="' + color + '">' + texto + '</text>';
     }).join('');
 
-    var fechasHtml = puntos.map(function (p) {
+    var fechasHtml = puntosEfectivo.map(function (p) {
         return '<text x="' + p.x.toFixed(1) + '" y="163" text-anchor="middle" class="caja-line-chart__date">' + p.cierre.fecha.split(' ')[0] + '</text>';
     }).join('');
 
     container.innerHTML =
+        '<div class="caja-line-chart__legend">' +
+            '<span class="caja-line-chart__legend-item"><i style="background:' + CAJA_CHART_COLOR_SAGE_DARK + ';"></i>Efectivo</span>' +
+            '<span class="caja-line-chart__legend-item"><i style="background:' + CAJA_CHART_COLOR_DIGITAL + '; border-radius:0;"></i>Digital</span>' +
+        '</div>' +
         '<svg viewBox="0 0 ' + W + ' ' + H + '" class="caja-line-chart__svg">' +
             '<defs><linearGradient id="cajaDiffGradient" x1="0" y1="' + plotTop + '" x2="0" y2="' + plotBottom + '" gradientUnits="userSpaceOnUse">' +
                 '<stop offset="0%" stop-color="' + CAJA_CHART_COLOR_SAGE + '" stop-opacity="0.35"></stop>' +
@@ -174,8 +244,9 @@ function renderDiffChart() {
             '</linearGradient></defs>' +
             '<line x1="' + marginX + '" y1="' + zeroY.toFixed(1) + '" x2="' + (W - marginX) + '" y2="' + zeroY.toFixed(1) + '" class="caja-line-chart__zero"></line>' +
             '<path d="' + areaPath + '" fill="url(#cajaDiffGradient)"></path>' +
-            '<path d="' + lineaPath + '" class="caja-line-chart__line"></path>' +
-            puntosHtml + valoresHtml + fechasHtml +
+            '<path d="' + lineaDigitalPath + '" class="caja-line-chart__line caja-line-chart__line--digital"></path>' +
+            '<path d="' + lineaEfectivoPath + '" class="caja-line-chart__line"></path>' +
+            puntosDigitalHtml + puntosEfectivoHtml + valoresHtml + fechasHtml +
         '</svg>';
 }
 
@@ -199,26 +270,33 @@ function initCierreSlideOver() {
 
         document.getElementById('cierreSlideOverTitulo').textContent = cierre.fecha;
 
+        // Con dos conteos (efectivo y digital) el pill del encabezado solo
+        // resume si algo quedó descuadrado -el detalle de cuál y por
+        // cuánto va en las dos filas de "Diferencia" más abajo.
         var pill = document.getElementById('cierreSlideOverDiferenciaPill');
-        if (cierre.diferencia > 0) {
-            pill.className = 'status-pill status-pill--sobrante';
-            pill.textContent = 'Sobrante';
-        } else if (cierre.diferencia < 0) {
-            pill.className = 'status-pill status-pill--faltante';
-            pill.textContent = 'Faltante';
-        } else {
+        if (cierre.diferencia === 0 && cierre.diferenciaDigital === 0) {
             pill.className = 'status-pill status-pill--sin-facturar';
             pill.textContent = 'Exacto';
+        } else {
+            var esSobrante = (cierre.diferencia + cierre.diferenciaDigital) >= 0;
+            pill.className = 'status-pill ' + (esSobrante ? 'status-pill--sobrante' : 'status-pill--faltante');
+            pill.textContent = 'Descuadrado';
         }
 
         document.getElementById('cierreSlideOverBase').textContent = formatCOP(cierre.baseInicial);
         document.getElementById('cierreSlideOverVentasEfectivo').textContent = formatCOP(cierre.ventasEfectivo);
-        document.getElementById('cierreSlideOverVentasDigital').textContent = formatCOP(cierre.ventasDigital);
         document.getElementById('cierreSlideOverGastos').textContent = formatCOP(cierre.gastosEfectivo);
+        document.getElementById('cierreSlideOverCompras').textContent = formatCOP(cierre.comprasEfectivo);
+        document.getElementById('cierreSlideOverVentasDigital').textContent = formatCOP(cierre.ventasDigital);
+        document.getElementById('cierreSlideOverGastosDigital').textContent = formatCOP(cierre.gastosDigital);
+        document.getElementById('cierreSlideOverComprasDigital').textContent = formatCOP(cierre.comprasDigital);
         document.getElementById('cierreSlideOverEsperado').textContent = formatCOP(cierre.totalEsperado);
+        document.getElementById('cierreSlideOverEsperadoDigital').textContent = formatCOP(cierre.totalEsperadoDigital);
         document.getElementById('cierreSlideOverGeneral').textContent = formatCOP(cierre.totalGeneral);
         document.getElementById('cierreSlideOverConteo').textContent = formatCOP(cierre.conteoReal);
         document.getElementById('cierreSlideOverDiferencia').textContent = formatDiferencia(cierre.diferencia);
+        document.getElementById('cierreSlideOverConteoDigital').textContent = formatCOP(cierre.conteoDigital);
+        document.getElementById('cierreSlideOverDiferenciaDigital').textContent = formatDiferencia(cierre.diferenciaDigital);
         document.getElementById('cierreSlideOverAbrioPor').textContent = cierre.abrioPor + ' · ' + cierre.horaCierre;
 
         slideOver.classList.add('is-open');
@@ -256,37 +334,72 @@ function initCierreSlideOver() {
 }
 
 /* --------------------------------------------------------------------
- * 4. Flujo completo: abrir caja -> recibo en vivo -> cerrar caja
+ * 4. Flujo completo: abrir/reabrir caja -> recibo en vivo -> cerrar caja
  * ------------------------------------------------------------------ */
 function initCajaFlow() {
     var heroAbrir = document.getElementById('cajaHeroAbrir');
     var panelAbierta = document.getElementById('cajaAbiertaPanel');
     var baseInicialInput = document.getElementById('cajaBaseInicial');
     var abrirBtn = document.getElementById('abrirCajaBtn');
+    var reabrirBtn = document.getElementById('reabrirCajaBtn');
     if (!heroAbrir || !panelAbierta || !abrirBtn) {
         return;
     }
 
     var estadoValorEl = document.getElementById('cajaEstadoValor');
     var estadoMetaEl = document.getElementById('cajaEstadoMeta');
-    var estadoIconoEl = document.getElementById('cajaEstadoIcono');
-
-    var baseActual = 0;
-    var totalEsperadoActual = 0;
+    var estadoCard = document.getElementById('cajaEstadoCard');
+    var statVentasEl = document.getElementById('cajaStatVentas');
+    var statGastosEl = document.getElementById('cajaStatGastos');
 
     formatearInputDinero(baseInicialInput);
 
-    function formatHoraAhora() {
-        var ahora = new Date();
-        var horas = ahora.getHours();
-        var minutos = ahora.getMinutes();
-        var sufijo = horas >= 12 ? 'p.m.' : 'a.m.';
-        var horas12 = horas % 12;
-        if (horas12 === 0) {
-            horas12 = 12;
-        }
-        var minutosTexto = minutos < 10 ? '0' + minutos : String(minutos);
-        return horas12 + ':' + minutosTexto + ' ' + sufijo;
+    function pintarRecibo(caja) {
+        document.getElementById('reciboBase').textContent = formatCOP(caja.baseInicial);
+        document.getElementById('reciboVentasEfectivo').textContent = formatCOP(caja.ventasEfectivo);
+        document.getElementById('reciboGastos').textContent = formatCOP(caja.gastosEfectivo);
+        document.getElementById('reciboCompras').textContent = formatCOP(caja.comprasEfectivo);
+        document.getElementById('reciboTotalEsperado').textContent = formatCOP(caja.totalEsperado);
+        document.getElementById('reciboVentasDigital').textContent = formatCOP(caja.ventasDigital);
+        document.getElementById('reciboComprasDigital').textContent = formatCOP(caja.comprasDigital);
+        document.getElementById('reciboTotalEsperadoDigital').textContent = formatCOP(caja.totalEsperadoDigital);
+        document.getElementById('reciboTotalGeneral').textContent = formatCOP(caja.totalGeneral);
+        document.getElementById('cajaHoraApertura').textContent = caja.horaApertura;
+        document.getElementById('cajaAbrioPor').textContent = caja.abrioPor;
+
+        statVentasEl.dataset.countupCancelado = '1';
+        statGastosEl.dataset.countupCancelado = '1';
+        statVentasEl.textContent = formatCOP(caja.ventasEfectivo + caja.ventasDigital);
+        statGastosEl.textContent = formatCOP(caja.gastosEfectivo + caja.gastosDigital);
+    }
+
+    function pasarAAbierta(caja) {
+        cajaActual = caja;
+        pintarRecibo(caja);
+
+        heroAbrir.hidden = true;
+        panelAbierta.hidden = false;
+
+        estadoValorEl.textContent = 'Abierta';
+        estadoMetaEl.textContent = 'Base ' + formatCOP(caja.baseInicial) + ' · ' + caja.horaApertura;
+        estadoCard.classList.remove('stat-card--mist');
+        estadoCard.classList.add('stat-card--sage');
+    }
+
+    function pasarACerrada() {
+        cajaActual = null;
+        heroAbrir.hidden = false;
+        panelAbierta.hidden = true;
+        baseInicialInput.value = '';
+
+        estadoValorEl.textContent = 'Cerrada';
+        estadoMetaEl.textContent = 'Todavía no la has abierto';
+        estadoCard.classList.remove('stat-card--sage');
+        estadoCard.classList.add('stat-card--mist');
+        statVentasEl.dataset.countupCancelado = '1';
+        statGastosEl.dataset.countupCancelado = '1';
+        statVentasEl.textContent = formatCOP(0);
+        statGastosEl.textContent = formatCOP(0);
     }
 
     abrirBtn.addEventListener('click', function () {
@@ -296,40 +409,84 @@ function initCajaFlow() {
             return;
         }
 
-        baseActual = base;
-        totalEsperadoActual = baseActual + cajaHoy.ventasEfectivo - cajaHoy.gastosEfectivo;
-        var totalGeneral = totalEsperadoActual + cajaHoy.ventasDigital;
+        var originalText = abrirBtn.textContent;
+        abrirBtn.disabled = true;
+        abrirBtn.textContent = 'Abriendo...';
 
-        document.getElementById('reciboBase').textContent = formatCOP(baseActual);
-        document.getElementById('reciboVentasEfectivo').textContent = formatCOP(cajaHoy.ventasEfectivo);
-        document.getElementById('reciboGastos').textContent = formatCOP(cajaHoy.gastosEfectivo);
-        document.getElementById('reciboTotalEsperado').textContent = formatCOP(totalEsperadoActual);
-        document.getElementById('reciboVentasDigital').textContent = formatCOP(cajaHoy.ventasDigital);
-        document.getElementById('reciboTotalGeneral').textContent = formatCOP(totalGeneral);
-        document.getElementById('cajaHoraApertura').textContent = formatHoraAhora();
-
-        heroAbrir.hidden = true;
-        panelAbierta.hidden = false;
-
-        estadoValorEl.textContent = 'Abierta';
-        estadoMetaEl.textContent = 'Base inicial: ' + formatCOP(baseActual) + ' · desde ahora';
-        estadoIconoEl.closest('.stat-card').classList.remove('stat-card--mist');
-        estadoIconoEl.closest('.stat-card').classList.add('stat-card--sage');
+        cajaApiRequest('POST', '/cliente/caja/abrir', { base_inicial: base })
+            .then(function (json) {
+                pasarAAbierta(json.caja);
+            })
+            .catch(function (error) {
+                mostrarError(error.message);
+            })
+            .finally(function () {
+                abrirBtn.disabled = false;
+                abrirBtn.textContent = originalText;
+            });
     });
 
-    initCerrarCajaModal(function () { return { baseActual: baseActual, totalEsperadoActual: totalEsperadoActual }; }, function () {
-        heroAbrir.hidden = false;
-        panelAbierta.hidden = true;
-        baseInicialInput.value = '';
+    if (reabrirBtn) {
+        reabrirBtn.addEventListener('click', function () {
+            var id = reabrirBtn.getAttribute('data-caja-id');
+            if (!id) {
+                return;
+            }
 
-        estadoValorEl.textContent = 'Cerrada';
-        estadoMetaEl.textContent = 'Ya cerraste caja hoy';
-        estadoIconoEl.closest('.stat-card').classList.remove('stat-card--sage');
-        estadoIconoEl.closest('.stat-card').classList.add('stat-card--mist');
+            var originalText = reabrirBtn.textContent;
+            reabrirBtn.disabled = true;
+            reabrirBtn.textContent = 'Reabriendo...';
+
+            cajaApiRequest('POST', '/cliente/caja/' + id + '/reabrir')
+                .then(function (json) {
+                    // Esa caja deja de ser un cierre del historial -vuelve a
+                    // estar abierta, así que se saca de la tabla/gráfico.
+                    var row = document.querySelector('#cajaTableBody .data-table__row[data-cierre-id="' + id + '"]');
+                    if (row) {
+                        row.remove();
+                    }
+                    cajaCierres = cajaCierres.filter(function (c) { return String(c.id) !== String(id); });
+                    delete cajaCierresById[id];
+                    renderDiffChart();
+                    actualizarStatCierresSinCuadrar();
+
+                    reabrirBtn.hidden = true;
+                    pasarAAbierta(json.caja);
+                })
+                .catch(function (error) {
+                    mostrarError(error.message);
+                })
+                .finally(function () {
+                    reabrirBtn.disabled = false;
+                    reabrirBtn.textContent = originalText;
+                });
+        });
+    }
+
+    initCerrarCajaModal(function () { return cajaActual; }, function (cierre) {
+        pasarACerrada();
+
+        if (reabrirBtn) {
+            reabrirBtn.setAttribute('data-caja-id', cierre.id);
+            reabrirBtn.hidden = false;
+        }
     });
 }
 
-function initCerrarCajaModal(getEstadoActual, onCerrada) {
+function actualizarStatCierresSinCuadrar() {
+    var el = document.getElementById('cajaStatSinCuadrar');
+    if (!el) {
+        return;
+    }
+    // "Últimos 6" -mismo recorte que ya usa el gráfico de diferencia. Un
+    // cierre queda "sin cuadrar" si falla el efectivo O el digital.
+    var sinCuadrar = cajaCierres.slice(0, 6).filter(function (c) { return c.diferencia !== 0 || c.diferenciaDigital !== 0; }).length;
+    el.dataset.countupCancelado = '1';
+    el.setAttribute('data-count', sinCuadrar);
+    el.textContent = formatNumber(sinCuadrar, 0);
+}
+
+function initCerrarCajaModal(getCajaActual, onCerrada) {
     var openBtn = document.getElementById('cerrarCajaBtn');
     var modal = document.getElementById('cerrarCajaModal');
     var overlay = document.getElementById('cerrarCajaOverlay');
@@ -342,43 +499,59 @@ function initCerrarCajaModal(getEstadoActual, onCerrada) {
     var conteoInput = document.getElementById('conteoFisicoInput');
     var diferenciaBox = document.getElementById('cajaModalDiferencia');
     var diferenciaTexto = document.getElementById('cajaModalDiferenciaTexto');
+    var esperadoDigitalEl = document.getElementById('cerrarModalEsperadoDigital');
+    var conteoDigitalInput = document.getElementById('conteoDigitalInput');
+    var diferenciaDigitalBox = document.getElementById('cajaModalDiferenciaDigital');
+    var diferenciaDigitalTexto = document.getElementById('cajaModalDiferenciaDigitalTexto');
     var confirmarBtn = document.getElementById('confirmarCierreBtn');
 
     formatearInputDinero(conteoInput);
+    formatearInputDinero(conteoDigitalInput);
 
-    function actualizarDiferencia() {
-        var estado = getEstadoActual();
-
-        if (!conteoInput.value.replace(/\D/g, '')) {
-            diferenciaBox.hidden = true;
-            confirmarBtn.disabled = true;
-            return;
+    // Misma lógica para el conteo físico y el digital -cada uno con su
+    // propio input/caja de diferencia, comparado contra su propio esperado.
+    function pintarDiferencia(input, box, texto, esperado) {
+        if (!input.value.replace(/\D/g, '')) {
+            box.hidden = true;
+            return false;
         }
 
-        var conteo = valorDineroInput(conteoInput);
-        var diferencia = conteo - estado.totalEsperadoActual;
-        diferenciaBox.hidden = false;
-        confirmarBtn.disabled = false;
+        var conteo = valorDineroInput(input);
+        var diferencia = conteo - esperado;
+        box.hidden = false;
 
         if (diferencia === 0) {
-            diferenciaBox.className = 'caja-modal-diferencia es-exacto';
-            diferenciaTexto.textContent = 'Cuadra exacto con lo esperado.';
+            box.className = 'caja-modal-diferencia es-exacto';
+            texto.textContent = 'Cuadra exacto con lo esperado.';
         } else if (diferencia > 0) {
-            diferenciaBox.className = 'caja-modal-diferencia es-sobrante';
-            diferenciaTexto.textContent = 'Sobrante de ' + formatCOP(diferencia);
+            box.className = 'caja-modal-diferencia es-sobrante';
+            texto.textContent = 'Sobrante de ' + formatCOP(diferencia);
         } else {
-            diferenciaBox.className = 'caja-modal-diferencia es-faltante';
-            diferenciaTexto.textContent = 'Faltante de ' + formatCOP(Math.abs(diferencia));
+            box.className = 'caja-modal-diferencia es-faltante';
+            texto.textContent = 'Faltante de ' + formatCOP(Math.abs(diferencia));
         }
+
+        return true;
     }
 
-    conteoInput.addEventListener('input', actualizarDiferencia);
+    function actualizarDiferencias() {
+        var caja = getCajaActual();
+        var tieneEfectivo = pintarDiferencia(conteoInput, diferenciaBox, diferenciaTexto, caja.totalEsperado);
+        var tieneDigital = pintarDiferencia(conteoDigitalInput, diferenciaDigitalBox, diferenciaDigitalTexto, caja.totalEsperadoDigital);
+        confirmarBtn.disabled = !(tieneEfectivo && tieneDigital);
+    }
+
+    conteoInput.addEventListener('input', actualizarDiferencias);
+    conteoDigitalInput.addEventListener('input', actualizarDiferencias);
 
     function openModal() {
-        var estado = getEstadoActual();
-        esperadoEl.textContent = formatCOP(estado.totalEsperadoActual);
+        var caja = getCajaActual();
+        esperadoEl.textContent = formatCOP(caja.totalEsperado);
+        esperadoDigitalEl.textContent = formatCOP(caja.totalEsperadoDigital);
         conteoInput.value = '';
+        conteoDigitalInput.value = '';
         diferenciaBox.hidden = true;
+        diferenciaDigitalBox.hidden = true;
         confirmarBtn.disabled = true;
 
         modal.classList.add('is-open');
@@ -402,81 +575,66 @@ function initCerrarCajaModal(getEstadoActual, onCerrada) {
         }
     });
 
-    function formatFechaHoraAhora() {
-        var ahora = new Date();
-        var horas = ahora.getHours();
-        var minutos = ahora.getMinutes();
-        var sufijo = horas >= 12 ? 'p.m.' : 'a.m.';
-        var horas12 = horas % 12;
-        if (horas12 === 0) {
-            horas12 = 12;
-        }
-        var minutosTexto = minutos < 10 ? '0' + minutos : String(minutos);
-        return horas12 + ':' + minutosTexto + ' ' + sufijo;
-    }
-
     confirmarBtn.addEventListener('click', function () {
         if (confirmarBtn.disabled) {
             return;
         }
 
-        var estado = getEstadoActual();
+        var caja = getCajaActual();
         var conteo = valorDineroInput(conteoInput);
-        var diferencia = conteo - estado.totalEsperadoActual;
+        var conteoDigital = valorDineroInput(conteoDigitalInput);
 
         var originalText = confirmarBtn.textContent;
         confirmarBtn.disabled = true;
         confirmarBtn.textContent = 'Cerrando...';
 
-        window.setTimeout(function () {
-            var nuevoId = cajaCierres.reduce(function (max, c) { return Math.max(max, c.id); }, 0) + 1;
-            var cierre = {
-                id: nuevoId,
-                fecha: 'Hoy',
-                abrioPor: 'Laura Ramírez',
-                baseInicial: estado.baseActual,
-                ventasEfectivo: cajaHoy.ventasEfectivo,
-                ventasDigital: cajaHoy.ventasDigital,
-                gastosEfectivo: cajaHoy.gastosEfectivo,
-                totalEsperado: estado.totalEsperadoActual,
-                totalGeneral: estado.totalEsperadoActual + cajaHoy.ventasDigital,
-                conteoReal: conteo,
-                diferencia: diferencia,
-                horaCierre: formatFechaHoraAhora()
-            };
+        cajaApiRequest('POST', '/cliente/caja/' + caja.id + '/cerrar', { conteo_fisico: conteo, conteo_digital: conteoDigital })
+            .then(function (json) {
+                var cierre = json.cierre;
 
-            cajaCierres.unshift(cierre);
-            cajaCierresById[cierre.id] = cierre;
+                cajaCierres.unshift(cierre);
+                cajaCierresById[cierre.id] = cierre;
 
-            var tableBody = document.getElementById('cajaTableBody');
-            if (tableBody) {
-                var row = document.createElement('tr');
-                row.className = 'data-table__row';
-                row.setAttribute('data-cierre-id', cierre.id);
-                row.tabIndex = 0;
+                var tableBody = document.getElementById('cajaTableBody');
+                if (tableBody) {
+                    var row = document.createElement('tr');
+                    row.className = 'data-table__row';
+                    row.setAttribute('data-cierre-id', cierre.id);
+                    row.tabIndex = 0;
+                    row.innerHTML =
+                        '<td><div class="data-table__title">' + cierre.fecha + '</div><div class="data-table__meta">Cerrada ' + cierre.horaCierre + '</div></td>' +
+                        '<td class="data-table__meta">' + formatCOP(cierre.baseInicial) + '</td>' +
+                        '<td class="data-table__title">' + formatCOP(cierre.totalEsperado) + '</td>' +
+                        '<td></td>' +
+                        '<td class="data-table__title">' + formatCOP(cierre.totalEsperadoDigital) + '</td>' +
+                        '<td></td>';
 
-                var pillClass = diferencia > 0 ? 'status-pill--sobrante' : (diferencia < 0 ? 'status-pill--faltante' : 'status-pill--sin-facturar');
-                var pillTexto = diferencia > 0 ? '+' + formatCOP(diferencia) : (diferencia < 0 ? '−' + formatCOP(Math.abs(diferencia)) : 'Exacto');
+                    pintarPillDiferencia(row.cells[3], cierre.diferencia);
+                    pintarPillDiferencia(row.cells[5], cierre.diferenciaDigital);
 
-                row.innerHTML =
-                    '<td><div class="data-table__title">' + cierre.fecha + '</div><div class="data-table__meta">Cerrada ' + cierre.horaCierre + '</div></td>' +
-                    '<td class="data-table__meta">' + formatCOP(cierre.baseInicial) + '</td>' +
-                    '<td class="data-table__title">' + formatCOP(cierre.totalEsperado) + '</td>' +
-                    '<td class="data-table__meta">' + formatCOP(cierre.conteoReal) + '</td>' +
-                    '<td><span class="status-pill ' + pillClass + '">' + pillTexto + '</span></td>';
-
-                tableBody.insertBefore(row, tableBody.firstChild);
-                if (window.wireCajaFilaCierre) {
-                    window.wireCajaFilaCierre(row);
+                    tableBody.insertBefore(row, tableBody.firstChild);
+                    if (window.wireCajaFilaCierre) {
+                        window.wireCajaFilaCierre(row);
+                    }
                 }
-            }
 
-            renderDiffChart();
+                var emptyState = document.getElementById('cajaEmpty');
+                if (emptyState) {
+                    emptyState.hidden = true;
+                }
 
-            confirmarBtn.disabled = false;
-            confirmarBtn.textContent = originalText;
-            closeModal();
-            onCerrada();
-        }, 700);
+                renderDiffChart();
+                actualizarStatCierresSinCuadrar();
+
+                closeModal();
+                onCerrada(cierre);
+            })
+            .catch(function (error) {
+                mostrarError(error.message);
+            })
+            .finally(function () {
+                confirmarBtn.disabled = false;
+                confirmarBtn.textContent = originalText;
+            });
     });
 }

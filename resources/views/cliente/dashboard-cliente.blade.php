@@ -1,12 +1,16 @@
 <x-cliente-layout title="Dashboard">
 
-    {{-- Dashboard del negocio cliente — SOLO FRONTEND por ahora, datos
-         mock. El único backend real de todo el panel cliente es cerrar
-         sesión (ver el <form> del sidebar en layouts/cliente-layout). --}}
+    {{-- Dashboard del negocio cliente — datos reales
+         (App\Http\Controllers\Cliente\DashboardController). Ganancia neta
+         ya consulta la tabla real de gastos, aunque hoy siempre dé "$0 en
+         gastos" porque ese módulo todavía no existe -no es un dato falso,
+         es que de verdad no hay nada registrado ahí todavía. Estado de
+         caja sí es 100% real (App\Models\Cliente\Caja), igual que en la
+         página de Caja. --}}
 
     <div class="cliente-page-header cliente-reveal cliente-reveal-1">
         <p class="cliente-page-header__eyebrow">Tu negocio</p>
-        <h1 class="cliente-page-header__title">Bienvenida, Laura</h1>
+        <h1 class="cliente-page-header__title">Bienvenida, {{ auth()->user()->nombres }}</h1>
         <p class="cliente-page-header__date">{{ now()->locale('es')->translatedFormat('l, d \d\e F \d\e Y') }}</p>
     </div>
 
@@ -24,7 +28,7 @@
             </span>
         </button>
 
-        <button type="button" class="quick-action quick-action--sand" data-coming-soon="Registrar compra estará disponible pronto.">
+        <button type="button" class="quick-action quick-action--sand" id="registrarCompraBtn">
             <span class="quick-action__icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="9" cy="20" r="1"/>
@@ -38,7 +42,7 @@
             </span>
         </button>
 
-        <button type="button" class="quick-action quick-action--slate" id="abrirCajaAction">
+        <button type="button" class="quick-action quick-action--slate" id="abrirCajaAction" data-caja-abierta="{{ $cajaAbierta ? '1' : '0' }}">
             <span class="quick-action__icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
@@ -47,8 +51,8 @@
                 </svg>
             </span>
             <span class="quick-action__text">
-                <span class="quick-action__label">Abrir caja</span>
-                <span class="quick-action__hint">Empezar el día</span>
+                <span class="quick-action__label">{{ $cajaAbierta ? 'Caja abierta' : 'Abrir caja' }}</span>
+                <span class="quick-action__hint">{{ $cajaAbierta ? 'Ir a Caja' : 'Empezar el día' }}</span>
             </span>
         </button>
     </div>
@@ -61,9 +65,9 @@
                     <path d="M4 7h16l-1.5 13.5a2 2 0 0 1-2 1.5H7.5a2 2 0 0 1-2-1.5L4 7Z"/>
                 </svg>
             </div>
-            <span class="stat-card__value" data-count="1240000" data-prefix="$">$0</span>
+            <span class="stat-card__value" id="ventasHoyValor" data-count="{{ $totalVentasHoy }}" data-prefix="$">$0</span>
             <span class="stat-card__label">Ventas de hoy</span>
-            <span class="stat-card__meta">18 transacciones</span>
+            <span class="stat-card__meta" id="ventasHoyMeta" data-cantidad="{{ $cantidadVentasHoy }}">{{ $cantidadVentasHoy }} transacci{{ $cantidadVentasHoy === 1 ? 'ón' : 'ones' }}</span>
         </div>
 
         <div class="stat-card stat-card--sage">
@@ -73,7 +77,7 @@
                     <path d="M16 7h6v6"/>
                 </svg>
             </div>
-            <span class="stat-card__value" data-count="410000" data-prefix="$">$0</span>
+            <span class="stat-card__value" id="gananciaBrutaValor" data-count="{{ $gananciaBrutaHoy }}" data-prefix="$">$0</span>
             <span class="stat-card__label">Ganancia bruta del día</span>
             <span class="stat-card__meta">Ventas − costo de productos</span>
         </div>
@@ -86,12 +90,12 @@
                     <path d="M17 14h.01"/>
                 </svg>
             </div>
-            <span class="stat-card__value" data-count="285000" data-prefix="$">$0</span>
+            <span class="stat-card__value" id="gananciaNetaValor" data-count="{{ $gananciaNetaHoy }}" data-prefix="$">$0</span>
             <span class="stat-card__label">Ganancia neta del día</span>
             <span class="stat-card__meta">Ganancia bruta − gastos</span>
         </div>
 
-        <div class="stat-card stat-card--mist" id="cajaEstadoCard">
+        <div class="stat-card {{ $cajaAbierta ? 'stat-card--sage' : 'stat-card--mist' }}" id="cajaEstadoCard">
             <div class="stat-card__icon" id="cajaEstadoIcono">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
@@ -99,9 +103,15 @@
                     <path d="M6 9v.01M18 15v.01"/>
                 </svg>
             </div>
-            <span class="stat-card__value stat-card__value--status" id="cajaEstadoValor">Cerrada</span>
+            <span class="stat-card__value stat-card__value--status" id="cajaEstadoValor">{{ $cajaAbierta ? 'Abierta' : 'Cerrada' }}</span>
             <span class="stat-card__label">Estado de caja</span>
-            <span class="stat-card__meta" id="cajaEstadoMeta">Todavía no la has abierto hoy</span>
+            <span class="stat-card__meta" id="cajaEstadoMeta">
+                @if ($cajaAbierta)
+                    Base ${{ number_format($cajaAbierta['baseInicial'], 0, ',', '.') }} · {{ $cajaAbierta['horaApertura'] }}
+                @else
+                    Todavía no la has abierto hoy
+                @endif
+            </span>
         </div>
     </div>
 
@@ -115,48 +125,14 @@
             </div>
 
             <div class="bar-chart">
-                <div class="bar-chart__col">
-                    <div class="bar-chart__track">
-                        <div class="bar-chart__fill" data-pct="53" data-value="$890.000"></div>
+                @foreach ($ventasSemana as $dia)
+                    <div class="bar-chart__col {{ $dia['esHoy'] ? 'is-current' : '' }}">
+                        <div class="bar-chart__track">
+                            <div class="bar-chart__fill" data-pct="{{ $dia['pct'] }}" data-value="{{ $dia['valor'] }}" data-total="{{ $dia['total'] }}" data-es-hoy="{{ $dia['esHoy'] ? '1' : '0' }}"></div>
+                        </div>
+                        <span class="bar-chart__label">{{ $dia['label'] }}</span>
                     </div>
-                    <span class="bar-chart__label">Lun</span>
-                </div>
-                <div class="bar-chart__col is-current">
-                    <div class="bar-chart__track">
-                        <div class="bar-chart__fill" data-pct="74" data-value="$1.240.000"></div>
-                    </div>
-                    <span class="bar-chart__label">Mar</span>
-                </div>
-                <div class="bar-chart__col">
-                    <div class="bar-chart__track">
-                        <div class="bar-chart__fill" data-pct="45" data-value="$760.000"></div>
-                    </div>
-                    <span class="bar-chart__label">Mié</span>
-                </div>
-                <div class="bar-chart__col">
-                    <div class="bar-chart__track">
-                        <div class="bar-chart__fill" data-pct="58" data-value="$980.000"></div>
-                    </div>
-                    <span class="bar-chart__label">Jue</span>
-                </div>
-                <div class="bar-chart__col">
-                    <div class="bar-chart__track">
-                        <div class="bar-chart__fill" data-pct="86" data-value="$1.450.000"></div>
-                    </div>
-                    <span class="bar-chart__label">Vie</span>
-                </div>
-                <div class="bar-chart__col">
-                    <div class="bar-chart__track">
-                        <div class="bar-chart__fill" data-pct="100" data-value="$1.680.000"></div>
-                    </div>
-                    <span class="bar-chart__label">Sáb</span>
-                </div>
-                <div class="bar-chart__col">
-                    <div class="bar-chart__track">
-                        <div class="bar-chart__fill" data-pct="32" data-value="$540.000"></div>
-                    </div>
-                    <span class="bar-chart__label">Dom</span>
-                </div>
+                @endforeach
             </div>
         </div>
 
@@ -169,159 +145,59 @@
             </div>
 
             <div class="sale-list">
-                <div class="sale-row">
-                    <div class="sale-row__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <rect x="2.5" y="5" width="19" height="14" rx="2.5"/>
-                            <path d="M2.5 10h19M6 15h4"/>
-                        </svg>
+                @forelse ($ventasRecientes as $venta)
+                    {{-- $venta['hora'] viene como "Hoy, 3:06 p.m." (misma
+                         forma que usa Ventas) -acá alcanza con la hora
+                         sola, "Hoy" ya lo dice el subtítulo del panel. --}}
+                    <div class="sale-row {{ $venta['metodo'] === 'efectivo' ? 'sale-row--efectivo' : '' }}" data-venta-id="{{ $venta['id'] }}" tabindex="0">
+                        <div class="sale-row__icon">
+                            @if ($venta['metodo'] === 'efectivo')
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                            @else
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <rect x="2.5" y="5" width="19" height="14" rx="2.5"/>
+                                    <path d="M2.5 10h19M6 15h4"/>
+                                </svg>
+                            @endif
+                        </div>
+                        <div class="sale-row__info">
+                            <div class="sale-row__id">Venta #{{ $venta['id'] }}</div>
+                            <div class="sale-row__meta">{{ \Illuminate\Support\Str::after($venta['hora'], ', ') }} · {{ $venta['metodo'] === 'efectivo' ? 'Efectivo' : 'Wompi' }}</div>
+                        </div>
+                        <div class="sale-row__monto">${{ number_format($venta['total'], 0, ',', '.') }}</div>
                     </div>
-                    <div class="sale-row__info">
-                        <div class="sale-row__id">Venta #128</div>
-                        <div class="sale-row__meta">2:45 p.m. · Wompi</div>
-                    </div>
-                    <div class="sale-row__monto">$85.000</div>
-                </div>
-
-                <div class="sale-row sale-row--efectivo">
-                    <div class="sale-row__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
-                            <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                    </div>
-                    <div class="sale-row__info">
-                        <div class="sale-row__id">Venta #127</div>
-                        <div class="sale-row__meta">2:10 p.m. · Efectivo</div>
-                    </div>
-                    <div class="sale-row__monto">$124.000</div>
-                </div>
-
-                <div class="sale-row sale-row--efectivo">
-                    <div class="sale-row__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
-                            <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                    </div>
-                    <div class="sale-row__info">
-                        <div class="sale-row__id">Venta #126</div>
-                        <div class="sale-row__meta">1:30 p.m. · Efectivo</div>
-                    </div>
-                    <div class="sale-row__monto">$45.000</div>
-                </div>
-
-                <div class="sale-row">
-                    <div class="sale-row__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <rect x="2.5" y="5" width="19" height="14" rx="2.5"/>
-                            <path d="M2.5 10h19M6 15h4"/>
-                        </svg>
-                    </div>
-                    <div class="sale-row__info">
-                        <div class="sale-row__id">Venta #125</div>
-                        <div class="sale-row__meta">12:55 p.m. · Wompi</div>
-                    </div>
-                    <div class="sale-row__monto">$210.000</div>
-                </div>
-
-                <div class="sale-row sale-row--efectivo">
-                    <div class="sale-row__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
-                            <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                    </div>
-                    <div class="sale-row__info">
-                        <div class="sale-row__id">Venta #124</div>
-                        <div class="sale-row__meta">11:40 a.m. · Efectivo</div>
-                    </div>
-                    <div class="sale-row__monto">$68.000</div>
-                </div>
-
-                <div class="sale-row">
-                    <div class="sale-row__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <rect x="2.5" y="5" width="19" height="14" rx="2.5"/>
-                            <path d="M2.5 10h19M6 15h4"/>
-                        </svg>
-                    </div>
-                    <div class="sale-row__info">
-                        <div class="sale-row__id">Venta #123</div>
-                        <div class="sale-row__meta">10:55 a.m. · Wompi</div>
-                    </div>
-                    <div class="sale-row__monto">$156.000</div>
-                </div>
-
-                <div class="sale-row sale-row--efectivo">
-                    <div class="sale-row__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
-                            <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                    </div>
-                    <div class="sale-row__info">
-                        <div class="sale-row__id">Venta #122</div>
-                        <div class="sale-row__meta">10:12 a.m. · Efectivo</div>
-                    </div>
-                    <div class="sale-row__monto">$32.000</div>
-                </div>
-
-                <div class="sale-row sale-row--efectivo">
-                    <div class="sale-row__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
-                            <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                    </div>
-                    <div class="sale-row__info">
-                        <div class="sale-row__id">Venta #121</div>
-                        <div class="sale-row__meta">9:48 a.m. · Efectivo</div>
-                    </div>
-                    <div class="sale-row__monto">$95.000</div>
-                </div>
-
-                <div class="sale-row">
-                    <div class="sale-row__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <rect x="2.5" y="5" width="19" height="14" rx="2.5"/>
-                            <path d="M2.5 10h19M6 15h4"/>
-                        </svg>
-                    </div>
-                    <div class="sale-row__info">
-                        <div class="sale-row__id">Venta #120</div>
-                        <div class="sale-row__meta">9:15 a.m. · Wompi</div>
-                    </div>
-                    <div class="sale-row__monto">$178.000</div>
-                </div>
-
-                <div class="sale-row sale-row--efectivo">
-                    <div class="sale-row__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <rect x="2.5" y="6" width="19" height="12" rx="2.5"/>
-                            <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                    </div>
-                    <div class="sale-row__info">
-                        <div class="sale-row__id">Venta #119</div>
-                        <div class="sale-row__meta">8:30 a.m. · Efectivo</div>
-                    </div>
-                    <div class="sale-row__monto">$54.000</div>
-                </div>
+                @empty
+                    <p class="sale-list__empty">Todavía no hay ventas registradas hoy.</p>
+                @endforelse
             </div>
         </div>
     </div>
 
+    <script id="ventasRecientesData" type="application/json">{!! json_encode($ventasRecientes) !!}</script>
+
+    @include('cliente.partials.venta-slide-over')
+
     @include('cliente.partials.nueva-venta-modal')
+
+    @include('cliente.partials.registrar-compra-modal')
+
+    @include('cliente.partials.abrir-caja-modal')
 
     @push('styles')
         <link rel="stylesheet" href="{{ asset_v('assets/css/cliente/dashboard.css') }}">
         <link rel="stylesheet" href="{{ asset_v('assets/css/cliente/nueva-venta-modal.css') }}">
+        <link rel="stylesheet" href="{{ asset_v('assets/css/cliente/inventario.css') }}">
     @endpush
 
     @push('scripts')
         <script src="{{ asset_v('assets/js/cliente/dashboard.js') }}" defer></script>
+        <script src="{{ asset_v('assets/js/cliente/venta-slide-over.js') }}" defer></script>
         <script src="{{ asset_v('assets/js/cliente/nueva-venta-modal.js') }}" defer></script>
+        <script src="{{ asset_v('assets/js/cliente/registrar-compra-modal.js') }}" defer></script>
+        <script src="{{ asset_v('assets/js/cliente/abrir-caja-modal.js') }}" defer></script>
     @endpush
 
 </x-cliente-layout>

@@ -1,8 +1,12 @@
 <?php
 
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
+use App\Http\Controllers\Cliente\CajaController;
+use App\Http\Controllers\Cliente\DashboardController;
 use App\Http\Controllers\Cliente\InventarioController;
+use App\Http\Controllers\Cliente\ProfileController as ClienteProfileController;
 use App\Http\Controllers\Cliente\ProveedorController;
+use App\Http\Controllers\Cliente\VentasController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -47,13 +51,12 @@ Route::middleware(['auth', 'rol:admin'])->group(function () {
 // aquí -el Global Scope por sí solo no alcanza a cubrir ese caso, ver
 // App\Models\Scopes\EmpresaScope.
 Route::middleware(['auth', 'rol:cliente'])->group(function () {
-    Route::get('/cliente/dashboard', function () {
-        return view('cliente.dashboard-cliente');
-    })->name('cliente.dashboard');
+    Route::get('/cliente/dashboard', [DashboardController::class, 'index'])->name('cliente.dashboard');
 
-    Route::get('/cliente/ventas', function () {
-        return view('cliente.ventas');
-    })->name('cliente.ventas');
+    Route::get('/cliente/ventas', [VentasController::class, 'index'])->name('cliente.ventas');
+    Route::post('/cliente/ventas', [VentasController::class, 'store'])->name('cliente.ventas.store');
+    Route::get('/cliente/ventas/{venta}/recibo', [VentasController::class, 'recibo'])->name('cliente.ventas.recibo');
+    Route::post('/cliente/ventas/{venta}/anular', [VentasController::class, 'anular'])->name('cliente.ventas.anular');
 
     Route::get('/cliente/inventario', [InventarioController::class, 'index'])->name('cliente.inventario');
     Route::post('/cliente/inventario/categorias', [InventarioController::class, 'storeCategoria'])->name('cliente.inventario.categorias.store');
@@ -70,9 +73,15 @@ Route::middleware(['auth', 'rol:cliente'])->group(function () {
     Route::put('/cliente/proveedores/{proveedor}', [ProveedorController::class, 'update'])->name('cliente.proveedores.update');
     Route::delete('/cliente/proveedores/{proveedor}', [ProveedorController::class, 'destroy'])->name('cliente.proveedores.destroy');
 
-    Route::get('/cliente/caja', function () {
-        return view('cliente.caja');
-    })->name('cliente.caja');
+    Route::get('/cliente/caja', [CajaController::class, 'index'])->name('cliente.caja');
+    Route::post('/cliente/caja/abrir', [CajaController::class, 'abrir'])->name('cliente.caja.abrir');
+    Route::post('/cliente/caja/{caja}/cerrar', [CajaController::class, 'cerrar'])->name('cliente.caja.cerrar');
+    Route::post('/cliente/caja/{caja}/reabrir', [CajaController::class, 'reabrir'])->name('cliente.caja.reabrir');
+
+    Route::get('/cliente/perfil', [ClienteProfileController::class, 'edit'])->name('cliente.perfil');
+    Route::patch('/cliente/perfil', [ClienteProfileController::class, 'updateInfo'])->name('cliente.perfil.update');
+    Route::put('/cliente/perfil/password', [ClienteProfileController::class, 'updatePassword'])->name('cliente.perfil.password');
+    Route::post('/cliente/perfil/logo', [ClienteProfileController::class, 'updateLogo'])->name('cliente.perfil.logo');
 });
 
 Route::middleware('auth')->group(function () {

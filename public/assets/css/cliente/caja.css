@@ -161,6 +161,27 @@
     padding-top: 6px;
 }
 
+.caja-line-chart__legend {
+    display: flex;
+    gap: 18px;
+    margin-bottom: 8px;
+}
+
+.caja-line-chart__legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: var(--color-mist);
+}
+
+.caja-line-chart__legend-item i {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
 .caja-line-chart__svg {
     display: block;
     width: 100%;
@@ -174,6 +195,12 @@
     stroke-width: 2.5;
     stroke-linejoin: round;
     stroke-linecap: round;
+}
+
+.caja-line-chart__line--digital {
+    stroke: var(--color-mist);
+    stroke-width: 2;
+    stroke-dasharray: 5 4;
 }
 
 .caja-line-chart__zero {

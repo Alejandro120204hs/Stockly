@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Cliente;
 
+use App\Models\Cliente\Caja;
 use App\Models\Cliente\Compra;
 use App\Models\Cliente\Producto;
 use App\Models\Cliente\Proveedor;
@@ -25,6 +26,16 @@ class ProveedorCrudTest extends TestCase
         ]);
 
         $this->actingAs($usuario);
+
+        // La mayoría de estos tests registran compras en efectivo, que
+        // ahora requieren una caja abierta (ver App\Http\Controllers\
+        // Cliente\CajaController) -se abre una acá para no repetirlo en
+        // cada test.
+        Caja::create([
+            'usuario_apertura_id' => $usuario->id,
+            'base_inicial' => 0,
+            'apertura_en' => now(),
+        ]);
 
         return $usuario;
     }
@@ -142,6 +153,7 @@ class ProveedorCrudTest extends TestCase
             'tipo' => 'proveedor',
             'proveedor_id' => $proveedor->id,
             'factura_validada' => false,
+            'metodo_pago' => 'efectivo',
             'lineas' => [
                 ['producto_id' => $producto->id, 'cantidad' => 5, 'costo' => 9500],
             ],

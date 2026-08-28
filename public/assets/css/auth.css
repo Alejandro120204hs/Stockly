@@ -630,6 +630,50 @@ body.auth-body {
     animation: auth-shake 0.4s ease;
 }
 
+/* ---------- Logo del negocio (opcional) ----------
+   El <input type="file"> real queda invisible pero accesible (así el
+   teclado y los lectores de pantalla lo siguen viendo); el <label> de
+   afuera es la caja que se ve, con el texto cambiado por JS al nombre
+   del archivo elegido (ver auth.js). */
+.form-field--file {
+    margin-bottom: 18px;
+}
+
+.form-file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    opacity: 0;
+}
+
+.form-file-picker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 13px 16px;
+    border: 1.5px dashed rgba(30, 45, 61, 0.24);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-surface);
+    color: var(--color-mist);
+    font-size: 0.86rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.25s ease, background-color 0.25s ease;
+}
+
+.form-file-picker:hover,
+.form-file-input:focus-visible + .form-file-picker {
+    border-color: var(--color-sage);
+    background-color: rgba(74, 124, 111, 0.06);
+}
+
+.form-file-picker.has-file {
+    color: var(--color-sage-dark);
+    border-style: solid;
+    border-color: var(--color-sage);
+}
+
 /* ---------- Navegación entre pasos ---------- */
 .wizard-nav {
     display: flex;
