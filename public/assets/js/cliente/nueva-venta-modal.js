@@ -5,15 +5,39 @@
  * mismo script. Depende de cliente/layout.js (formatCOP, normalizarTexto)
  * ya cargado antes que este.
  *
- * Todo demo: arma el total solo, calcula el cambio en efectivo, y simula
- * la confirmación de un pago digital (así es como funcionaría de verdad
- * con el webhook de Wompi, según el modelo de negocio -acá solo con un
- * setTimeout). No hay backend: "Registrar venta" no persiste nada todavía.
+ * El total y el cambio se calculan solo en el cliente, y el pago digital
+ * se simula (así es como funcionaría de verdad con el webhook de Wompi,
+ * según el modelo de negocio -acá solo con un setTimeout, no hay
+ * integración real con la pasarela todavía). "Registrar venta" sí
+ * persiste de verdad contra POST /cliente/ventas.
  */
 
 document.addEventListener('DOMContentLoaded', function () {
     initNuevaVentaModal();
 });
+
+/** Mismo helper que inventarioApiRequest/proveedoresApiRequest, pero
+ * self-contained acá porque este modal se incluye también en el
+ * Dashboard, que no carga ventas.js. */
+function ventasApiRequest(method, url, data) {
+    var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    return fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': csrfMeta ? csrfMeta.content : ''
+        },
+        body: data !== undefined ? JSON.stringify(data) : undefined
+    }).then(function (response) {
+        return response.json().catch(function () { return {}; }).then(function (json) {
+            if (!response.ok) {
+                throw new Error(json.message || 'Ocurrió un error inesperado.');
+            }
+            return json;
+        });
+    });
+}
 
 function initNuevaVentaModal() {
     var openButtons = document.querySelectorAll('#nuevaVentaBtn');
@@ -41,6 +65,11 @@ function initNuevaVentaModal() {
     var qrBox = document.getElementById('ventaQrBox');
     var qrStatus = document.getElementById('ventaQrStatus');
     var registrarBtn = document.getElementById('ventaRegistrarBtn');
+    var quiereFacturaCheckbox = document.getElementById('ventaQuiereFactura');
+    var facturaPanel = document.getElementById('ventaFacturaPanel');
+    var compradorTipoDocumentoSelect = document.getElementById('ventaCompradorTipoDocumento');
+    var compradorNumeroDocumentoInput = document.getElementById('ventaCompradorNumeroDocumento');
+    var compradorNombreInput = document.getElementById('ventaCompradorNombre');
 
     var lineas = [];
     var metodoPago = 'efectivo';
@@ -51,6 +80,14 @@ function initNuevaVentaModal() {
         return lineas.reduce(function (sum, linea) {
             return sum + linea.cantidad * linea.precio;
         }, 0);
+    }
+
+    /** "Monto recibido" es un input de texto (no number) justo para poder
+     * mostrar puntos de miles mientras se escribe, igual que el resto de
+     * la plata en la app -se guarda solo el dígito, el punto es cosmético. */
+    function getMontoRecibido() {
+        var digitos = montoRecibidoInput.value.replace(/\D/g, '');
+        return digitos ? parseInt(digitos, 10) : 0;
     }
 
     function renderLineas() {
@@ -74,7 +111,7 @@ function initNuevaVentaModal() {
                     '</div>' +
                     '<div class="venta-line__qty">' +
                         '<button type="button" class="venta-line__qty-btn" data-action="dec">−</button>' +
-                        '<span class="venta-line__qty-value">' + linea.cantidad + '</span>' +
+                        '<input type="text" inputmode="numeric" class="venta-line__qty-value venta-line__qty-value--input" value="' + linea.cantidad + '">' +
                         '<button type="button" class="venta-line__qty-btn" data-action="inc">+</button>' +
                     '</div>' +
                     '<div class="venta-line__subtotal">' + formatCOP(linea.cantidad * linea.precio) + '</div>' +
@@ -97,6 +134,27 @@ function initNuevaVentaModal() {
                     renderLineas();
                 });
 
+                // La cantidad también se puede escribir directamente (más
+                // fácil que darle a "+" muchas veces). Se actualiza en vivo
+                // sin reconstruir la fila -si no, el cursor/foco se
+                // perdería mientras escribes.
+                var qtyInputLinea = row.querySelector('.venta-line__qty-value--input');
+                qtyInputLinea.addEventListener('input', function (event) {
+                    var digitos = event.target.value.replace(/\D/g, '');
+                    event.target.value = digitos;
+                    linea.cantidad = digitos ? parseInt(digitos, 10) : 0;
+                    row.querySelector('.venta-line__subtotal').textContent = formatCOP(linea.cantidad * linea.precio);
+                    updateTotalsAndState();
+                });
+                qtyInputLinea.addEventListener('blur', function () {
+                    if (!linea.cantidad || linea.cantidad < 1) {
+                        linea.cantidad = 1;
+                        qtyInputLinea.value = '1';
+                        row.querySelector('.venta-line__subtotal').textContent = formatCOP(linea.cantidad * linea.precio);
+                        updateTotalsAndState();
+                    }
+                });
+
                 linesContainer.appendChild(row);
             });
         }
@@ -113,7 +171,7 @@ function initNuevaVentaModal() {
 
     function updateCambio() {
         var total = getTotal();
-        var recibido = parseFloat(montoRecibidoInput.value) || 0;
+        var recibido = getMontoRecibido();
         var cambio = recibido - total;
         cambioEl.textContent = formatCOP(Math.max(0, cambio));
         cambioEl.classList.toggle('is-negative', cambio < 0);
@@ -128,9 +186,13 @@ function initNuevaVentaModal() {
             return;
         }
 
+        if (quiereFacturaCheckbox.checked && (!compradorNombreInput.value.trim() || !compradorNumeroDocumentoInput.value.trim())) {
+            registrarBtn.disabled = true;
+            return;
+        }
+
         if (metodoPago === 'efectivo') {
-            var recibido = parseFloat(montoRecibidoInput.value) || 0;
-            registrarBtn.disabled = recibido < total;
+            registrarBtn.disabled = getMontoRecibido() < total;
         } else {
             registrarBtn.disabled = !digitalConfirmado;
         }
@@ -192,6 +254,17 @@ function initNuevaVentaModal() {
         }
     });
 
+    /* ---------- ¿Necesita factura a su nombre? ----------
+     * Solo guarda quién la pidió (para que Facturación la recoja más
+     * adelante) -no genera ningún documento DIAN acá todavía. */
+    quiereFacturaCheckbox.addEventListener('change', function () {
+        facturaPanel.hidden = !quiereFacturaCheckbox.checked;
+        updateRegistrarState();
+    });
+
+    compradorNombreInput.addEventListener('input', updateRegistrarState);
+    compradorNumeroDocumentoInput.addEventListener('input', updateRegistrarState);
+
     /* ---------- Método de pago ---------- */
     function setMetodo(nuevo) {
         metodoPago = nuevo;
@@ -208,7 +281,11 @@ function initNuevaVentaModal() {
         simularConfirmacionDigital();
     });
 
-    montoRecibidoInput.addEventListener('input', updateTotalsAndState);
+    montoRecibidoInput.addEventListener('input', function () {
+        var valor = getMontoRecibido();
+        montoRecibidoInput.value = valor ? valor.toLocaleString('es-CO') : '';
+        updateTotalsAndState();
+    });
 
     function simularConfirmacionDigital() {
         digitalConfirmado = false;
@@ -234,6 +311,11 @@ function initNuevaVentaModal() {
         searchInput.value = '';
         resultsBox.hidden = true;
         montoRecibidoInput.value = '';
+        quiereFacturaCheckbox.checked = false;
+        facturaPanel.hidden = true;
+        compradorTipoDocumentoSelect.value = 'CC';
+        compradorNumeroDocumentoInput.value = '';
+        compradorNombreInput.value = '';
         setMetodo('efectivo');
         renderLineas();
     }
@@ -275,9 +357,43 @@ function initNuevaVentaModal() {
         registrarBtn.disabled = true;
         registrarBtn.textContent = 'Registrando...';
 
-        window.setTimeout(function () {
-            registrarBtn.textContent = originalText;
-            closeModal();
-        }, 700);
+        var payload = {
+            metodo_pago: metodoPago,
+            monto_recibido: metodoPago === 'efectivo' ? getMontoRecibido() : null,
+            pago_confirmado: metodoPago === 'digital' ? digitalConfirmado : null,
+            quiere_factura: quiereFacturaCheckbox.checked,
+            comprador_tipo_documento: quiereFacturaCheckbox.checked ? compradorTipoDocumentoSelect.value : null,
+            comprador_numero_documento: quiereFacturaCheckbox.checked ? compradorNumeroDocumentoInput.value.trim() : null,
+            comprador_nombre: quiereFacturaCheckbox.checked ? compradorNombreInput.value.trim() : null,
+            lineas: lineas.map(function (linea) {
+                return { producto_id: linea.id, cantidad: linea.cantidad };
+            })
+        };
+
+        ventasApiRequest('POST', '/cliente/ventas', payload)
+            .then(function (json) {
+                // El precio "de hoy" que mostraba el buscador puede ya no
+                // coincidir con el que quedó guardado en la venta (precio
+                // histórico) -no se toca acá, solo se refresca el stock.
+                (json.productosActualizados || []).forEach(function (actualizado) {
+                    var producto = productos.find(function (p) { return p.id === actualizado.id; });
+                    if (producto) {
+                        producto.stockVitrina = actualizado.stockVitrina;
+                    }
+                });
+
+                if (window.agregarVentaALaTabla) {
+                    window.agregarVentaALaTabla(json.venta);
+                }
+
+                closeModal();
+            })
+            .catch(function (error) {
+                mostrarError(error.message);
+            })
+            .finally(function () {
+                registrarBtn.disabled = false;
+                registrarBtn.textContent = originalText;
+            });
     });
 }

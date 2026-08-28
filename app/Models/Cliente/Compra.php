@@ -17,9 +17,11 @@ class Compra extends Model
 
     protected $fillable = [
         'empresa_id',
+        'caja_id',
         'proveedor_id',
         'factura_validada_id',
         'tipo',
+        'metodo_pago',
         'total',
         'usuario_id',
         'fecha',

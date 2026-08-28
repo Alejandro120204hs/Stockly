@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Cliente;
 
+use App\Models\Cliente\Caja;
 use App\Models\Cliente\CategoriaProducto;
 use App\Models\Cliente\Compra;
 use App\Models\Cliente\InventarioBodega;
@@ -27,6 +28,17 @@ class InventarioCrudTest extends TestCase
         ]);
 
         $this->actingAs($usuario);
+
+        // La mayoría de estos tests registran compras en efectivo, que
+        // ahora requieren una caja abierta (ver App\Http\Controllers\
+        // Cliente\CajaController) -se abre una acá para no repetirlo en
+        // cada test; los que sí prueban el bloqueo o la validación de
+        // metodo_pago la abren o simplemente no dependen de ella.
+        Caja::create([
+            'usuario_apertura_id' => $usuario->id,
+            'base_inicial' => 0,
+            'apertura_en' => now(),
+        ]);
 
         return $usuario;
     }
@@ -164,6 +176,7 @@ class InventarioCrudTest extends TestCase
         $response = $this->postJson('/cliente/inventario/compras', [
             'tipo' => 'informal',
             'factura_validada' => false,
+            'metodo_pago' => 'efectivo',
             'lineas' => [
                 ['producto_id' => $producto->id, 'cantidad' => 12, 'costo' => 9500],
             ],
@@ -175,6 +188,106 @@ class InventarioCrudTest extends TestCase
         $this->assertSame(1, Compra::count());
     }
 
+    public function test_registrar_compra_guarda_el_metodo_de_pago_digital(): void
+    {
+        $this->crearUsuarioCliente();
+        $producto = $this->crearProducto();
+
+        $response = $this->postJson('/cliente/inventario/compras', [
+            'tipo' => 'informal',
+            'factura_validada' => false,
+            'metodo_pago' => 'digital',
+            'lineas' => [
+                ['producto_id' => $producto->id, 'cantidad' => 3, 'costo' => 9500],
+            ],
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('compra.metodo', 'digital');
+        $this->assertSame('digital', Compra::first()->metodo_pago);
+    }
+
+    public function test_no_se_puede_registrar_una_compra_con_digital_de_hoy_sin_caja_abierta(): void
+    {
+        $this->crearUsuarioCliente();
+        $producto = $this->crearProducto();
+        // "digital" ahora significa "con lo digital que recibiste hoy",
+        // así que también depende de que haya una caja abierta.
+        Caja::first()->update(['cierre_en' => now()]);
+
+        $response = $this->postJson('/cliente/inventario/compras', [
+            'tipo' => 'informal',
+            'factura_validada' => false,
+            'metodo_pago' => 'digital',
+            'lineas' => [
+                ['producto_id' => $producto->id, 'cantidad' => 3, 'costo' => 9500],
+            ],
+        ]);
+
+        $response->assertStatus(422);
+        $this->assertSame(0, Compra::count());
+    }
+
+    public function test_compra_con_digital_externo_no_requiere_caja_abierta_y_no_queda_asociada_a_ninguna(): void
+    {
+        $this->crearUsuarioCliente();
+        $producto = $this->crearProducto();
+        Caja::first()->update(['cierre_en' => now()]);
+
+        $response = $this->postJson('/cliente/inventario/compras', [
+            'tipo' => 'informal',
+            'factura_validada' => false,
+            'metodo_pago' => 'digital_externo',
+            'lineas' => [
+                ['producto_id' => $producto->id, 'cantidad' => 3, 'costo' => 9500],
+            ],
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('compra.metodo', 'digital_externo');
+        $this->assertNull(Compra::first()->caja_id);
+    }
+
+    public function test_compra_con_efectivo_externo_no_requiere_caja_abierta_y_no_queda_asociada_a_ninguna(): void
+    {
+        $this->crearUsuarioCliente();
+        $producto = $this->crearProducto();
+        // La caja que abre crearUsuarioCliente() se cierra a propósito acá
+        // -efectivo_externo es plata que nunca estuvo en la caja, así que
+        // debe poder registrarse aunque no haya ninguna abierta.
+        Caja::first()->update(['cierre_en' => now()]);
+
+        $response = $this->postJson('/cliente/inventario/compras', [
+            'tipo' => 'informal',
+            'factura_validada' => false,
+            'metodo_pago' => 'efectivo_externo',
+            'lineas' => [
+                ['producto_id' => $producto->id, 'cantidad' => 3, 'costo' => 9500],
+            ],
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('compra.metodo', 'efectivo_externo');
+        $this->assertNull(Compra::first()->caja_id);
+    }
+
+    public function test_no_se_puede_registrar_una_compra_con_metodo_de_pago_invalido(): void
+    {
+        $this->crearUsuarioCliente();
+        $producto = $this->crearProducto();
+
+        $response = $this->postJson('/cliente/inventario/compras', [
+            'tipo' => 'informal',
+            'factura_validada' => false,
+            'metodo_pago' => 'credito',
+            'lineas' => [
+                ['producto_id' => $producto->id, 'cantidad' => 3, 'costo' => 9500],
+            ],
+        ]);
+
+        $response->assertStatus(422);
+    }
+
     public function test_transferir_mueve_stock_de_bodega_a_vitrina(): void
     {
         $this->crearUsuarioCliente();
@@ -182,6 +295,7 @@ class InventarioCrudTest extends TestCase
         $this->postJson('/cliente/inventario/compras', [
             'tipo' => 'informal',
             'factura_validada' => false,
+            'metodo_pago' => 'efectivo',
             'lineas' => [['producto_id' => $producto->id, 'cantidad' => 10, 'costo' => 9500]],
         ])->assertOk();
 
@@ -202,6 +316,7 @@ class InventarioCrudTest extends TestCase
         $this->postJson('/cliente/inventario/compras', [
             'tipo' => 'informal',
             'factura_validada' => false,
+            'metodo_pago' => 'efectivo',
             'lineas' => [['producto_id' => $producto->id, 'cantidad' => 5, 'costo' => 9500]],
         ])->assertOk();
 

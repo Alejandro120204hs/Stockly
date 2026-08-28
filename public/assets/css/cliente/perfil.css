@@ -1,0 +1,170 @@
+/* ==========================================================================
+   Stockly — Panel del negocio cliente: vista Mi perfil
+   Mismo patrón que admin/perfil.css (mismos nombres de clase, cambiado el
+   prefijo admin- por cliente- para no chocar con las reglas del panel
+   de Super Admin). Los inputs/botón genéricos de acá (cliente-form-*)
+   por ahora solo los usa esta vista -las demás páginas del panel cliente
+   ya tienen su propio cliente-input/cliente-btn-primary en layout.css.
+   ========================================================================== */
+.perfil-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+.perfil-photo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+}
+
+.perfil-photo__avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background-color: var(--color-slate);
+    color: var(--color-sand);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.perfil-photo__avatar--img {
+    object-fit: contain;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border-12);
+    padding: 4px;
+}
+
+.perfil-photo__btn {
+    display: inline-block;
+    padding: 9px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(30, 45, 61, 0.15);
+    background-color: var(--color-surface);
+    color: var(--color-slate);
+    font-family: inherit;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.perfil-photo__btn:hover {
+    border-color: var(--color-sage);
+    background-color: var(--color-sage-soft);
+}
+
+.perfil-photo__hint {
+    margin: 0;
+    font-size: 0.76rem;
+    color: var(--color-mist);
+    line-height: 1.5;
+}
+
+.cliente-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.cliente-form-field {
+    position: relative;
+    margin-bottom: 16px;
+}
+
+.cliente-form-field--password .cliente-input {
+    padding-right: 44px;
+}
+
+.cliente-form-toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 34px;
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: none;
+    color: var(--color-mist);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.cliente-form-toggle-password:hover {
+    color: var(--color-slate);
+    background-color: var(--color-background);
+}
+
+.cliente-form-toggle-password svg {
+    width: 18px;
+    height: 18px;
+}
+
+.cliente-form-toggle-password .icon-eye-off {
+    display: none;
+}
+
+.cliente-form-toggle-password[aria-pressed="true"] .icon-eye {
+    display: none;
+}
+
+.cliente-form-toggle-password[aria-pressed="true"] .icon-eye-off {
+    display: block;
+}
+
+.cliente-form-error {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.78rem;
+    color: var(--color-error);
+}
+
+/* Un author rule con "display" tiene más especificidad que el [hidden]
+   nativo del navegador y siempre gana -sin esto, perfilClaveMismatch se
+   quedaría visible desde el primer render aunque tenga el atributo
+   hidden (mismo bug ya visto con .data-table__pagination/.slide-over__field). */
+.cliente-form-error[hidden] {
+    display: none;
+}
+
+.cliente-form-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 4px;
+}
+
+.cliente-form-banner {
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    font-size: 0.86rem;
+    font-weight: 500;
+    margin-bottom: 18px;
+}
+
+.cliente-form-banner--success {
+    background-color: var(--color-sage-soft);
+    color: var(--color-sage-dark);
+}
+
+@media (max-width: 900px) {
+    .perfil-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 560px) {
+    .cliente-form-grid {
+        grid-template-columns: 1fr;
+    }
+}

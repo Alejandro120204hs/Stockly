@@ -46,6 +46,7 @@ class RegisteredUserController extends Controller
 
             'company_name' => ['required', 'string', 'max:255'],
             'nit' => ['required', 'string', 'max:50'],
+            'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,svg', 'max:2048'],
             'business_type' => ['required', 'string', 'max:100'],
             'business_type_other' => ['required_if:business_type,Otro', 'nullable', 'string', 'max:100'],
             'department' => ['required', 'string', 'max:100'],
@@ -69,6 +70,7 @@ class RegisteredUserController extends Controller
         $user = DB::transaction(function () use ($request, $clienteRol, $tipoNegocio) {
             $empresa = Empresa::create([
                 'nombre_negocio' => $request->company_name,
+                'logo_path' => $request->hasFile('logo') ? $request->file('logo')->store('empresas/logos', 'public') : null,
                 'tipo_negocio' => $tipoNegocio,
                 'nit' => $request->nit,
                 // El correo de contacto de la empresa es el mismo correo

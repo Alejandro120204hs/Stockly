@@ -147,6 +147,13 @@
     color: var(--color-error);
 }
 
+/* Un author rule con "display" tiene más especificidad que el [hidden]
+   nativo del navegador y siempre gana -sin esto, perfilClaveMismatch se
+   quedaría visible desde el primer render aunque tenga el atributo hidden. */
+.admin-form-error[hidden] {
+    display: none;
+}
+
 .admin-form-actions {
     display: flex;
     align-items: center;
