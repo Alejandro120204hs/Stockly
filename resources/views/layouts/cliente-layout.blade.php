@@ -93,7 +93,7 @@
 
                
 
-                <a href="#" class="cliente-nav-item" data-coming-soon="La sección de Facturación está en construcción.">
+                <a href="{{ url('/cliente/facturacion') }}" class="cliente-nav-item {{ request()->is('cliente/facturacion') ? 'is-active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
                         <path d="M14 3v5h5"/>

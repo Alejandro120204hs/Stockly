@@ -74,6 +74,15 @@ Route::middleware(['auth', 'rol:cliente'])->group(function () {
     Route::put('/cliente/proveedores/{proveedor}', [ProveedorController::class, 'update'])->name('cliente.proveedores.update');
     Route::delete('/cliente/proveedores/{proveedor}', [ProveedorController::class, 'destroy'])->name('cliente.proveedores.destroy');
 
+<<<<<<< HEAD
+    Route::get('/cliente/caja', function () {
+        return view('cliente.caja');
+    })->name('cliente.caja');
+
+    Route::get('/cliente/facturacion', function () {
+        return view('cliente.facturacion');
+    })->name('cliente.facturacion');
+=======
     Route::get('/cliente/caja', [CajaController::class, 'index'])->name('cliente.caja');
     Route::post('/cliente/caja/abrir', [CajaController::class, 'abrir'])->name('cliente.caja.abrir');
     Route::post('/cliente/caja/{caja}/cerrar', [CajaController::class, 'cerrar'])->name('cliente.caja.cerrar');
@@ -86,6 +95,7 @@ Route::middleware(['auth', 'rol:cliente'])->group(function () {
     Route::patch('/cliente/perfil', [ClienteProfileController::class, 'updateInfo'])->name('cliente.perfil.update');
     Route::put('/cliente/perfil/password', [ClienteProfileController::class, 'updatePassword'])->name('cliente.perfil.password');
     Route::post('/cliente/perfil/logo', [ClienteProfileController::class, 'updateLogo'])->name('cliente.perfil.logo');
+>>>>>>> 82609d5c4ead86f71dcf8a9bf11af84964a539e9
 });
 
 Route::middleware('auth')->group(function () {
