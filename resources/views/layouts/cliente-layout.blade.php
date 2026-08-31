@@ -102,7 +102,15 @@
                     <span class="cliente-nav-item__label">Facturación</span>
                 </a>
 
-                
+                <a href="{{ url('/cliente/nomina') }}" class="cliente-nav-item {{ request()->is('cliente/nomina') ? 'is-active' : '' }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="9" cy="8" r="3.2"/>
+                        <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/>
+                        <circle cx="17.5" cy="8.5" r="2.3"/>
+                        <path d="M15.6 14.2c2.6.4 4.4 2.6 4.4 5.3"/>
+                    </svg>
+                    <span class="cliente-nav-item__label">Nómina</span>
+                </a>
 
                 <a href="{{ url('/cliente/reportes') }}" class="cliente-nav-item {{ request()->is('cliente/reportes*') ? 'is-active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

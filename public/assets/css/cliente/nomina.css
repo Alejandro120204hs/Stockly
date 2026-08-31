@@ -1,0 +1,111 @@
+/* ==========================================================================
+   Stockly — Panel cliente: Nómina
+   Componentes base (panel, data-table, stat-grid, slide-over, modal,
+   status-pill) viven en layout.css; los de checklist/total de Facturación
+   se reutilizan vía facturacion.css. Aquí solo lo exclusivo de esta vista:
+   el select "Empleado + Agregar" y las filas de pago que arma esa acción.
+   ========================================================================== */
+
+.pago-periodo-row {
+    display: flex;
+    gap: 8px;
+}
+
+.pago-periodo-row select {
+    flex: 1;
+    min-width: 0;
+}
+
+.pago-empleados-head {
+    display: flex;
+    gap: 14px;
+    padding: 0 14px 6px 14px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-mist);
+}
+
+.pago-empleados-head span:first-child {
+    flex: 1;
+}
+
+.pago-empleados-head span:nth-child(2) {
+    width: 84px;
+    flex-shrink: 0;
+}
+
+.pago-empleados-head span:last-child {
+    width: 130px;
+    flex-shrink: 0;
+    text-align: right;
+    padding-right: 34px;
+}
+
+.pago-empleado-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--color-border-06);
+}
+
+.pago-empleado-row:last-child {
+    border-bottom: none;
+}
+
+.pago-empleado-row__info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.pago-empleado-row__info span:first-child {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-slate);
+}
+
+.pago-empleado-row__info span:last-child {
+    font-size: 12px;
+    color: var(--color-mist);
+}
+
+.pago-empleado-dias {
+    width: 84px;
+    flex-shrink: 0;
+    text-align: right;
+}
+
+.pago-empleado-monto {
+    width: 130px;
+    flex-shrink: 0;
+    text-align: right;
+}
+
+.pago-empleado-remove {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: none;
+    background: none;
+    color: var(--color-mist);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.pago-empleado-remove:hover {
+    color: var(--color-error, #B3473C);
+    background-color: var(--color-error-soft, #F7E7E4);
+}
+
+.pago-empleado-remove svg {
+    width: 14px;
+    height: 14px;
+}

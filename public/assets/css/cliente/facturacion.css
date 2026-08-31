@@ -6,10 +6,50 @@
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
+   Pestañas principales — Ventas / Gastos
+   -------------------------------------------------------------------------- */
+.facturacion-main-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    margin-bottom: 22px;
+    width: fit-content;
+    background: var(--color-mist-soft);
+    border-radius: 12px;
+}
+
+.facturacion-main-tab {
+    appearance: none;
+    border: none;
+    background: transparent;
+    padding: 9px 20px;
+    border-radius: 9px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-mist);
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+}
+
+.facturacion-main-tab:hover {
+    color: var(--color-ink, #24291f);
+}
+
+.facturacion-main-tab.is-active {
+    background: var(--color-surface, #fff);
+    color: var(--color-sage-dark);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .06);
+}
+
+/* --------------------------------------------------------------------------
    Stat grid — 5 columnas
    -------------------------------------------------------------------------- */
 .stat-grid--facturacion {
     grid-template-columns: repeat(5, 1fr);
+}
+
+.stat-grid--facturacion-gastos {
+    grid-template-columns: repeat(3, 1fr);
 }
 
 .stat-card--alerta {
@@ -33,7 +73,8 @@
 }
 
 @media (max-width: 600px) {
-    .stat-grid--facturacion {
+    .stat-grid--facturacion,
+    .stat-grid--facturacion-gastos {
         grid-template-columns: repeat(2, 1fr);
     }
 }

@@ -113,7 +113,7 @@
                 <span class="stat-label">Gastos</span>
             </td>
             <td>
-                <span class="stat-value">${{ number_format($data['gananciaNeta'], 0, ',', '.') }}</span>
+                <span class="stat-value">{{ $data['gananciaNeta'] < 0 ? '-' : '' }}${{ number_format(abs($data['gananciaNeta']), 0, ',', '.') }}</span>
                 <span class="stat-label">Ganancia neta</span>
             </td>
             <td>

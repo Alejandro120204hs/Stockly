@@ -111,13 +111,13 @@ class VentasController extends Controller
                 fn ($linea) => $linea['cantidad'] * (float) $productos[$linea['producto_id']]->precio_venta
             );
 
-            // Todavía no existe integración real con Factus -esto NO
-            // genera ningún documento DIAN de verdad. Por ahora se simula
-            // que la factura queda lista de inmediato cuando hay
-            // comprador, para poder ver el flujo completo en la interfaz
-            // (mismo criterio que la confirmación simulada de Wompi).
-            // Cuando se conecte Factus, esto se reemplaza por el estado
-            // real que devuelva la API en vez de asumirlo aquí.
+            // "Quiere factura" solo identifica al comprador -no emite nada.
+            // El documento electrónico real (con CUFE y QR) se genera
+            // aparte, en el módulo Facturación (ver FacturacionController),
+            // así que la venta queda "sin_facturar" de todas formas: eso es
+            // lo que la hace aparecer en la lista de pendientes de
+            // Facturación, con el comprador ya guardado y listo para
+            // cuando alguien la emita de verdad.
             $comprador = null;
             if (! empty($validated['quiere_factura'])) {
                 $comprador = Comprador::firstOrCreate(
@@ -136,7 +136,7 @@ class VentasController extends Controller
                 'total' => $total,
                 'metodo_pago' => $validated['metodo_pago'],
                 'estado_pago' => $confirmado ? 'pagada' : 'pendiente',
-                'estado_facturacion' => $comprador ? 'facturada_individual' : 'sin_facturar',
+                'estado_facturacion' => 'sin_facturar',
                 'fecha' => now(),
             ]);
 

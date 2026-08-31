@@ -214,11 +214,54 @@ class VentasCrudTest extends TestCase
         $this->assertSame('Juan Pérez', $venta->comprador->nombre);
         $this->assertSame('123456789', $venta->comprador->numero_documento);
 
-        // Todavía no hay integración real con Factus -esto se simula como
-        // "ya facturada" solo para poder ver el flujo completo en la
-        // interfaz. Cuando se conecte Factus de verdad, este estado debe
-        // salir de la respuesta real de la API, no asumirse aquí.
-        $this->assertSame('facturada_individual', $venta->estado_facturacion);
+        // Pedir factura solo identifica al comprador -no la emite. La
+        // venta sigue "sin_facturar" hasta que alguien la emita de verdad
+        // desde el módulo Facturación (ver FacturacionController), que es
+        // donde se genera el documento real con CUFE. Si quedara
+        // "facturada" de una vez acá, desaparecería de la lista de
+        // pendientes de Facturación sin que nunca se haya emitido nada.
+        $this->assertSame('sin_facturar', $venta->estado_facturacion);
+    }
+
+    public function test_una_venta_con_comprador_aparece_en_facturacion_con_esos_datos_precargados(): void
+    {
+        $this->crearUsuarioCliente();
+        $producto = $this->crearProductoConStockEnVitrina(5);
+
+        $this->postJson('/cliente/ventas', [
+            'metodo_pago' => 'efectivo',
+            'monto_recibido' => 15000,
+            'quiere_factura' => true,
+            'comprador_tipo_documento' => 'CC',
+            'comprador_numero_documento' => '123456789',
+            'comprador_nombre' => 'Juan Pérez',
+            'lineas' => [['producto_id' => $producto->id, 'cantidad' => 1]],
+        ])->assertOk();
+
+        // Debe seguir apareciendo como pendiente en Facturación -con el
+        // nombre y documento del comprador ya listos, sin tener que
+        // volver a escribirlos ahí.
+        $html = $this->get('/cliente/facturacion')->assertOk()->getContent();
+        preg_match('/id="ventasSinFacturarData"[^>]*>(.*?)<\/script>/s', $html, $m);
+        $pendientes = json_decode($m[1], true);
+
+        $this->assertCount(1, $pendientes);
+        $this->assertSame('CC', $pendientes[0]['compradorTipoDoc']);
+        $this->assertSame('123456789', $pendientes[0]['compradorNumDoc']);
+        $this->assertSame('Juan Pérez', $pendientes[0]['compradorNombre']);
+
+        // Al emitirla de verdad desde Facturación, ahí sí sale de la lista
+        // de pendientes.
+        $venta = Venta::firstOrFail();
+        $this->postJson('/cliente/facturacion', [
+            'tipo' => 'factura_individual',
+            'ventas_ids' => [$venta->id],
+            'comprador_tipo_documento' => 'CC',
+            'comprador_numero_documento' => '123456789',
+            'comprador_nombre' => 'Juan Pérez',
+        ])->assertOk();
+
+        $this->assertSame('facturada_individual', $venta->fresh()->estado_facturacion);
     }
 
     public function test_sin_marcar_quiere_factura_la_venta_no_queda_asociada_a_ningun_comprador(): void

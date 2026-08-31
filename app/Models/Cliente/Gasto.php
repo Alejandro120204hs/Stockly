@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Gasto extends Model
 {
@@ -23,6 +24,7 @@ class Gasto extends Model
         'responsable',
         'monto',
         'metodo_pago',
+        'estado_documento',
         'fecha',
     ];
 
@@ -42,6 +44,11 @@ class Gasto extends Model
     public function usuario(): BelongsTo
     {
         return $this->belongsTo(User::class, 'usuario_id');
+    }
+
+    public function documentosSoporte(): BelongsToMany
+    {
+        return $this->belongsToMany(DocumentoSoporte::class, 'documento_soporte_gasto', 'gasto_id', 'documento_id');
     }
 
     /**

@@ -6,6 +6,7 @@ use App\Http\Controllers\Cliente\DashboardController;
 use App\Http\Controllers\Cliente\FacturacionController;
 use App\Http\Controllers\Cliente\GastoController;
 use App\Http\Controllers\Cliente\InventarioController;
+use App\Http\Controllers\Cliente\NominaController;
 use App\Http\Controllers\Cliente\ProfileController as ClienteProfileController;
 use App\Http\Controllers\Cliente\ReportesController;
 use App\Http\Controllers\Cliente\ProveedorController;
@@ -83,7 +84,20 @@ Route::middleware(['auth', 'rol:cliente'])->group(function () {
 
     Route::get('/cliente/facturacion', [FacturacionController::class, 'index'])->name('cliente.facturacion');
     Route::post('/cliente/facturacion', [FacturacionController::class, 'store'])->name('cliente.facturacion.store');
+    Route::get('/cliente/facturacion/{documento}/pdf', [FacturacionController::class, 'pdf'])->name('cliente.facturacion.pdf');
     Route::post('/cliente/facturacion/{documento}/anular', [FacturacionController::class, 'anular'])->name('cliente.facturacion.anular');
+
+    Route::post('/cliente/facturacion/gastos', [FacturacionController::class, 'storeGasto'])->name('cliente.facturacion.gastos.store');
+    Route::get('/cliente/facturacion/gastos/{documento}/pdf', [FacturacionController::class, 'pdfGasto'])->name('cliente.facturacion.gastos.pdf');
+    Route::post('/cliente/facturacion/gastos/{documento}/anular', [FacturacionController::class, 'anularGasto'])->name('cliente.facturacion.gastos.anular');
+
+    Route::get('/cliente/nomina', [NominaController::class, 'index'])->name('cliente.nomina');
+    Route::post('/cliente/nomina/empleados', [NominaController::class, 'storeEmpleado'])->name('cliente.nomina.empleados.store');
+    Route::put('/cliente/nomina/empleados/{empleado}', [NominaController::class, 'updateEmpleado'])->name('cliente.nomina.empleados.update');
+    Route::delete('/cliente/nomina/empleados/{empleado}', [NominaController::class, 'destroyEmpleado'])->name('cliente.nomina.empleados.destroy');
+    Route::post('/cliente/nomina/documentos', [NominaController::class, 'storeDocumentos'])->name('cliente.nomina.documentos.store');
+    Route::get('/cliente/nomina/documentos/{documento}/pdf', [NominaController::class, 'pdfDocumento'])->name('cliente.nomina.documentos.pdf');
+    Route::post('/cliente/nomina/documentos/{documento}/anular', [NominaController::class, 'anularDocumento'])->name('cliente.nomina.documentos.anular');
 
     Route::get('/cliente/gastos', [GastoController::class, 'index'])->name('cliente.gastos');
     Route::post('/cliente/gastos', [GastoController::class, 'store'])->name('cliente.gastos.store');
