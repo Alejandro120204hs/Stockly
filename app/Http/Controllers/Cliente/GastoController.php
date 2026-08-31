@@ -38,7 +38,12 @@ class GastoController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'categoria' => ['required', 'in:nomina,arriendo,servicios,otros'],
+            // 'nomina' ya no es una categoría elegible acá -pagarle a un
+            // empleado ahora tiene su propio módulo (Nómina), con
+            // documento real para la DIAN en vez de un simple gasto. Los
+            // gastos ya registrados con esa categoría se conservan tal
+            // cual, solo se cierra la puerta a crear NUEVOS así.
+            'categoria' => ['required', 'in:arriendo,servicios,otros'],
             'descripcion' => ['required', 'string', 'max:255'],
             'responsable' => ['nullable', 'string', 'max:255'],
             'monto' => ['required', 'numeric', 'min:0.01'],

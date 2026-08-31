@@ -176,12 +176,16 @@
             const t = Math.min((now - start) / dur, 1);
             const ease = 1 - Math.pow(1 - t, 3);
             const val = from + (to - from) * ease;
-            el.textContent = prefix + formatNum(val, esMoney);
+            // formatNum() usa Math.abs() para no arrastrar el signo hasta
+            // adentro del número (evita cosas como "$-3.416.300") -el
+            // signo va aparte, al frente del todo, para que quede claro
+            // que es una pérdida aunque alguien no distinga el rojo.
+            el.textContent = (val < 0 ? '-' : '') + prefix + formatNum(val, esMoney);
             if (t < 1) {
                 const id = requestAnimationFrame(tick);
                 countUpTimers.push(id);
             } else {
-                el.textContent = prefix + formatNum(to, esMoney);
+                el.textContent = (to < 0 ? '-' : '') + prefix + formatNum(to, esMoney);
             }
         }
         const id = requestAnimationFrame(tick);

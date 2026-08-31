@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Cliente;
 use App\Http\Controllers\Controller;
 use App\Models\Cliente\Caja;
 use App\Models\Cliente\Gasto;
+use App\Models\Cliente\NominaDocumento;
 use App\Models\Cliente\Venta;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -126,13 +127,21 @@ class ReportesController extends Controller
             ->filter(fn ($g) => $g->fechaTurno() >= $desdeStr && $g->fechaTurno() <= $hastaStr)
             ->values();
 
+        // Los pagos de Nómina viven en su propia tabla (no son un Gasto) y
+        // no están ligados a ninguna caja -son plata que sale igual, así
+        // que Reportes sí los resta de la ganancia neta (el Dashboard no,
+        // porque "hoy" ahí es específicamente lo que pasó por la caja).
+        $nominaPagada = (float) NominaDocumento::whereBetween('fecha_pago', [$desdeStr, $hastaStr])
+            ->whereNull('anulada_en')
+            ->sum('monto_pagado');
+
         // Ganancia bruta: usa los precios HISTÓRICOS congelados en venta_detalle
         // (no el precio_costo actual del producto — puede haber cambiado).
         $gananciaBruta = (float) $ventas->sum(fn ($v) => $v->gananciaBruta());
         $totalIngresos = (float) $ventas->sum('total');
         // Reportes sí incluye TODOS los gastos (de caja y "aparte"), a diferencia
         // del Dashboard que solo resta los gastos pagados de la caja del día.
-        $totalGastos  = (float) $gastos->sum('monto');
+        $totalGastos  = (float) $gastos->sum('monto') + $nominaPagada;
         $gananciaNeta = $gananciaBruta - $totalGastos;
 
         $pagoEfectivo = (float) $ventas->where('metodo_pago', 'efectivo')->sum('total');
@@ -168,7 +177,10 @@ class ReportesController extends Controller
             'pagoDigital'      => $pagoDigital,
             'topProductos'     => $topProductos,
             'gastosCategorias' => [
-                'nomina'    => $gastosCat['nomina']    ?? 0,
+                // Suma tanto los gastos históricos con categoría "nomina"
+                // (de antes de que existiera el módulo real) como los
+                // documentos de Nómina emitidos de verdad.
+                'nomina'    => ($gastosCat['nomina'] ?? 0) + $nominaPagada,
                 'arriendo'  => $gastosCat['arriendo']  ?? 0,
                 'servicios' => $gastosCat['servicios'] ?? 0,
                 'otros'     => $gastosCat['otros']     ?? 0,

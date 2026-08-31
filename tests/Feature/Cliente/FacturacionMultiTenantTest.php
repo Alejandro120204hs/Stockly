@@ -103,6 +103,44 @@ class FacturacionMultiTenantTest extends TestCase
         $this->assertNull($docB->fresh()->anulada_en);
     }
 
+    public function test_el_pdf_de_la_factura_se_descarga_para_un_documento_propio(): void
+    {
+        $this->crearUsuarioCliente();
+        $venta = $this->crearVentaConCaja();
+        $this->postJson('/cliente/facturacion', [
+            'tipo'                       => 'factura_individual',
+            'ventas_ids'                 => [$venta->id],
+            'comprador_tipo_documento'   => 'CC',
+            'comprador_numero_documento' => '12345678',
+            'comprador_nombre'           => 'Cliente A',
+        ])->assertOk();
+        $doc = DocumentoElectronico::firstOrFail();
+
+        $response = $this->get("/cliente/facturacion/{$doc->id}/pdf");
+
+        $response->assertOk();
+        $this->assertSame('application/pdf', $response->headers->get('Content-Type'));
+    }
+
+    public function test_no_se_puede_descargar_el_pdf_de_un_documento_de_otra_empresa(): void
+    {
+        // Empresa B emite un documento.
+        $this->crearUsuarioCliente();
+        $ventaB = $this->crearVentaConCaja();
+        $this->postJson('/cliente/facturacion', [
+            'tipo'                       => 'factura_individual',
+            'ventas_ids'                 => [$ventaB->id],
+            'comprador_tipo_documento'   => 'CC',
+            'comprador_numero_documento' => '12345678',
+            'comprador_nombre'           => 'Cliente B',
+        ])->assertOk();
+        $docB = DocumentoElectronico::withoutGlobalScopes()->latest()->first();
+
+        // Empresa A intenta descargar el PDF de ese documento.
+        $this->crearUsuarioCliente();
+        $this->get("/cliente/facturacion/{$docB->id}/pdf")->assertNotFound();
+    }
+
     public function test_no_se_puede_facturar_ventas_de_otra_empresa(): void
     {
         // Empresa B tiene una venta sin facturar.

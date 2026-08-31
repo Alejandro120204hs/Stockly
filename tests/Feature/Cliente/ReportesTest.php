@@ -98,7 +98,19 @@ class ReportesTest extends TestCase
             'fecha'       => now(),
         ]);
 
-        // Empresa A no debe ver ese gasto.
+        // Empresa B también paga nómina por el módulo real.
+        $this->postJson('/cliente/nomina/empleados', [
+            'nombres' => 'Empleado', 'apellidos' => 'B', 'tipo_documento' => 'CC',
+            'numero_documento' => '9999999999', 'cargo' => 'Auxiliar', 'salario' => 50000,
+        ])->assertOk();
+        $empleadoB = \App\Models\Cliente\Empleado::firstOrFail();
+        $this->postJson('/cliente/nomina/documentos', [
+            'periodo'    => 'Agosto 2026',
+            'fecha_pago' => now()->toDateString(),
+            'pagos'      => [['empleado_id' => $empleadoB->id, 'monto_pagado' => 900000]],
+        ])->assertOk();
+
+        // Empresa A no debe ver nada de eso.
         $this->crearUsuarioCliente();
         $data = $this->reportesData('mes');
 
@@ -187,6 +199,59 @@ class ReportesTest extends TestCase
         $this->assertEquals(380000, $data['gastos']);
         // Sin ventas, ganancia neta = 0 − 380k = −380k.
         $this->assertEquals(-380000, $data['gananciaNeta']);
+    }
+
+    public function test_un_pago_de_nomina_resta_en_la_ganancia_neta_de_reportes(): void
+    {
+        // Nómina no es un Gasto -vive en su propia tabla, sin caja. Debe
+        // restar igual en Reportes (Dashboard no, porque "hoy" ahí es
+        // específicamente lo que pasó por la caja del día).
+        $this->travelTo('2026-08-15 09:00:00');
+        $this->crearUsuarioCliente();
+
+        $this->postJson('/cliente/nomina/empleados', [
+            'nombres' => 'Ana', 'apellidos' => 'Ruiz', 'tipo_documento' => 'CC',
+            'numero_documento' => '1111111111', 'cargo' => 'Auxiliar', 'salario' => 50000,
+        ])->assertOk();
+        $empleado = \App\Models\Cliente\Empleado::firstOrFail();
+
+        $this->postJson('/cliente/nomina/documentos', [
+            'periodo'    => 'Agosto 2026',
+            'fecha_pago' => now()->toDateString(),
+            'pagos'      => [['empleado_id' => $empleado->id, 'monto_pagado' => 700000]],
+        ])->assertOk();
+
+        $data = $this->reportesData('mes');
+
+        $this->assertEquals(700000, $data['gastos']);
+        $this->assertEquals(700000, $data['gastosCategorias']['nomina']);
+        $this->assertEquals(-700000, $data['gananciaNeta']);
+    }
+
+    public function test_un_documento_de_nomina_anulado_no_resta_en_reportes(): void
+    {
+        $this->travelTo('2026-08-15 09:00:00');
+        $this->crearUsuarioCliente();
+
+        $this->postJson('/cliente/nomina/empleados', [
+            'nombres' => 'Ana', 'apellidos' => 'Ruiz', 'tipo_documento' => 'CC',
+            'numero_documento' => '1111111111', 'cargo' => 'Auxiliar', 'salario' => 50000,
+        ])->assertOk();
+        $empleado = \App\Models\Cliente\Empleado::firstOrFail();
+
+        $this->postJson('/cliente/nomina/documentos', [
+            'periodo'    => 'Agosto 2026',
+            'fecha_pago' => now()->toDateString(),
+            'pagos'      => [['empleado_id' => $empleado->id, 'monto_pagado' => 700000]],
+        ])->assertOk();
+        $documento = \App\Models\Cliente\NominaDocumento::firstOrFail();
+
+        $this->postJson("/cliente/nomina/documentos/{$documento->id}/anular")->assertOk();
+
+        $data = $this->reportesData('mes');
+
+        $this->assertEquals(0, $data['gastos']);
+        $this->assertEquals(0, $data['gananciaNeta']);
     }
 
     // -------------------------------------------------------------------------

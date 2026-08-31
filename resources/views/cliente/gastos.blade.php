@@ -8,12 +8,18 @@
          caja/Aparte, para que "Gastos en efectivo/digital" en Caja
          reflejen la realidad. --}}
     @php
+        // 'nomina' se queda en $categoriaLabels solo para poder seguir
+        // mostrando/filtrando gastos ya registrados con esa categoría -pero
+        // ya no se ofrece para gastos NUEVOS: pagarle a un empleado ahora
+        // tiene su propio módulo (Nómina, en el sidebar), con documento
+        // real para la DIAN en vez de un simple registro de gasto.
         $categoriaLabels = [
             'nomina' => 'Nómina',
             'arriendo' => 'Arriendo',
             'servicios' => 'Servicios',
             'otros' => 'Otros',
         ];
+        $categoriaLabelsNuevoGasto = collect($categoriaLabels)->except('nomina');
     @endphp
 
     <div class="cliente-page-header cliente-reveal cliente-reveal-1" style="display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap;">
@@ -182,7 +188,7 @@
         <div class="modal__body">
             <label for="gastoCategoria" class="cliente-label">Categoría</label>
             <select id="gastoCategoria" class="cliente-input" style="margin-bottom:14px;">
-                @foreach ($categoriaLabels as $valor => $label)
+                @foreach ($categoriaLabelsNuevoGasto as $valor => $label)
                     <option value="{{ $valor }}">{{ $label }}</option>
                 @endforeach
             </select>
