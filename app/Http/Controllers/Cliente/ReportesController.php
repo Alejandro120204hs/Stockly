@@ -34,26 +34,56 @@ class ReportesController extends Controller
         ]);
     }
 
+    /**
+     * Reporte de UN día puntual, elegido con el selector de calendario
+     * -no es uno de los 4 períodos fijos, así que se calcula bajo demanda
+     * en vez de venir precargado en el HTML. La gráfica de barras acá es
+     * por HORA, no por día: un solo día siempre da una sola barra "por
+     * día", que se ve vacía sin importar el ancho -por hora sí cuenta algo
+     * real (a qué horas vende más el negocio).
+     */
+    public function dia(Request $request)
+    {
+        $validated = $request->validate([
+            'fecha' => ['required', 'date', 'before_or_equal:today'],
+        ]);
+
+        $fecha = Carbon::parse($validated['fecha']);
+        $data = $this->buildPeriodo($fecha->copy()->startOfDay(), $fecha->copy()->endOfDay(), false, true);
+
+        return response()->json($data);
+    }
+
     public function pdf(Request $request): Response
     {
-        $periodoKey = array_key_exists($request->input('periodo', 'semana'), self::PERIODOS)
-            ? $request->input('periodo')
-            : 'semana';
+        $fecha = $request->input('fecha');
 
-        [$desde, $hasta] = $this->rangoParaPeriodo($periodoKey);
-        $data    = $this->buildPeriodo($desde, $hasta, $periodoKey === 'anio');
+        if ($fecha) {
+            $fechaCarbon = Carbon::parse($fecha);
+            $data = $this->buildPeriodo($fechaCarbon->copy()->startOfDay(), $fechaCarbon->copy()->endOfDay(), false, true);
+            $periodoLabel = $fechaCarbon->locale('es')->translatedFormat('d \d\e F \d\e Y');
+            $nombreArchivo = 'reporte-'.$fechaCarbon->format('Ymd');
+        } else {
+            $periodoKey = array_key_exists($request->input('periodo', 'semana'), self::PERIODOS)
+                ? $request->input('periodo')
+                : 'semana';
+
+            [$desde, $hasta] = $this->rangoParaPeriodo($periodoKey);
+            $data = $this->buildPeriodo($desde, $hasta, $periodoKey === 'anio');
+            $periodoLabel = self::PERIODOS[$periodoKey];
+            $nombreArchivo = 'reporte-'.str_replace(' ', '-', strtolower($periodoLabel)).'-'.now()->format('Ymd');
+        }
+
         $empresa = auth()->user()->empresa;
 
         $pdf = Pdf::loadView('cliente.reportes-pdf', [
             'data'         => $data,
-            'periodoLabel' => self::PERIODOS[$periodoKey],
+            'periodoLabel' => $periodoLabel,
             'empresa'      => $empresa,
             'generadoEl'   => now()->locale('es')->translatedFormat('d \d\e F Y, h:i a'),
         ])->setPaper('a4', 'portrait');
 
-        $filename = 'reporte-'.str_replace(' ', '-', strtolower(self::PERIODOS[$periodoKey])).'-'.now()->format('Ymd').'.pdf';
-
-        return $pdf->download($filename);
+        return $pdf->download($nombreArchivo.'.pdf');
     }
 
     private function rangoParaPeriodo(string $periodo): array
@@ -69,7 +99,7 @@ class ReportesController extends Controller
         };
     }
 
-    private function buildPeriodo(Carbon $desde, Carbon $hasta, bool $mensual = false): array
+    private function buildPeriodo(Carbon $desde, Carbon $hasta, bool $mensual = false, bool $porHora = false): array
     {
         $desdeStr = $desde->toDateString();
         $hastaStr = $hasta->toDateString();
@@ -122,9 +152,11 @@ class ReportesController extends Controller
 
         $gastosCat = $gastos->groupBy('categoria')->map(fn ($g) => (float) $g->sum('monto'));
 
-        $graficaBars = $mensual
-            ? $this->barrasMensuales($ventas)
-            : $this->barrasDiarias($desde, $hasta, $ventas);
+        $graficaBars = match (true) {
+            $porHora => $this->barrasPorHora($desde, $ventas),
+            $mensual => $this->barrasMensuales($ventas),
+            default  => $this->barrasDiarias($desde, $hasta, $ventas),
+        };
 
         return [
             'ingresos'         => $totalIngresos,
@@ -141,7 +173,20 @@ class ReportesController extends Controller
                 'servicios' => $gastosCat['servicios'] ?? 0,
                 'otros'     => $gastosCat['otros']     ?? 0,
             ],
-            'graficaBars' => $graficaBars,
+            'graficaBars'  => $graficaBars,
+            'fechaLabel'   => $desde->locale('es')->translatedFormat('d \d\e F'),
+            // Solo para el PDF de un día puntual: reemplaza a "Ventas por
+            // período" (que en un solo día da 24 filas casi todas en $0)
+            // por el detalle real de cada venta -sí tiene sentido en un
+            // documento pensado como comprobante impreso del día.
+            'ventasDetalle' => $porHora
+                ? $ventas->sortBy('fecha')->map(fn (Venta $v) => [
+                    'hora'      => hora_es($v->fecha),
+                    'productos' => $v->detalles->map(fn ($d) => $d->producto->nombre.' x'.$d->cantidad)->implode(', '),
+                    'total'     => (float) $v->total,
+                    'metodo'    => $v->metodo_pago === 'efectivo' ? 'Efectivo' : 'Digital',
+                ])->values()->all()
+                : null,
         ];
     }
 
@@ -159,6 +204,28 @@ class ReportesController extends Controller
                 // medianoche no parte sus ventas entre dos barras distintas.
                 'total' => (float) $ventas->filter(fn ($v) => $v->fechaTurno() === $fecha)->sum('total'),
                 'esHoy' => $fecha === now()->toDateString(),
+            ];
+        })->all();
+    }
+
+    /**
+     * 24 barras, una por hora del día (0-23) -a diferencia de las demás
+     * gráficas, acá se agrupa por la hora REAL de la venta, no por
+     * fechaTurno(): dentro de un solo día, lo que importa es a qué hora
+     * del reloj entró cada venta, sin importar cuándo se abrió la caja.
+     */
+    private function barrasPorHora(Carbon $desde, $ventas): array
+    {
+        $horaActual = now()->isSameDay($desde) ? now()->hour : -1;
+
+        return collect(range(0, 23))->map(function (int $hora) use ($ventas, $horaActual) {
+            $sufijo = $hora < 12 ? 'a' : 'p';
+            $hora12 = $hora % 12 === 0 ? 12 : $hora % 12;
+
+            return [
+                'label' => $hora12.$sufijo,
+                'total' => (float) $ventas->filter(fn ($v) => (int) $v->fecha->format('G') === $hora)->sum('total'),
+                'esHoy' => $hora === $horaActual,
             ];
         })->all();
     }

@@ -37,6 +37,55 @@
 .reporte-tab:hover         { background: rgba(74, 124, 111, 0.08); color: var(--color-sage-dark); }
 .reporte-tab.is-active     { background: var(--color-sage); color: #fff; }
 
+/* ——— Pestaña "elegir un día" (ícono de calendario + <input type=date>) ——— */
+.reporte-tab--dia {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+.reporte-tab--dia svg { flex-shrink: 0; }
+
+.reporte-dia-input {
+    /* El pseudo-elemento de abajo necesita esto como referencia -sin
+       position:relative acá, "inset:0" busca el ancestro posicionado más
+       cercano en TODA la página, y el área invisible clicable termina
+       tapando otros elementos (ej. las pestañas "Esta semana"/"Este mes"),
+       que dejan de responder al primer click mientras el calendario
+       nativo sigue abierto encima. */
+    position: relative;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0;
+    max-width: 92px;
+}
+.reporte-dia-input:focus { outline: none; }
+/* El ícono nativo del navegador queda encima de nuestro ícono propio -se
+   oculta y se deja solo el de arriba, para no duplicar el calendario. */
+.reporte-dia-input::-webkit-calendar-picker-indicator {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+.reporte-tab--dia.is-active .reporte-dia-input { color: #fff; }
+.reporte-tab--dia.is-active .reporte-dia-input::-webkit-datetime-edit-fields-wrapper,
+.reporte-tab--dia.is-active .reporte-dia-input::-webkit-datetime-edit-text,
+.reporte-tab--dia.is-active .reporte-dia-input::-webkit-datetime-edit-month-field,
+.reporte-tab--dia.is-active .reporte-dia-input::-webkit-datetime-edit-day-field,
+.reporte-tab--dia.is-active .reporte-dia-input::-webkit-datetime-edit-year-field {
+    color: #fff;
+}
+.reporte-tab--dia.is-cargando { opacity: 0.6; }
+
 .reporte-pdf-btn {
     display: inline-flex;
     align-items: center;
@@ -73,64 +122,6 @@
     font-size: 12px;
     color: var(--color-mist);
     margin: 3px 0 0;
-}
-
-/* ——— Gráfica de barras ——— */
-.reporte-grafica-wrap {
-    overflow-x: auto;
-    padding-bottom: 4px;
-}
-
-.reporte-grafica {
-    display: flex;
-    align-items: flex-end;
-    gap: 6px;
-    height: 140px;
-    min-width: min-content;
-    padding-bottom: 28px;
-    position: relative;
-}
-
-.reporte-bar {
-    flex: 1;
-    min-width: 20px;
-    max-width: 56px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
-    height: 100%;
-    gap: 4px;
-    position: relative;
-}
-
-.reporte-bar__fill {
-    width: 100%;
-    min-height: 3px;
-    border-radius: 4px 4px 0 0;
-    background: var(--color-sage);
-    height: 0;
-    transition: height 0.55s cubic-bezier(0.23, 1, 0.32, 1);
-}
-.reporte-bar.is-hoy .reporte-bar__fill {
-    background: var(--color-sage-dark);
-}
-.reporte-bar.is-cero .reporte-bar__fill {
-    background: var(--color-mist-soft);
-    min-height: 4px;
-    height: 4px !important;
-}
-
-.reporte-bar__label {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 10px;
-    color: var(--color-mist);
-    white-space: nowrap;
-    pointer-events: none;
-    font-variant-numeric: tabular-nums;
 }
 
 /* ——— Fila dos columnas ——— */
