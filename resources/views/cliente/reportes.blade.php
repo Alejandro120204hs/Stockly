@@ -9,7 +9,16 @@
 
         <div class="reporte-toolbar">
             <div class="reporte-tabs" role="tablist" aria-label="Período del reporte">
-                <button type="button" class="reporte-tab" role="tab" data-periodo="hoy">Hoy</button>
+                {{-- En vez de una pestaña fija "Hoy", un selector de
+                     calendario -deja ver el reporte de CUALQUIER día
+                     puntual, no solo el de hoy. --}}
+                <label class="reporte-tab reporte-tab--dia" role="tab" id="reporteDiaTab" aria-selected="false">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="14" height="14">
+                        <rect x="3" y="4.5" width="18" height="16" rx="2"/>
+                        <path d="M8 2.5v4M16 2.5v4M3 9.5h18"/>
+                    </svg>
+                    <input type="date" id="reporteDiaInput" class="reporte-dia-input" value="{{ now()->toDateString() }}" max="{{ now()->toDateString() }}" aria-label="Elegir un día">
+                </label>
                 <button type="button" class="reporte-tab is-active" role="tab" data-periodo="semana" aria-selected="true">Esta semana</button>
                 <button type="button" class="reporte-tab" role="tab" data-periodo="mes">Este mes</button>
                 <button type="button" class="reporte-tab" role="tab" data-periodo="anio">Este año</button>
@@ -75,21 +84,8 @@
         </div>
     </section>
 
-    {{-- Gráfica de ventas --}}
-    <div class="panel cliente-reveal cliente-reveal-3">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; gap:12px; flex-wrap:wrap;">
-            <div>
-                <h2 class="reporte-section-title" id="graficaTitulo">Ventas por día — Esta semana</h2>
-                <p class="reporte-section-sub">Total vendido por período</p>
-            </div>
-        </div>
-        <div class="reporte-grafica-wrap">
-            <div class="reporte-grafica" id="reporteGrafica" aria-label="Gráfica de ventas por período"></div>
-        </div>
-    </div>
-
     {{-- Métodos de pago + Gastos por categoría --}}
-    <div class="reporte-row cliente-reveal cliente-reveal-4">
+    <div class="reporte-row cliente-reveal cliente-reveal-3">
 
         <div class="panel">
             <h2 class="reporte-section-title" style="margin-bottom:4px;">Métodos de pago</h2>
@@ -127,7 +123,7 @@
     </div>
 
     {{-- Top productos --}}
-    <div class="panel cliente-reveal cliente-reveal-5">
+    <div class="panel cliente-reveal cliente-reveal-4">
         <h2 class="reporte-section-title" style="margin-bottom:4px;">Top productos más vendidos</h2>
         <p class="reporte-section-sub" style="margin-bottom:20px;">Ordenados por unidades vendidas en el período</p>
         <div id="reporteTopProductos" class="reporte-top"></div>

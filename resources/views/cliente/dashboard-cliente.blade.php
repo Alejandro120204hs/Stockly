@@ -91,8 +91,8 @@
                 </svg>
             </div>
             <span class="stat-card__value" id="gananciaNetaValor" data-count="{{ $gananciaNetaHoy }}" data-prefix="$">$0</span>
-            <span class="stat-card__label">Ganancia neta del día</span>
-            <span class="stat-card__meta">Ganancia bruta − gastos</span>
+            <span class="stat-card__label">Ganancia neta de la caja</span>
+            <span class="stat-card__meta">Ganancia bruta − gastos de caja. Ver Reportes para el total real</span>
         </div>
 
         <div class="stat-card {{ $cajaAbierta ? 'stat-card--sage' : 'stat-card--mist' }}" id="cajaEstadoCard">

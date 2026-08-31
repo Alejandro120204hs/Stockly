@@ -89,6 +89,7 @@ Route::middleware(['auth', 'rol:cliente'])->group(function () {
     Route::post('/cliente/gastos', [GastoController::class, 'store'])->name('cliente.gastos.store');
 
     Route::get('/cliente/reportes', [ReportesController::class, 'index'])->name('cliente.reportes');
+    Route::get('/cliente/reportes/dia', [ReportesController::class, 'dia'])->name('cliente.reportes.dia');
     Route::get('/cliente/reportes/pdf', [ReportesController::class, 'pdf'])->name('cliente.reportes.pdf');
 
     Route::get('/cliente/perfil', [ClienteProfileController::class, 'edit'])->name('cliente.perfil');

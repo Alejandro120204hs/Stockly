@@ -244,4 +244,125 @@ class ReportesTest extends TestCase
         $this->assertEquals(10000, $penultima['total'], 'Ambas ventas caen el día 5 (apertura del turno)');
         $this->assertEquals(0,     $ultima['total'],    'La barra del día 6 debe estar vacía');
     }
+
+    // -------------------------------------------------------------------------
+    // 5. Selector de un día puntual (/cliente/reportes/dia) — gráfica por hora
+    // -------------------------------------------------------------------------
+
+    public function test_el_reporte_de_un_dia_puntual_agrupa_las_ventas_por_hora(): void
+    {
+        $this->travelTo('2026-08-10 09:00:00');
+        $this->crearUsuarioCliente();
+        $this->postJson('/cliente/caja/abrir', ['base_inicial' => 0])->assertOk();
+
+        $this->postJson('/cliente/inventario/productos', [
+            'nombre' => 'Cerveza', 'categoria' => 'Cervezas',
+            'precio_costo' => 3000, 'precio_venta' => 5000, 'unidad_medida' => 'Lata',
+        ])->assertOk();
+        $prod = Producto::where('nombre', 'Cerveza')->firstOrFail();
+        $this->postJson('/cliente/inventario/compras', [
+            'tipo' => 'informal', 'factura_validada' => false, 'metodo_pago' => 'efectivo',
+            'lineas' => [['producto_id' => $prod->id, 'cantidad' => 3, 'costo' => 3000]],
+        ])->assertOk();
+        $this->postJson('/cliente/inventario/transferencias', ['producto_id' => $prod->id, 'cantidad' => 3])->assertOk();
+
+        // Venta a las 9am del día 10.
+        $this->postJson('/cliente/ventas', [
+            'metodo_pago' => 'efectivo', 'monto_recibido' => 5000,
+            'lineas' => [['producto_id' => $prod->id, 'cantidad' => 1]],
+        ])->assertOk();
+
+        // Otra venta a las 3pm del mismo día.
+        $this->travelTo('2026-08-10 15:00:00');
+        $this->postJson('/cliente/ventas', [
+            'metodo_pago' => 'efectivo', 'monto_recibido' => 5000,
+            'lineas' => [['producto_id' => $prod->id, 'cantidad' => 1]],
+        ])->assertOk();
+
+        // Una venta de OTRO día no debe contar.
+        $this->travelTo('2026-08-11 09:00:00');
+        $this->postJson('/cliente/ventas', [
+            'metodo_pago' => 'efectivo', 'monto_recibido' => 5000,
+            'lineas' => [['producto_id' => $prod->id, 'cantidad' => 1]],
+        ])->assertOk();
+
+        $response = $this->getJson('/cliente/reportes/dia?fecha=2026-08-10');
+        $response->assertOk();
+        $data = $response->json();
+
+        $this->assertEquals(10000, $data['ingresos']);
+        $this->assertSame(2, $data['cantidadVentas']);
+
+        // 24 barras (una por hora), la de las 9am y la de las 3pm con 5.000
+        // cada una, el resto en cero.
+        $bars = collect($data['graficaBars']);
+        $this->assertCount(24, $bars);
+        $this->assertEquals(5000, $bars[9]['total']);
+        $this->assertEquals(5000, $bars[15]['total']);
+        $this->assertEquals(0, $bars[0]['total']);
+    }
+
+    public function test_no_se_puede_pedir_el_reporte_de_un_dia_futuro(): void
+    {
+        $this->crearUsuarioCliente();
+
+        $manana = now()->addDay()->toDateString();
+        $response = $this->getJson('/cliente/reportes/dia?fecha=' . $manana);
+
+        $response->assertStatus(422);
+    }
+
+    // -------------------------------------------------------------------------
+    // 6. PDF de un día puntual -detalle de ventas en vez de "Ventas por período"
+    // -------------------------------------------------------------------------
+
+    public function test_el_reporte_de_un_dia_incluye_el_detalle_de_cada_venta(): void
+    {
+        $this->travelTo('2026-08-12 09:00:00');
+        $this->crearUsuarioCliente();
+        $this->postJson('/cliente/caja/abrir', ['base_inicial' => 0])->assertOk();
+
+        $this->postJson('/cliente/inventario/productos', [
+            'nombre' => 'Cerveza', 'categoria' => 'Cervezas',
+            'precio_costo' => 3000, 'precio_venta' => 5000, 'unidad_medida' => 'Lata',
+        ])->assertOk();
+        $prod = Producto::where('nombre', 'Cerveza')->firstOrFail();
+        $this->postJson('/cliente/inventario/compras', [
+            'tipo' => 'informal', 'factura_validada' => false, 'metodo_pago' => 'efectivo',
+            'lineas' => [['producto_id' => $prod->id, 'cantidad' => 2, 'costo' => 3000]],
+        ])->assertOk();
+        $this->postJson('/cliente/inventario/transferencias', ['producto_id' => $prod->id, 'cantidad' => 2])->assertOk();
+
+        $this->postJson('/cliente/ventas', [
+            'metodo_pago' => 'efectivo', 'monto_recibido' => 5000,
+            'lineas' => [['producto_id' => $prod->id, 'cantidad' => 1]],
+        ])->assertOk();
+
+        $data = $this->getJson('/cliente/reportes/dia?fecha=2026-08-12')->assertOk()->json();
+
+        $this->assertIsArray($data['ventasDetalle']);
+        $this->assertCount(1, $data['ventasDetalle']);
+        $this->assertSame('Cerveza x1', $data['ventasDetalle'][0]['productos']);
+        $this->assertEquals(5000, $data['ventasDetalle'][0]['total']);
+        $this->assertSame('Efectivo', $data['ventasDetalle'][0]['metodo']);
+    }
+
+    public function test_el_reporte_de_semana_no_trae_detalle_de_ventas(): void
+    {
+        $this->crearUsuarioCliente();
+
+        $data = $this->reportesData('semana');
+
+        $this->assertNull($data['ventasDetalle']);
+    }
+
+    public function test_el_pdf_de_un_dia_puntual_se_descarga_correctamente(): void
+    {
+        $this->crearUsuarioCliente();
+
+        $response = $this->get('/cliente/reportes/pdf?fecha=2026-08-12');
+
+        $response->assertOk();
+        $this->assertSame('application/pdf', $response->headers->get('Content-Type'));
+    }
 }

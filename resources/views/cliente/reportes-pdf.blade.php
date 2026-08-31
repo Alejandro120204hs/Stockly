@@ -194,21 +194,43 @@
         </tbody>
     </table>
 
-    {{-- ——— Ventas por período ——— --}}
-    <div class="section-title">Ventas por período</div>
-    <table class="data-table">
-        <thead>
-            <tr><th>Período</th><th class="num">Total en ventas</th></tr>
-        </thead>
-        <tbody>
-            @foreach ($data['graficaBars'] as $bar)
-                <tr>
-                    <td>{{ $bar['label'] }}{{ $bar['esHoy'] ? ' (hoy)' : '' }}</td>
-                    <td class="num">${{ number_format($bar['total'], 0, ',', '.') }}</td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
+    @if (is_array($data['ventasDetalle'] ?? null))
+        {{-- ——— Detalle de ventas del día ——— --}}
+        <div class="section-title">Detalle de ventas del día</div>
+        <table class="data-table">
+            <thead>
+                <tr><th>Hora</th><th>Producto(s)</th><th class="num">Método</th><th class="num">Total</th></tr>
+            </thead>
+            <tbody>
+                @forelse ($data['ventasDetalle'] as $venta)
+                    <tr>
+                        <td>{{ $venta['hora'] }}</td>
+                        <td>{{ $venta['productos'] }}</td>
+                        <td class="num">{{ $venta['metodo'] }}</td>
+                        <td class="num">${{ number_format($venta['total'], 0, ',', '.') }}</td>
+                    </tr>
+                @empty
+                    <tr><td class="empty" colspan="4">Sin ventas este día</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    @else
+        {{-- ——— Ventas por período ——— --}}
+        <div class="section-title">Ventas por período</div>
+        <table class="data-table">
+            <thead>
+                <tr><th>Período</th><th class="num">Total en ventas</th></tr>
+            </thead>
+            <tbody>
+                @foreach ($data['graficaBars'] as $bar)
+                    <tr>
+                        <td>{{ $bar['label'] }}{{ $bar['esHoy'] ? ' (hoy)' : '' }}</td>
+                        <td class="num">${{ number_format($bar['total'], 0, ',', '.') }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
 
     <div class="pdf-footer">
         Generado por Stockly · {{ $generadoEl }}

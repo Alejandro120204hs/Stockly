@@ -8,18 +8,6 @@
 (function () {
     'use strict';
 
-    const PERIODOS = {
-        hoy:    'Hoy',
-        semana: 'Esta semana',
-        mes:    'Este mes',
-        anio:   'Este año',
-    };
-    const GRAFICA_TITULO = {
-        hoy:    'Ventas de hoy',
-        semana: 'Ventas por día — Esta semana',
-        mes:    'Ventas por día — Este mes',
-        anio:   'Ventas por mes — Este año',
-    };
     const CIRC = 2 * Math.PI * 25; // circunferencia del donut (r=25)
 
     let periodoActual = 'semana';
@@ -42,39 +30,104 @@
         }
 
         initTabs();
+        initDiaTab();
         renderPeriodo(periodoActual);
     });
 
     /* ------------------------------------------------------------------ */
-    /* Tabs                                                                 */
+    /* Tabs (Esta semana / Este mes / Este año)                             */
     /* ------------------------------------------------------------------ */
 
     function initTabs() {
-        document.querySelectorAll('.reporte-tab').forEach(function (btn) {
+        // [data-periodo] excluye la pestaña de calendario (#reporteDiaTab),
+        // que no es un período fijo y tiene su propio manejador abajo.
+        document.querySelectorAll('.reporte-tab[data-periodo]').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 const periodo = btn.dataset.periodo;
                 if (periodo === periodoActual) return;
 
-                document.querySelectorAll('.reporte-tab').forEach(function (t) {
-                    t.classList.remove('is-active');
-                    t.removeAttribute('aria-selected');
-                });
+                desactivarTodasLasPestanas();
                 btn.classList.add('is-active');
                 btn.setAttribute('aria-selected', 'true');
 
                 periodoActual = periodo;
                 renderPeriodo(periodo);
-                actualizarPdfHref(periodo);
+                actualizarPdfHref({ periodo: periodo });
             });
         });
     }
 
-    function actualizarPdfHref(periodo) {
+    function desactivarTodasLasPestanas() {
+        document.querySelectorAll('.reporte-tab').forEach(function (t) {
+            t.classList.remove('is-active');
+            t.setAttribute('aria-selected', 'false');
+        });
+    }
+
+    function actualizarPdfHref(params) {
         const btn = document.getElementById('reportePdfBtn');
         if (!btn) return;
         const url = new URL(btn.href);
-        url.searchParams.set('periodo', periodo);
+        url.search = '';
+        Object.keys(params).forEach(function (key) { url.searchParams.set(key, params[key]); });
         btn.href = url.toString();
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Selector de un día puntual (calendario)                              */
+    /* ------------------------------------------------------------------ */
+
+    function initDiaTab() {
+        const tab = document.getElementById('reporteDiaTab');
+        const input = document.getElementById('reporteDiaInput');
+        if (!tab || !input) return;
+
+        function activarDia(fecha) {
+            if (!fecha) return;
+
+            desactivarTodasLasPestanas();
+            tab.classList.add('is-active');
+            tab.setAttribute('aria-selected', 'true');
+            periodoActual = 'dia';
+
+            cancelCountUps();
+            tab.classList.add('is-cargando');
+
+            fetch('/cliente/reportes/dia?fecha=' + encodeURIComponent(fecha), {
+                headers: { 'Accept': 'application/json' },
+            })
+                .then(function (res) {
+                    if (!res.ok) throw new Error('No se pudo cargar el reporte de ese día.');
+                    return res.json();
+                })
+                .then(function (d) {
+                    renderData(d);
+                    actualizarPdfHref({ fecha: fecha });
+                })
+                .catch(function (err) {
+                    console.error('Reportes:', err);
+                })
+                .finally(function () {
+                    tab.classList.remove('is-cargando');
+                });
+        }
+
+        input.addEventListener('change', function () {
+            activarDia(input.value);
+        });
+
+        // El navegador NO dispara "change" si la fecha elegida en el
+        // selector nativo es la misma que ya tenía el input -ej. vienes
+        // de "Este mes", abres el calendario y le das clic a "Hoy", pero
+        // el input ya tenía hoy como valor por defecto desde que cargó la
+        // página, así que técnicamente "no cambió" nada para el navegador.
+        // Por eso también se activa al abrir el selector, si todavía no
+        // estábamos en modo "día" -sin esto, el panel se quedaba en el
+        // período anterior aunque el usuario sí haya elegido un día.
+        tab.addEventListener('click', function () {
+            if (periodoActual === 'dia') return;
+            activarDia(input.value);
+        });
     }
 
     /* ------------------------------------------------------------------ */
@@ -85,15 +138,15 @@
         const d = allData[key];
         if (!d) return;
 
+        renderData(d);
+    }
+
+    function renderData(d) {
         cancelCountUps();
         renderStats(d);
-        renderGrafica(d.graficaBars, key);
         renderMetodos(d.pagoEfectivo, d.pagoDigital);
         renderGastosCat(d.gastosCategorias);
         renderTopProductos(d.topProductos);
-
-        const titulo = document.getElementById('graficaTitulo');
-        if (titulo) titulo.textContent = GRAFICA_TITULO[key] || '';
     }
 
     /* ------------------------------------------------------------------ */
@@ -145,51 +198,6 @@
             return Math.abs(Math.round(n)).toLocaleString('es-CO');
         }
         return Math.round(n).toString();
-    }
-
-    /* ------------------------------------------------------------------ */
-    /* Gráfica de barras                                                    */
-    /* ------------------------------------------------------------------ */
-
-    function renderGrafica(bars, key) {
-        const wrap = document.getElementById('reporteGrafica');
-        if (!wrap) return;
-        wrap.innerHTML = '';
-
-        if (!bars || bars.length === 0) {
-            wrap.innerHTML = '<p class="reporte-empty">Sin datos para este período.</p>';
-            return;
-        }
-
-        const maxTotal = bars.reduce(function (m, b) { return Math.max(m, b.total); }, 0);
-        const H = 100; // alto útil (px) para cálculo de %
-
-        bars.forEach(function (bar) {
-            const pct = maxTotal > 0 ? (bar.total / maxTotal) * H : 0;
-
-            const item = document.createElement('div');
-            item.className = 'reporte-bar' +
-                (bar.esHoy  ? ' is-hoy'  : '') +
-                (bar.total === 0 ? ' is-cero' : '');
-
-            const fill = document.createElement('div');
-            fill.className = 'reporte-bar__fill';
-            fill.style.height = '0';
-
-            const label = document.createElement('div');
-            label.className = 'reporte-bar__label';
-            label.textContent = bar.label;
-
-            item.appendChild(fill);
-            item.appendChild(label);
-            wrap.appendChild(item);
-
-            requestAnimationFrame(function () {
-                requestAnimationFrame(function () {
-                    fill.style.height = Math.max(pct, bar.total > 0 ? 4 : 0) + 'px';
-                });
-            });
-        });
     }
 
     /* ------------------------------------------------------------------ */
