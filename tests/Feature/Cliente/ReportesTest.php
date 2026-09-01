@@ -430,4 +430,65 @@ class ReportesTest extends TestCase
         $response->assertOk();
         $this->assertSame('application/pdf', $response->headers->get('Content-Type'));
     }
+
+    // -------------------------------------------------------------------------
+    // 7. Reporte de un mes puntual (cualquier mes ya pasado, no solo "Este mes")
+    // -------------------------------------------------------------------------
+
+    public function test_el_reporte_de_un_mes_puntual_incluye_solo_las_ventas_de_ese_mes(): void
+    {
+        $this->travelTo('2026-07-15 09:00:00');
+        $this->crearUsuarioCliente();
+        $this->postJson('/cliente/caja/abrir', ['base_inicial' => 0])->assertOk();
+
+        $this->postJson('/cliente/inventario/productos', [
+            'nombre' => 'Cerveza', 'categoria' => 'Cervezas',
+            'precio_costo' => 3000, 'precio_venta' => 5000, 'unidad_medida' => 'Lata',
+        ])->assertOk();
+        $prod = Producto::where('nombre', 'Cerveza')->firstOrFail();
+        $this->postJson('/cliente/inventario/compras', [
+            'tipo' => 'informal', 'factura_validada' => false, 'metodo_pago' => 'efectivo',
+            'lineas' => [['producto_id' => $prod->id, 'cantidad' => 3, 'costo' => 3000]],
+        ])->assertOk();
+        $this->postJson('/cliente/inventario/transferencias', ['producto_id' => $prod->id, 'cantidad' => 3])->assertOk();
+
+        // Venta en julio.
+        $this->postJson('/cliente/ventas', [
+            'metodo_pago' => 'efectivo', 'monto_recibido' => 5000,
+            'lineas' => [['producto_id' => $prod->id, 'cantidad' => 1]],
+        ])->assertOk();
+
+        // Venta de agosto (mes distinto) -no debe contar en el reporte de julio.
+        $this->travelTo('2026-08-05 09:00:00');
+        $this->postJson('/cliente/ventas', [
+            'metodo_pago' => 'efectivo', 'monto_recibido' => 5000,
+            'lineas' => [['producto_id' => $prod->id, 'cantidad' => 1]],
+        ])->assertOk();
+
+        $response = $this->getJson('/cliente/reportes/mes?mes=2026-07');
+
+        $response->assertOk();
+        $response->assertJsonPath('cantidadVentas', 1);
+        $response->assertJsonPath('ingresos', 5000);
+    }
+
+    public function test_no_se_puede_pedir_el_reporte_de_un_mes_futuro(): void
+    {
+        $this->crearUsuarioCliente();
+
+        $mesFuturo = now()->addMonth()->format('Y-m');
+        $response = $this->getJson('/cliente/reportes/mes?mes=' . $mesFuturo);
+
+        $response->assertStatus(422);
+    }
+
+    public function test_el_pdf_de_un_mes_puntual_se_descarga_correctamente(): void
+    {
+        $this->crearUsuarioCliente();
+
+        $response = $this->get('/cliente/reportes/pdf?mes=2026-07');
+
+        $response->assertOk();
+        $this->assertSame('application/pdf', $response->headers->get('Content-Type'));
+    }
 }

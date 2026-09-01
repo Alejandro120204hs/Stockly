@@ -183,6 +183,12 @@
             <h2 class="panel__title">Historial de cierres</h2>
         </div>
 
+        <div class="cliente-toolbar">
+            <select id="cajaMesFilter" class="cliente-toolbar__select">
+                <option value="">Todos los meses</option>
+            </select>
+        </div>
+
         <div class="data-table-wrap">
             <table class="data-table" id="cajaTable">
                 <thead>
@@ -229,6 +235,12 @@
             </table>
 
             <p class="data-table__empty" id="cajaEmpty" @unless (count($cierres) === 0) hidden @endunless>Todavía no hay cierres registrados.</p>
+        </div>
+
+        <div class="data-table__pagination" id="cajaPagination">
+            <button type="button" class="cliente-btn-ghost" id="cajaPrevPage">← Anterior</button>
+            <span class="data-table__pagination-info" id="cajaPageInfo">Página 1 de 1</span>
+            <button type="button" class="cliente-btn-ghost" id="cajaNextPage">Siguiente →</button>
         </div>
     </div>
 

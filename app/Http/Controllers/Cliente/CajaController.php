@@ -11,14 +11,17 @@ class CajaController extends Controller
 {
     public function index()
     {
+        // Todo el historial va al cliente (mismo patrón que Facturación/
+        // Proveedores) -la tabla pagina y filtra por mes en el navegador,
+        // no aquí. "Últimos 6" (para el stat y el gráfico) sigue siendo
+        // los primeros 6 de esta misma lista, ya viene ordenada desc.
         $cierres = Caja::with('usuarioApertura')
             ->whereNotNull('cierre_en')
             ->orderByDesc('cierre_en')
-            ->take(6)
             ->get()
             ->map(fn (Caja $caja) => $this->shapeCierre($caja));
 
-        $diasSinCuadrar = $cierres->filter(fn (array $c) => $c['diferencia'] !== 0.0 || $c['diferenciaDigital'] !== 0.0)->count();
+        $diasSinCuadrar = $cierres->take(6)->filter(fn (array $c) => $c['diferencia'] !== 0.0 || $c['diferenciaDigital'] !== 0.0)->count();
 
         $cajaAbierta = Caja::with('usuarioApertura')->whereNull('cierre_en')->first();
         $cajaAbiertaData = $cajaAbierta ? $this->shapeCajaAbierta($cajaAbierta) : null;
@@ -165,6 +168,10 @@ class CajaController extends Controller
         return array_merge([
             'id' => $caja->id,
             'fecha' => $caja->apertura_en->locale('es')->translatedFormat('d M Y'),
+            // Para el filtro de mes en el historial: una clave ordenable
+            // ("2026-08") y una etiqueta legible ("Agosto 2026").
+            'mesKey' => $caja->apertura_en->format('Y-m'),
+            'mesLabel' => ucfirst($caja->apertura_en->locale('es')->translatedFormat('F Y')),
             'horaCierre' => hora_es($caja->cierre_en),
             'abrioPor' => $caja->usuarioApertura->nombreCompleto(),
             'baseInicial' => (float) $caja->base_inicial,

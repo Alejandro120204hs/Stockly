@@ -55,15 +55,47 @@ class ReportesController extends Controller
         return response()->json($data);
     }
 
+    /**
+     * Reporte de UN mes puntual, elegido con el selector de mes -igual que
+     * dia(), no es uno de los 4 períodos fijos así que se calcula bajo
+     * demanda. A diferencia de "Este mes" (que siempre es el mes actual),
+     * acá puede pedirse cualquier mes ya pasado. La gráfica sigue siendo
+     * por día (barrasDiarias), no mensual -eso es solo para "Este año".
+     */
+    public function mes(Request $request)
+    {
+        $validated = $request->validate([
+            'mes' => ['required', 'date_format:Y-m'],
+        ]);
+
+        $inicio = Carbon::createFromFormat('Y-m', $validated['mes'])->startOfMonth();
+
+        if ($inicio->greaterThan(now()->startOfMonth())) {
+            return response()->json(['message' => 'No puedes pedir el reporte de un mes futuro.'], 422);
+        }
+
+        $hasta = $inicio->isSameMonth(now()) ? now() : $inicio->copy()->endOfMonth();
+        $data = $this->buildPeriodo($inicio, $hasta, false);
+
+        return response()->json($data);
+    }
+
     public function pdf(Request $request): Response
     {
         $fecha = $request->input('fecha');
+        $mes = $request->input('mes');
 
         if ($fecha) {
             $fechaCarbon = Carbon::parse($fecha);
             $data = $this->buildPeriodo($fechaCarbon->copy()->startOfDay(), $fechaCarbon->copy()->endOfDay(), false, true);
             $periodoLabel = $fechaCarbon->locale('es')->translatedFormat('d \d\e F \d\e Y');
             $nombreArchivo = 'reporte-'.$fechaCarbon->format('Ymd');
+        } elseif ($mes) {
+            $inicio = Carbon::createFromFormat('Y-m', $mes)->startOfMonth();
+            $hasta = $inicio->isSameMonth(now()) ? now() : $inicio->copy()->endOfMonth();
+            $data = $this->buildPeriodo($inicio, $hasta, false);
+            $periodoLabel = ucfirst($inicio->locale('es')->translatedFormat('F Y'));
+            $nombreArchivo = 'reporte-'.$inicio->format('Ym');
         } else {
             $periodoKey = array_key_exists($request->input('periodo', 'semana'), self::PERIODOS)
                 ? $request->input('periodo')
