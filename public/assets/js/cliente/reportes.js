@@ -30,7 +30,7 @@
         }
 
         initTabs();
-        initDiaTab();
+        initFechaTab();
         renderPeriodo(periodoActual);
     });
 
@@ -39,7 +39,7 @@
     /* ------------------------------------------------------------------ */
 
     function initTabs() {
-        // [data-periodo] excluye la pestaña de calendario (#reporteDiaTab),
+        // [data-periodo] excluye la pestaña de calendario (#reporteFechaTab),
         // que no es un período fijo y tiene su propio manejador abajo.
         document.querySelectorAll('.reporte-tab[data-periodo]').forEach(function (btn) {
             btn.addEventListener('click', function () {
@@ -74,35 +74,49 @@
     }
 
     /* ------------------------------------------------------------------ */
-    /* Selector de un día puntual (calendario)                              */
+    /* Selector de fecha único (calendario) con toggle Día/Mes -el mismo    */
+    /* <input> cambia de type="date" a type="month" según el modo, en vez   */
+    /* de tener dos calendarios separados (confundía cuál era cuál).       */
     /* ------------------------------------------------------------------ */
 
-    function initDiaTab() {
-        const tab = document.getElementById('reporteDiaTab');
-        const input = document.getElementById('reporteDiaInput');
-        if (!tab || !input) return;
+    function initFechaTab() {
+        const tab = document.getElementById('reporteFechaTab');
+        const input = document.getElementById('reporteFechaInput');
+        const btnDia = document.getElementById('reporteModoDia');
+        const btnMes = document.getElementById('reporteModoMes');
+        if (!tab || !input || !btnDia || !btnMes) return;
 
-        function activarDia(fecha) {
-            if (!fecha) return;
+        const hoy = new Date();
+        const hoyStr = input.value; // ya viene con la fecha de hoy desde el servidor
+        const mesActualStr = hoyStr.slice(0, 7);
+
+        let modo = 'dia';
+        let ultimoDia = hoyStr;
+        let ultimoMes = mesActualStr;
+
+        function activar(valor) {
+            if (!valor) return;
 
             desactivarTodasLasPestanas();
             tab.classList.add('is-active');
             tab.setAttribute('aria-selected', 'true');
-            periodoActual = 'dia';
+            periodoActual = modo === 'dia' ? 'dia' : 'mes-elegido';
 
             cancelCountUps();
             tab.classList.add('is-cargando');
 
-            fetch('/cliente/reportes/dia?fecha=' + encodeURIComponent(fecha), {
-                headers: { 'Accept': 'application/json' },
-            })
+            const url = modo === 'dia'
+                ? '/cliente/reportes/dia?fecha=' + encodeURIComponent(valor)
+                : '/cliente/reportes/mes?mes=' + encodeURIComponent(valor);
+
+            fetch(url, { headers: { 'Accept': 'application/json' } })
                 .then(function (res) {
-                    if (!res.ok) throw new Error('No se pudo cargar el reporte de ese día.');
+                    if (!res.ok) throw new Error('No se pudo cargar ese reporte.');
                     return res.json();
                 })
                 .then(function (d) {
                     renderData(d);
-                    actualizarPdfHref({ fecha: fecha });
+                    actualizarPdfHref(modo === 'dia' ? { fecha: valor } : { mes: valor });
                 })
                 .catch(function (err) {
                     console.error('Reportes:', err);
@@ -112,21 +126,52 @@
                 });
         }
 
-        input.addEventListener('change', function () {
-            activarDia(input.value);
+        function cambiarModo(nuevoModo) {
+            if (nuevoModo === modo) return;
+            modo = nuevoModo;
+
+            btnDia.classList.toggle('is-active', modo === 'dia');
+            btnMes.classList.toggle('is-active', modo === 'mes');
+
+            input.type = modo === 'dia' ? 'date' : 'month';
+            input.max = modo === 'dia' ? hoyStr : mesActualStr;
+            input.setAttribute('aria-label', modo === 'dia' ? 'Elegir un día' : 'Elegir un mes');
+            input.value = modo === 'dia' ? ultimoDia : ultimoMes;
+
+            activar(input.value);
+        }
+
+        btnDia.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            cambiarModo('dia');
+        });
+        btnMes.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            cambiarModo('mes');
         });
 
-        // El navegador NO dispara "change" si la fecha elegida en el
-        // selector nativo es la misma que ya tenía el input -ej. vienes
+        input.addEventListener('change', function () {
+            if (modo === 'dia') {
+                ultimoDia = input.value;
+            } else {
+                ultimoMes = input.value;
+            }
+            activar(input.value);
+        });
+
+        // El navegador NO dispara "change" si el valor elegido en el
+        // selector nativo es el mismo que ya tenía el input -ej. vienes
         // de "Este mes", abres el calendario y le das clic a "Hoy", pero
         // el input ya tenía hoy como valor por defecto desde que cargó la
         // página, así que técnicamente "no cambió" nada para el navegador.
         // Por eso también se activa al abrir el selector, si todavía no
-        // estábamos en modo "día" -sin esto, el panel se quedaba en el
-        // período anterior aunque el usuario sí haya elegido un día.
+        // estábamos en este modo -sin esto, el panel se quedaba en el
+        // período anterior aunque el usuario sí haya elegido algo.
         tab.addEventListener('click', function () {
-            if (periodoActual === 'dia') return;
-            activarDia(input.value);
+            if (periodoActual === (modo === 'dia' ? 'dia' : 'mes-elegido')) return;
+            activar(input.value);
         });
     }
 

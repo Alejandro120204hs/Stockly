@@ -9,15 +9,21 @@
 
         <div class="reporte-toolbar">
             <div class="reporte-tabs" role="tablist" aria-label="Período del reporte">
-                {{-- En vez de una pestaña fija "Hoy", un selector de
-                     calendario -deja ver el reporte de CUALQUIER día
-                     puntual, no solo el de hoy. --}}
-                <label class="reporte-tab reporte-tab--dia" role="tab" id="reporteDiaTab" aria-selected="false">
+                {{-- Un solo selector de calendario, no dos -el toggle
+                     Día/Mes decide qué elige el mismo <input>: un día
+                     puntual cualquiera, o un mes puntual cualquiera (no
+                     solo "Este mes", que siempre es el actual). Tener dos
+                     calendarios lado a lado confundía cuál era cuál. --}}
+                <label class="reporte-tab reporte-tab--dia" role="tab" id="reporteFechaTab" aria-selected="false">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="14" height="14">
                         <rect x="3" y="4.5" width="18" height="16" rx="2"/>
                         <path d="M8 2.5v4M16 2.5v4M3 9.5h18"/>
                     </svg>
-                    <input type="date" id="reporteDiaInput" class="reporte-dia-input" value="{{ now()->toDateString() }}" max="{{ now()->toDateString() }}" aria-label="Elegir un día">
+                    <span class="reporte-fecha-toggle">
+                        <button type="button" class="reporte-fecha-toggle__btn is-active" id="reporteModoDia" data-modo="dia">Día</button>
+                        <button type="button" class="reporte-fecha-toggle__btn" id="reporteModoMes" data-modo="mes">Mes</button>
+                    </span>
+                    <input type="date" id="reporteFechaInput" class="reporte-dia-input" value="{{ now()->toDateString() }}" max="{{ now()->toDateString() }}" aria-label="Elegir un día">
                 </label>
                 <button type="button" class="reporte-tab is-active" role="tab" data-periodo="semana" aria-selected="true">Esta semana</button>
                 <button type="button" class="reporte-tab" role="tab" data-periodo="mes">Este mes</button>

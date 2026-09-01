@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initDiffChart();
     initCierreSlideOver();
     initCajaFlow();
+    initHistorialCierres();
 });
 
 function cajaApiRequest(method, url, data) {
@@ -132,6 +133,131 @@ function formatDiferencia(diferencia) {
         return '−' + formatCOP(Math.abs(diferencia));
     }
     return formatCOP(0);
+}
+
+/* --------------------------------------------------------------------
+ * Historial de cierres: filtro por mes + paginación (6 por página).
+ * Todo el historial ya llegó pre-cargado en `cajaCierres` -acá solo se
+ * decide qué filas mostrar, ninguna petición nueva al servidor.
+ * ------------------------------------------------------------------ */
+var CAJA_HISTORIAL_PAGE_SIZE = 6;
+var cajaHistorialPagina = 1;
+
+function poblarFiltroMeses() {
+    var select = document.getElementById('cajaMesFilter');
+    if (!select) {
+        return;
+    }
+
+    var valorActual = select.value;
+    var vistos = {};
+
+    // Reconstruye las opciones desde cero (menos la primera, "Todos los
+    // meses") -así un cierre nuevo de un mes que todavía no existía en la
+    // lista también aparece sin recargar la página.
+    while (select.options.length > 1) {
+        select.remove(1);
+    }
+
+    cajaCierres.forEach(function (c) {
+        if (vistos[c.mesKey]) {
+            return;
+        }
+        vistos[c.mesKey] = true;
+        var option = document.createElement('option');
+        option.value = c.mesKey;
+        option.textContent = c.mesLabel;
+        select.appendChild(option);
+    });
+
+    if (vistos[valorActual]) {
+        select.value = valorActual;
+    }
+}
+
+function initHistorialCierres() {
+    var table = document.getElementById('cajaTable');
+    var filtro = document.getElementById('cajaMesFilter');
+    if (!table || !filtro) {
+        return;
+    }
+
+    poblarFiltroMeses();
+
+    filtro.addEventListener('change', function () {
+        cajaHistorialPagina = 1;
+        renderHistorialCierres();
+    });
+
+    document.getElementById('cajaPrevPage')?.addEventListener('click', function () {
+        if (cajaHistorialPagina > 1) {
+            cajaHistorialPagina--;
+            renderHistorialCierres();
+        }
+    });
+    document.getElementById('cajaNextPage')?.addEventListener('click', function () {
+        cajaHistorialPagina++;
+        renderHistorialCierres();
+    });
+
+    renderHistorialCierres();
+}
+
+function renderHistorialCierres() {
+    var table = document.getElementById('cajaTable');
+    var filtro = document.getElementById('cajaMesFilter');
+    var emptyState = document.getElementById('cajaEmpty');
+    var paginationEl = document.getElementById('cajaPagination');
+    var pageInfoEl = document.getElementById('cajaPageInfo');
+    var prevBtn = document.getElementById('cajaPrevPage');
+    var nextBtn = document.getElementById('cajaNextPage');
+    if (!table || !filtro) {
+        return;
+    }
+
+    var mesElegido = filtro.value;
+    var idsQueCoinciden = {};
+    cajaCierres.forEach(function (c) {
+        if (!mesElegido || c.mesKey === mesElegido) {
+            idsQueCoinciden[c.id] = true;
+        }
+    });
+    var totalCoincidencias = Object.keys(idsQueCoinciden).length;
+
+    var totalPaginas = Math.max(1, Math.ceil(totalCoincidencias / CAJA_HISTORIAL_PAGE_SIZE));
+    cajaHistorialPagina = Math.min(cajaHistorialPagina, totalPaginas);
+    var desde = (cajaHistorialPagina - 1) * CAJA_HISTORIAL_PAGE_SIZE;
+    var hasta = desde + CAJA_HISTORIAL_PAGE_SIZE;
+
+    // El orden de las filas en el DOM ya viene del más reciente al más
+    // antiguo (así se insertan/renderizan) -contar solo entre las que
+    // coinciden con el filtro da directamente la página correcta.
+    var indice = -1;
+    table.querySelectorAll('.data-table__row').forEach(function (row) {
+        var id = row.getAttribute('data-cierre-id');
+        if (!idsQueCoinciden[id]) {
+            row.hidden = true;
+            return;
+        }
+        indice++;
+        row.hidden = indice < desde || indice >= hasta;
+    });
+
+    if (emptyState) {
+        emptyState.hidden = totalCoincidencias !== 0;
+    }
+    if (paginationEl) {
+        paginationEl.hidden = totalCoincidencias === 0;
+    }
+    if (pageInfoEl) {
+        pageInfoEl.textContent = 'Página ' + cajaHistorialPagina + ' de ' + totalPaginas;
+    }
+    if (prevBtn) {
+        prevBtn.disabled = cajaHistorialPagina <= 1;
+    }
+    if (nextBtn) {
+        nextBtn.disabled = cajaHistorialPagina >= totalPaginas;
+    }
 }
 
 /* --------------------------------------------------------------------
@@ -450,6 +576,8 @@ function initCajaFlow() {
                     delete cajaCierresById[id];
                     renderDiffChart();
                     actualizarStatCierresSinCuadrar();
+                    poblarFiltroMeses();
+                    renderHistorialCierres();
 
                     reabrirBtn.hidden = true;
                     pasarAAbierta(json.caja);
@@ -619,13 +747,11 @@ function initCerrarCajaModal(getCajaActual, onCerrada) {
                     }
                 }
 
-                var emptyState = document.getElementById('cajaEmpty');
-                if (emptyState) {
-                    emptyState.hidden = true;
-                }
-
                 renderDiffChart();
                 actualizarStatCierresSinCuadrar();
+                poblarFiltroMeses();
+                cajaHistorialPagina = 1;
+                renderHistorialCierres();
 
                 closeModal();
                 onCerrada(cierre);
