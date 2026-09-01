@@ -1,4 +1,15 @@
 /* ==========================================================================
+   Fuente Inter (variable font — ejes opsz + wght)
+   ========================================================================== */
+@font-face {
+    font-family: 'Inter';
+    src: url('../../fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ==========================================================================
    Stockly — Panel del negocio cliente: LAYOUT compartido
    Esto es lo único que cargan TODAS las vistas del panel cliente (lo
    carga el layout compartido, layouts/cliente-layout.blade.php): tokens,
@@ -47,8 +58,8 @@
     --color-border-15: rgba(30, 45, 61, 0.15);
     --color-border-16: rgba(30, 45, 61, 0.16);
 
-    --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
-    --font-body: 'Work Sans', 'Segoe UI', Arial, sans-serif;
+    --font-display: 'Inter', 'Segoe UI', Arial, sans-serif;
+    --font-body: 'Inter', 'Segoe UI', Arial, sans-serif;
 
     --radius-sm: 8px;
     --radius-md: 14px;
@@ -103,6 +114,7 @@ body.cliente-body {
     margin: 0;
     min-height: 100vh;
     font-family: var(--font-body);
+    font-optical-sizing: auto;
     color: var(--color-slate);
     background-color: var(--color-background);
     -webkit-font-smoothing: antialiased;
@@ -1164,6 +1176,148 @@ body.cliente-body {
 }
 
 /* ==========================================================================
+   DATE PICKER PERSONALIZADO (.vf-picker)
+   Compartido entre Ventas, Gastos y cualquier otra vista que necesite un
+   input de fecha con posicionamiento controlado (right:0 alinea el borde
+   derecho del calendario con el borde derecho del botón trigger).
+   ========================================================================== */
+.vf-picker {
+    position: relative;
+}
+
+.vf-picker__btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 13px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-12);
+    background-color: var(--color-background);
+    font-family: inherit;
+    font-size: 0.86rem;
+    color: var(--color-slate);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.vf-picker__btn[aria-expanded="true"] {
+    border-color: var(--color-sage);
+    background-color: var(--color-surface);
+    box-shadow: 0 0 0 3px var(--color-sage-soft);
+}
+
+.vf-picker__cal {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 200;
+    width: 272px;
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-10);
+    box-shadow: 0 16px 40px -14px rgba(30, 45, 61, 0.3);
+    padding: 14px;
+}
+
+.vf-cal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.vf-cal__title {
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--color-slate);
+    text-transform: capitalize;
+}
+
+.vf-cal__nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--color-slate);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.vf-cal__nav:hover:not(:disabled) {
+    background-color: var(--color-background);
+}
+
+.vf-cal__nav:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.vf-cal__grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.vf-cal__dow {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--color-mist);
+    text-align: center;
+    padding: 4px 0 6px;
+    letter-spacing: 0.02em;
+}
+
+.vf-cal__day {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-family: inherit;
+    cursor: pointer;
+    background: none;
+    color: var(--color-slate);
+    transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.vf-cal__empty {
+    aspect-ratio: 1;
+}
+
+.vf-cal__day:hover:not(:disabled):not(.vf-cal__day--selected) {
+    background-color: var(--color-sage-soft);
+    color: var(--color-sage-dark);
+}
+
+.vf-cal__day--today {
+    font-weight: 700;
+    color: var(--color-sage-dark);
+}
+
+.vf-cal__day--selected {
+    background-color: var(--color-sage);
+    color: var(--color-surface);
+    font-weight: 600;
+}
+
+.vf-cal__day--selected.vf-cal__day--today {
+    color: var(--color-surface);
+}
+
+.vf-cal__day--future {
+    color: var(--color-mist);
+    opacity: 0.4;
+    cursor: default;
+}
+
+/* ==========================================================================
    ANIMACIÓN DE ENTRADA
    ========================================================================== */
 .cliente-reveal {
@@ -1207,6 +1361,12 @@ body.cliente-body {
         padding: 22px 18px;
     }
 
+    /* En tablet, los valores largos como "$1.468.938.500" rozan el borde
+       derecho de la card a 1.9rem. Se baja un poco sin sacrificar legibilidad. */
+    .stat-card__value {
+        font-size: 1.65rem;
+    }
+
     .cliente-sidebar-overlay {
         display: none;
         position: fixed;
@@ -1227,6 +1387,38 @@ body.cliente-body {
 
     .stat-grid {
         grid-template-columns: 1fr 1fr;
+    }
+
+    .stat-card {
+        padding: 12px 13px 10px;
+    }
+
+    .stat-card__icon {
+        width: 32px;
+        height: 32px;
+        margin-bottom: 7px;
+    }
+
+    .stat-card__icon svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    /* El grid 2-col a ~188px por card no aguanta 1.9rem con valores
+       como "$12.450.000" -se recortan por overflow:hidden de la card. */
+    .stat-card__value {
+        font-size: 1.3rem;
+    }
+
+    .stat-card__label {
+        font-size: 0.78rem;
+        margin-top: 4px;
+    }
+
+    .stat-card__meta {
+        font-size: 0.7rem;
+        margin-top: 6px;
+        line-height: 1.35;
     }
 }
 

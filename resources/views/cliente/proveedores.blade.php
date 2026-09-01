@@ -22,7 +22,7 @@
     <!-- ==========================================================
          STAT CARDS
          ========================================================== -->
-    <section class="stat-grid cliente-reveal cliente-reveal-2">
+    <section class="stat-grid stat-grid--3 cliente-reveal cliente-reveal-2">
         <div class="stat-card stat-card--sage">
             <div class="stat-card__icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

@@ -84,7 +84,14 @@
                 <option value="digital_externo">Digital (aparte)</option>
             </select>
 
-            <input type="date" id="gastosFechaFilter" class="cliente-toolbar__select" value="{{ $fechaHoyTurno }}" max="{{ now()->toDateString() }}">
+            <div class="vf-picker" id="gastosFechaPickerWrap">
+                <button type="button" class="vf-picker__btn" id="gastosFechaBtn" aria-haspopup="true" aria-expanded="false">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                    <span id="gastosFechaLabel"></span>
+                </button>
+                <input type="hidden" id="gastosFechaFilter" value="{{ $fechaHoyTurno }}">
+                <div class="vf-picker__cal" id="gastosFechaCal" hidden></div>
+            </div>
             <button type="button" class="cliente-btn-ghost" id="gastosVerTodos">Ver todos</button>
         </div>
 
