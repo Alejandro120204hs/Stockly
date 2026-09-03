@@ -2,15 +2,49 @@
  * Stockly — Panel de Super Admin: vista Pagos y suscripciones (vanilla JS)
  * Depende de admin/layout.js (formatNumber, normalizarTexto).
  *
- * Mismo patrón que el panel de Empresas. Diferencia principal: acá hay un
- * tercer estado ("rechazado") con un motivo de texto, y el flujo de
- * rechazo pide ese motivo antes de confirmar. Todo es demo visual -no hay
- * backend conectado, nada persiste al recargar.
+ * Mismo patrón que el panel de Empresas (empresasApiRequest/Confirmar).
+ * Un pago 'pago_recibido' se puede aprobar (activa la empresa de una) o
+ * rechazar (pide motivo antes de confirmar, igual que rechazar en el
+ * flujo viejo de Empresas).
  */
 
 document.addEventListener('DOMContentLoaded', function () {
     initPagosPanel();
 });
+
+function pagosApiRequest(method, url, data) {
+    var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    return fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': csrfMeta ? csrfMeta.content : ''
+        },
+        body: data !== undefined ? JSON.stringify(data) : undefined
+    }).then(function (response) {
+        return response.json().catch(function () { return {}; }).then(function (json) {
+            if (!response.ok) {
+                throw new Error(json.message || 'Ocurrió un error inesperado.');
+            }
+            return json;
+        });
+    });
+}
+
+function pagosMostrarError(mensaje) {
+    if (typeof Swal === 'undefined') {
+        window.alert(mensaje);
+        return;
+    }
+    Swal.fire({
+        icon: 'error',
+        title: 'No se pudo completar',
+        text: mensaje,
+        confirmButtonText: 'Entendido',
+        customClass: { popup: 'stockly-swal', container: 'stockly-swal-backdrop' }
+    });
+}
 
 function initPagosPanel() {
     var table = document.getElementById('pagosTable');
@@ -26,14 +60,8 @@ function initPagosPanel() {
         pagosById[pago.id] = pago;
     });
 
-    var estadoLabels = {
-        pendiente: 'Pendiente',
-        activado: 'Activado',
-        rechazado: 'Rechazado'
-    };
-
     var estadoPillClass = {
-        pendiente: 'por-vencer',
+        pago_recibido: 'por-vencer',
         activado: 'activo',
         rechazado: 'vencido'
     };
@@ -41,7 +69,7 @@ function initPagosPanel() {
     var overlay = document.getElementById('pagoSlideOverOverlay');
     var slideOver = document.getElementById('pagoSlideOver');
     var closeBtn = document.getElementById('pagoSlideOverClose');
-    var activarBtn = document.getElementById('pagoActivarBtn');
+    var aprobarBtn = document.getElementById('pagoAprobarBtn');
     var rechazarBtn = document.getElementById('pagoRechazarBtn');
     var reasonBox = document.getElementById('pagoRechazarReasonBox');
     var reasonInput = document.getElementById('pagoRechazarMotivo');
@@ -49,21 +77,25 @@ function initPagosPanel() {
     var reasonCancel = document.getElementById('pagoRechazarCancelar');
 
     var seccionAcciones = document.getElementById('pagoSeccionAcciones');
-    var seccionActivado = document.getElementById('pagoSeccionActivado');
-    var seccionRechazado = document.getElementById('pagoSeccionRechazado');
+    var seccionComprobante = document.getElementById('pagoSlideOverComprobanteSection');
+    var seccionRechazo = document.getElementById('pagoSlideOverRechazoSection');
+    var seccionVencimiento = document.getElementById('pagoSlideOverVencimientoSection');
+    var fechaActivacionRow = document.getElementById('pagoSlideOverFechaActivacionRow');
+    var activadoPorRow = document.getElementById('pagoSlideOverActivadoPorRow');
+    var comprobanteLink = document.getElementById('pagoSlideOverComprobanteLink');
 
     var currentId = null;
 
-    function pillMarkup(estado) {
+    function pillMarkup(pago) {
         return {
-            className: 'status-pill status-pill--' + estadoPillClass[estado],
-            label: estadoLabels[estado] || estado
+            className: 'status-pill status-pill--' + estadoPillClass[pago.estado],
+            label: pago.estadoLabel
         };
     }
 
-    function syncEstadoPill(pago) {
+    function aplicarFilasYSecciones(pago) {
         var row = table.querySelector('tr[data-pago-id="' + pago.id + '"]');
-        var pill = pillMarkup(pago.estado);
+        var pill = pillMarkup(pago);
 
         if (row) {
             var rowPill = row.querySelector('.status-pill');
@@ -73,30 +105,38 @@ function initPagosPanel() {
             }
         }
 
-        var slideOverPill = document.getElementById('pagoSlideOverEstado');
-        slideOverPill.className = pill.className;
-        slideOverPill.textContent = pill.label;
-
-        updateSections(pago);
-    }
-
-    function updateSections(pago) {
-        seccionAcciones.hidden = pago.estado !== 'pendiente';
-        seccionActivado.hidden = pago.estado !== 'activado';
-        seccionRechazado.hidden = pago.estado !== 'rechazado';
-
-        if (pago.estado === 'activado') {
-            document.getElementById('pagoSlideOverActivadoPor').textContent = pago.activadoPor || '—';
+        if (currentId === pago.id) {
+            document.getElementById('pagoSlideOverEmpresa').textContent = pago.empresa;
+            document.getElementById('pagoSlideOverPlan').textContent = pago.plan;
+            document.getElementById('pagoSlideOverMonto').textContent = pago.monto !== null ? '$' + formatNumber(pago.monto, 0) : '—';
+            document.getElementById('pagoSlideOverMetodo').textContent = pago.metodo || '—';
+            document.getElementById('pagoSlideOverFechaPago').textContent = pago.fechaPago || '—';
             document.getElementById('pagoSlideOverFechaActivacion').textContent = pago.fechaActivacion || '—';
-        }
+            document.getElementById('pagoSlideOverActivadoPor').textContent = pago.activadoPor;
+            document.getElementById('pagoSlideOverVencimientoAnterior').textContent = pago.vencimientoAnterior;
+            document.getElementById('pagoSlideOverVencimientoNuevo').textContent = pago.vencimientoNuevo || '—';
 
-        if (pago.estado === 'rechazado') {
-            document.getElementById('pagoSlideOverMotivo').textContent = pago.motivoRechazo || '—';
-        }
+            var slideOverPill = document.getElementById('pagoSlideOverEstado');
+            slideOverPill.className = pill.className;
+            slideOverPill.textContent = pill.label;
 
-        if (pago.estado === 'pendiente') {
-            reasonBox.hidden = true;
-            reasonInput.value = '';
+            seccionAcciones.hidden = pago.estado !== 'pago_recibido';
+            seccionComprobante.hidden = !pago.comprobanteUrl;
+            seccionRechazo.hidden = pago.estado !== 'rechazado';
+            seccionVencimiento.hidden = pago.estado === 'pago_recibido';
+            fechaActivacionRow.hidden = pago.estado === 'pago_recibido';
+            activadoPorRow.hidden = pago.estado === 'pago_recibido';
+
+            if (pago.comprobanteUrl) {
+                comprobanteLink.href = pago.comprobanteUrl;
+            }
+            if (pago.estado === 'rechazado') {
+                document.getElementById('pagoSlideOverMotivoRechazo').textContent = pago.motivoRechazo || '—';
+            }
+            if (pago.estado === 'pago_recibido') {
+                reasonBox.hidden = true;
+                reasonInput.value = '';
+            }
         }
     }
 
@@ -107,14 +147,7 @@ function initPagosPanel() {
         }
         currentId = id;
 
-        document.getElementById('pagoSlideOverEmpresa').textContent = pago.empresa;
-        document.getElementById('pagoSlideOverModulo').textContent = pago.modulo;
-        document.getElementById('pagoSlideOverMonto').textContent = '$' + formatNumber(pago.monto, 0);
-        document.getElementById('pagoSlideOverMetodo').textContent = pago.metodo;
-        document.getElementById('pagoSlideOverReferencia').textContent = pago.referencia;
-        document.getElementById('pagoSlideOverFecha').textContent = pago.fechaPago;
-
-        syncEstadoPill(pago);
+        aplicarFilasYSecciones(pago);
 
         slideOver.classList.add('is-open');
         slideOver.setAttribute('aria-hidden', 'false');
@@ -152,27 +185,28 @@ function initPagosPanel() {
         }
     });
 
-    /* ---------- Activar ---------- */
-    activarBtn.addEventListener('click', function () {
-        var pago = pagosById[currentId];
-        if (!pago || activarBtn.disabled) {
-            return;
-        }
+    /* ---------- Aprobar ---------- */
+    aprobarBtn.addEventListener('click', function () {
+        if (!currentId) return;
 
-        var originalText = activarBtn.textContent;
-        activarBtn.disabled = true;
+        var originalText = aprobarBtn.textContent;
+        aprobarBtn.disabled = true;
         rechazarBtn.disabled = true;
-        activarBtn.textContent = 'Activando...';
+        aprobarBtn.textContent = 'Aprobando...';
 
-        window.setTimeout(function () {
-            pago.estado = 'activado';
-            pago.activadoPor = 'Alejandro Hernández';
-            pago.fechaActivacion = 'Ahora mismo';
-            activarBtn.textContent = originalText;
-            activarBtn.disabled = false;
-            rechazarBtn.disabled = false;
-            syncEstadoPill(pago);
-        }, 600);
+        pagosApiRequest('POST', '/admin/pagos/' + currentId + '/aprobar')
+            .then(function (json) {
+                pagosById[json.pago.id] = json.pago;
+                aplicarFilasYSecciones(json.pago);
+            })
+            .catch(function (error) {
+                pagosMostrarError(error.message);
+            })
+            .finally(function () {
+                aprobarBtn.disabled = false;
+                rechazarBtn.disabled = false;
+                aprobarBtn.textContent = originalText;
+            });
     });
 
     /* ---------- Rechazar (pide motivo antes de confirmar) ---------- */
@@ -184,58 +218,57 @@ function initPagosPanel() {
     reasonCancel.addEventListener('click', function () {
         reasonBox.hidden = true;
         reasonInput.value = '';
-        setFieldError(reasonInput, false);
+        reasonInput.style.borderColor = '';
     });
 
     reasonConfirm.addEventListener('click', function () {
-        var pago = pagosById[currentId];
-        if (!pago) {
-            return;
-        }
+        if (!currentId) return;
 
         var motivo = reasonInput.value.trim();
         if (!motivo) {
-            setFieldError(reasonInput, true);
+            reasonInput.style.borderColor = 'var(--color-error)';
             reasonInput.focus();
             return;
         }
-        setFieldError(reasonInput, false);
+        reasonInput.style.borderColor = '';
 
         var originalText = reasonConfirm.textContent;
         reasonConfirm.disabled = true;
         reasonConfirm.textContent = 'Rechazando...';
 
-        window.setTimeout(function () {
-            pago.estado = 'rechazado';
-            pago.motivoRechazo = motivo;
-            reasonConfirm.textContent = originalText;
-            reasonConfirm.disabled = false;
-            syncEstadoPill(pago);
-        }, 600);
+        pagosApiRequest('POST', '/admin/pagos/' + currentId + '/rechazar', { motivo: motivo })
+            .then(function (json) {
+                pagosById[json.pago.id] = json.pago;
+                aplicarFilasYSecciones(json.pago);
+            })
+            .catch(function (error) {
+                pagosMostrarError(error.message);
+            })
+            .finally(function () {
+                reasonConfirm.disabled = false;
+                reasonConfirm.textContent = originalText;
+            });
     });
 
-    function setFieldError(el, hasError) {
-        el.style.borderColor = hasError ? 'var(--color-error)' : '';
-    }
-
-    /* ---------- Búsqueda + filtro por estado ---------- */
+    /* ---------- Búsqueda + filtros ---------- */
     var searchInput = document.getElementById('pagosSearch');
     var estadoFilter = document.getElementById('pagosEstadoFilter');
+    var planFilter = document.getElementById('pagosPlanFilter');
     var emptyState = document.getElementById('pagosEmpty');
 
     function applyFilters() {
         var term = normalizarTexto(searchInput.value.trim());
         var estado = estadoFilter.value;
+        var plan = planFilter.value;
         var visibleCount = 0;
 
         table.querySelectorAll('.data-table__row').forEach(function (row) {
             var id = parseInt(row.getAttribute('data-pago-id'), 10);
             var pago = pagosById[id];
-            var matchesTerm = !term
-                || normalizarTexto(pago.empresa).indexOf(term) !== -1
-                || normalizarTexto(pago.referencia).indexOf(term) !== -1;
+            var matchesTerm = !term || normalizarTexto(pago.empresa).indexOf(term) !== -1;
             var matchesEstado = !estado || pago.estado === estado;
-            var visible = matchesTerm && matchesEstado;
+            var matchesPlan = !plan || pago.plan === plan;
+            var visible = matchesTerm && matchesEstado && matchesPlan;
 
             row.hidden = !visible;
             if (visible) {
@@ -248,4 +281,5 @@ function initPagosPanel() {
 
     searchInput.addEventListener('input', applyFilters);
     estadoFilter.addEventListener('change', applyFilters);
+    planFilter.addEventListener('change', applyFilters);
 }

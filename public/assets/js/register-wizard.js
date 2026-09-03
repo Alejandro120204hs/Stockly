@@ -11,12 +11,10 @@
  *   2. Validación por paso: no se avanza si el paso actual tiene campos
  *      obligatorios vacíos, inválidos, o contraseñas que no coinciden.
  *   3. Campo "Otro" del tipo de negocio: aparece/desaparece según el select.
- *   4. Sincronización de Nombres+Apellidos hacia el campo "name" real que
- *      espera el backend actual (que todavía no tiene columnas separadas).
- *   5. Resumen del paso 3, armado leyendo los valores ya escritos en los
+ *   4. Resumen del paso 3, armado leyendo los valores ya escritos en los
  *      pasos 1 y 2 (nunca se vuelve a pedir nada, y la contraseña no se
  *      muestra).
- *   6. Departamento -> Ciudad/Municipio: selects dependientes, llenados
+ *   5. Departamento -> Ciudad/Municipio: selects dependientes, llenados
  *      desde window.COLOMBIA_LOCATIONS (colombia-locations.js).
  */
 
@@ -92,7 +90,6 @@ function initRegisterWizard() {
     // Envío final: revalida el último paso (checkbox de términos incluido)
     // como red de seguridad, por si el usuario llegó ahí sin usar "Siguiente".
     form.addEventListener('submit', function (event) {
-        syncFullName();
         if (!validateStep(steps.length - 1)) {
             event.preventDefault();
         }

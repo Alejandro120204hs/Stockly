@@ -126,6 +126,14 @@
                     </svg>
                     <span class="cliente-nav-item__label">Mi perfil</span>
                 </a>
+
+                <a href="{{ url('/cliente/suscripcion') }}" class="cliente-nav-item {{ request()->is('cliente/suscripcion') ? 'is-active' : '' }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 3v3M12 18v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M3 12h3M18 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>
+                        <circle cx="12" cy="12" r="4.5"/>
+                    </svg>
+                    <span class="cliente-nav-item__label">Suscripción</span>
+                </a>
             </nav>
 
             <div class="cliente-sidebar__footer">
@@ -179,6 +187,18 @@
                     </a>
                 </div>
             </header>
+
+            {{-- No bloquea nada -solo un aviso mientras todavía faltan
+                 días. Si ya venció o está suspendida, el middleware
+                 EnsureSuscripcionActiva ni deja llegar hasta acá (redirige
+                 a /cliente/suscripcion antes). --}}
+            @if ($empresa && $empresa->estadoEfectivo() === 'por_vencer')
+                <div class="cliente-banner cliente-banner--warning">
+                    Tu plan vence el {{ $empresa->fecha_vencimiento->format('d/m/Y') }}
+                    ({{ now()->startOfDay()->diffInDays($empresa->fecha_vencimiento) }} días) -
+                    <a href="{{ url('/cliente/suscripcion') }}">renuévalo aquí</a>.
+                </div>
+            @endif
 
             <main class="cliente-content">
                 {{ $slot }}

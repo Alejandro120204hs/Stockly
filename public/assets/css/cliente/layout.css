@@ -399,6 +399,25 @@ body.cliente-body {
     flex: 1;
 }
 
+/* Aviso de "por vencer" -no bloquea nada, solo recuerda que quedan pocos
+   días (ver layouts/cliente-layout.blade.php). */
+.cliente-banner {
+    padding: 12px 32px;
+    font-size: 0.86rem;
+    font-weight: 500;
+}
+
+.cliente-banner--warning {
+    background-color: var(--color-sand-soft);
+    color: var(--color-sand-dark);
+}
+
+.cliente-banner a {
+    color: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+}
+
 /* ==========================================================================
    ENCABEZADO DE PÁGINA
    ========================================================================== */

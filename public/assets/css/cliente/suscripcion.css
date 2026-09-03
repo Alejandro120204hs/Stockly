@@ -1,0 +1,215 @@
+/* ==========================================================================
+   Stockly — Suscripción (rol Cliente)
+   El data-table/slide-over compartido vive en cliente/layout.css; acá solo
+   lo propio: la franja de estado, las tarjetas de plan, los datos de pago
+   y el selector de archivo.
+   ========================================================================== */
+.suscripcion-estado {
+    margin-bottom: 18px;
+    font-size: 0.92rem;
+    font-weight: 500;
+}
+
+.suscripcion-estado--bloqueada {
+    background-color: var(--color-error-soft);
+    color: var(--color-error);
+}
+
+.suscripcion-estado--ok {
+    background-color: var(--color-sage-soft);
+    color: var(--color-sage-dark);
+}
+
+.suscripcion-pendiente__hint,
+.suscripcion-rechazo__hint {
+    color: var(--color-mist);
+    margin: 0;
+}
+
+.suscripcion-rechazo {
+    border-left: 3px solid var(--color-error);
+}
+
+.suscripcion-rechazo p {
+    margin: 0 0 6px;
+}
+
+/* ---------- Tarjetas de plan (radio nativo, sin JS) ---------- */
+.plan-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px;
+}
+
+.plan-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 18px 16px;
+    border-radius: var(--radius-md);
+    border: 2px solid var(--color-border-10);
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.plan-card:has(.plan-card__radio:checked) {
+    border-color: var(--color-sage);
+    background-color: var(--color-sage-soft);
+}
+
+.plan-card__radio {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+}
+
+.plan-card__name {
+    font-weight: 600;
+    color: var(--color-slate);
+}
+
+.plan-card__price {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--color-slate);
+}
+
+.plan-card__duration {
+    font-size: 0.8rem;
+    color: var(--color-mist);
+}
+
+/* ---------- Datos de pago -estilo tarjeta de pasarela, aunque el pago
+   sea manual: es lo que el ojo espera ver antes de pagar algo. ---------- */
+.pago-metodos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+}
+
+.pago-metodo-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 20px;
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border-10);
+    box-shadow: 0 10px 24px -20px rgba(30, 45, 61, 0.4);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pago-metodo-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px -18px rgba(30, 45, 61, 0.45);
+}
+
+.pago-metodo-card__icon {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background-color: var(--color-sage-soft);
+    color: var(--color-sage-dark);
+}
+
+.pago-metodo-card:nth-child(2) .pago-metodo-card__icon {
+    background-color: var(--color-sand-soft);
+    color: var(--color-sand-dark);
+}
+
+.pago-metodo-card__icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.pago-metodo-card__label {
+    display: block;
+    font-size: 0.76rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-mist);
+    margin-bottom: 2px;
+}
+
+.pago-metodo-card__valor-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pago-metodo-card__valor {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--color-slate);
+}
+
+.pago-metodo-card__copy {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    color: var(--color-mist);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.pago-metodo-card__copy svg {
+    width: 16px;
+    height: 16px;
+}
+
+.pago-metodo-card__copy:hover {
+    background-color: var(--color-mist-soft);
+    color: var(--color-slate);
+}
+
+.pago-metodo-card__copy.is-copied {
+    color: var(--color-sage-dark);
+}
+
+.pago-metodos__nombre {
+    margin: 12px 2px 0;
+    font-size: 0.84rem;
+    color: var(--color-mist);
+}
+
+.pago-metodos__nombre strong {
+    color: var(--color-slate);
+}
+
+/* ---------- Subir comprobante ---------- */
+.suscripcion-upload {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.suscripcion-upload__btn {
+    cursor: pointer;
+}
+
+.suscripcion-upload__filename {
+    font-size: 0.86rem;
+    color: var(--color-mist);
+}
+
+.suscripcion-upload__hint {
+    margin: 8px 0 0;
+    font-size: 0.78rem;
+    color: var(--color-mist);
+}

@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\EmpresaController as AdminEmpresaController;
+use App\Http\Controllers\Admin\ModuloController as AdminModuloController;
+use App\Http\Controllers\Admin\PagoController as AdminPagoController;
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Cliente\CajaController;
 use App\Http\Controllers\Cliente\DashboardController;
@@ -10,6 +14,7 @@ use App\Http\Controllers\Cliente\NominaController;
 use App\Http\Controllers\Cliente\ProfileController as ClienteProfileController;
 use App\Http\Controllers\Cliente\ReportesController;
 use App\Http\Controllers\Cliente\ProveedorController;
+use App\Http\Controllers\Cliente\SuscripcionController;
 use App\Http\Controllers\Cliente\VentasController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -30,21 +35,18 @@ Route::get('/dashboard', function () {
 })->middleware(['auth'])->name('dashboard');
 
 Route::middleware(['auth', 'rol:admin'])->group(function () {
-    Route::get('/admin/dashboard', function () {
-        return view('admin.dashboard-admin');
-    })->name('admin.dashboard');
+    Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
 
-    Route::get('/admin/empresas', function () {
-        return view('admin.empresas');
-    })->name('admin.empresas');
+    Route::get('/admin/empresas', [AdminEmpresaController::class, 'index'])->name('admin.empresas');
+    Route::post('/admin/empresas/{empresa}/activar', [AdminEmpresaController::class, 'activar'])->name('admin.empresas.activar');
+    Route::post('/admin/empresas/{empresa}/suspender', [AdminEmpresaController::class, 'suspender'])->name('admin.empresas.suspender');
+    Route::patch('/admin/empresas/{empresa}/modulos', [AdminEmpresaController::class, 'modulos'])->name('admin.empresas.modulos');
 
-    Route::get('/admin/pagos', function () {
-        return view('admin.pagos');
-    })->name('admin.pagos');
+    Route::get('/admin/pagos', [AdminPagoController::class, 'index'])->name('admin.pagos');
+    Route::post('/admin/pagos/{pago}/aprobar', [AdminPagoController::class, 'aprobar'])->name('admin.pagos.aprobar');
+    Route::post('/admin/pagos/{pago}/rechazar', [AdminPagoController::class, 'rechazar'])->name('admin.pagos.rechazar');
 
-    Route::get('/admin/modulos', function () {
-        return view('admin.modulos');
-    })->name('admin.modulos');
+    Route::get('/admin/modulos', [AdminModuloController::class, 'index'])->name('admin.modulos');
 
     Route::get('/admin/perfil', [AdminProfileController::class, 'edit'])->name('admin.perfil');
     Route::patch('/admin/perfil', [AdminProfileController::class, 'updateInfo'])->name('admin.perfil.update');
@@ -54,7 +56,16 @@ Route::middleware(['auth', 'rol:admin'])->group(function () {
 // "rol:cliente" evita que una cuenta admin (sin empresa_id) pueda entrar
 // aquí -el Global Scope por sí solo no alcanza a cubrir ese caso, ver
 // App\Models\Scopes\EmpresaScope.
+//
+// La ruta de Suscripción va SIN el middleware "suscripcion" -si no, una
+// empresa bloqueada nunca podría llegar a la única página donde puede
+// reportar un pago para desbloquearse (ver EnsureSuscripcionActiva).
 Route::middleware(['auth', 'rol:cliente'])->group(function () {
+    Route::get('/cliente/suscripcion', [SuscripcionController::class, 'index'])->name('cliente.suscripcion');
+    Route::post('/cliente/suscripcion', [SuscripcionController::class, 'store'])->name('cliente.suscripcion.store');
+});
+
+Route::middleware(['auth', 'rol:cliente', 'suscripcion'])->group(function () {
     Route::get('/cliente/dashboard', [DashboardController::class, 'index'])->name('cliente.dashboard');
 
     Route::get('/cliente/ventas', [VentasController::class, 'index'])->name('cliente.ventas');

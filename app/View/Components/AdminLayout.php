@@ -9,10 +9,6 @@ class AdminLayout extends Component
 {
     public function __construct(
         public string $title = 'Dashboard',
-        // Mock por ahora: 3 pagos pendientes, igual en todas las vistas.
-        // Es el valor por defecto acá -así ninguna vista tiene que
-        // repetirlo (ni puede olvidarlo, como pasó con "Mi perfil").
-        public int $pendingPayments = 3,
     ) {
     }
 

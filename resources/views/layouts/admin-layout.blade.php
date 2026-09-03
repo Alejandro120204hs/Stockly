@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title }} — Stockly Admin</title>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -57,9 +58,6 @@
                         <path d="M8.5 9h7M8.5 12.5h7M8.5 16h4"/>
                     </svg>
                     <span class="admin-nav-item__label">Pagos y suscripciones</span>
-                    @if ($pendingPayments > 0)
-                        <span class="admin-nav-item__badge">{{ $pendingPayments }}</span>
-                    @endif
                 </a>
 
                 <a href="{{ url('/admin/modulos') }}" class="admin-nav-item {{ request()->is('admin/modulos') ? 'is-active' : '' }}">
@@ -118,16 +116,6 @@
                 <h1 class="admin-topbar__title">{{ $title }}</h1>
 
                 <div class="admin-topbar__actions">
-                    <button type="button" class="admin-icon-button" aria-label="Notificaciones">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M6 8a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 12 6 8Z"/>
-                            <path d="M9.5 17a2.5 2.5 0 0 0 5 0"/>
-                        </svg>
-                        @if ($pendingPayments > 0)
-                            <span class="admin-icon-button__dot"></span>
-                        @endif
-                    </button>
-
                     <a href="{{ url('/admin/perfil') }}" class="admin-topbar__avatar" aria-label="Mi perfil">AH</a>
                 </div>
             </header>
