@@ -11,17 +11,20 @@
          style="display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap;">
         <div>
             <p class="cliente-page-header__eyebrow">Tu negocio</p>
-            <h1 class="cliente-page-header__title">Nómina</h1>
+            <h1 class="cliente-page-header__title">Empleados y pagos</h1>
             <p class="cliente-page-header__date">
                 {{ $stats['empleadosActivos'] }} {{ $stats['empleadosActivos'] === 1 ? 'empleado activo' : 'empleados activos' }}
-                · {{ $stats['documentosCount'] }} {{ $stats['documentosCount'] === 1 ? 'documento emitido' : 'documentos emitidos' }}
+                · {{ $stats['documentosCount'] }}
+                {{ $tieneFacturacion
+                    ? ($stats['documentosCount'] === 1 ? 'documento emitido' : 'documentos emitidos')
+                    : ($stats['documentosCount'] === 1 ? 'pago registrado' : 'pagos registrados') }}
             </p>
         </div>
     </div>
 
     <div class="facturacion-main-tabs cliente-reveal cliente-reveal-1" role="tablist" aria-label="Sección de nómina">
         <button type="button" class="facturacion-main-tab is-active" id="tabBtnEmpleados" role="tab" aria-selected="true">Empleados</button>
-        <button type="button" class="facturacion-main-tab" id="tabBtnDocumentos" role="tab" aria-selected="false">Nómina electrónica</button>
+        <button type="button" class="facturacion-main-tab" id="tabBtnDocumentos" role="tab" aria-selected="false">{{ $tieneFacturacion ? 'Nómina electrónica' : 'Pagar nómina' }}</button>
     </div>
 
     {{-- ================================================================
@@ -44,7 +47,7 @@
                 </p>
             </div>
             <div class="stat-card">
-                <p class="stat-card__label">Documentos emitidos</p>
+                <p class="stat-card__label">{{ $tieneFacturacion ? 'Documentos emitidos' : 'Pagos registrados' }}</p>
                 <p class="stat-card__value" data-count="{{ $stats['documentosCount'] }}">{{ $stats['documentosCount'] }}</p>
             </div>
         </div>
@@ -108,7 +111,7 @@
                 </p>
             </div>
             <div class="stat-card">
-                <p class="stat-card__label">Documentos emitidos</p>
+                <p class="stat-card__label">{{ $tieneFacturacion ? 'Documentos emitidos' : 'Pagos registrados' }}</p>
                 <p class="stat-card__value" data-count="{{ $stats['documentosCount'] }}">{{ $stats['documentosCount'] }}</p>
             </div>
             <div class="stat-card">
@@ -118,11 +121,17 @@
         </div>
 
         <div class="panel">
+            <div class="cliente-toolbar">
+                <select id="nominaDocMesFilter" class="cliente-toolbar__select">
+                    <option value="">Todos los meses</option>
+                </select>
+            </div>
+
             <div class="data-table-wrap">
                 <table class="data-table" id="nominaDocumentosTable">
                     <thead>
                         <tr>
-                            <th>Documento</th>
+                            <th>{{ $tieneFacturacion ? 'Documento' : 'Comprobante' }}</th>
                             <th>Empleado</th>
                             <th>Período</th>
                             <th>Monto pagado</th>
@@ -132,12 +141,14 @@
                     </thead>
                     <tbody>
                         @foreach ($documentos as $doc)
-                            <tr class="data-table__row" data-doc-nomina-id="{{ $doc['id'] }}" tabindex="0">
+                            <tr class="data-table__row" data-doc-nomina-id="{{ $doc['id'] }}" data-mes-key="{{ $doc['mesKey'] }}" tabindex="0">
                                 <td>
                                     <div class="data-table__title">{{ $doc['numero'] }}</div>
-                                    <div class="data-table__meta cufe-snippet" title="{{ $doc['cune'] }}">
-                                        {{ substr($doc['cune'], 0, 18) }}&hellip;
-                                    </div>
+                                    @if ($tieneFacturacion)
+                                        <div class="data-table__meta cufe-snippet" title="{{ $doc['cune'] }}">
+                                            {{ substr($doc['cune'], 0, 18) }}&hellip;
+                                        </div>
+                                    @endif
                                 </td>
                                 <td>
                                     <div class="data-table__title">{{ $doc['empleado']['nombre'] }}</div>
@@ -156,8 +167,14 @@
                     </tbody>
                 </table>
                 <p class="data-table__empty" id="nominaDocumentosEmpty" @unless ($documentos->isEmpty()) hidden @endunless>
-                    Todavía no hay documentos de nómina emitidos.
+                    {{ $tieneFacturacion ? 'Todavía no hay documentos de nómina emitidos.' : 'Todavía no has registrado ningún pago de nómina.' }}
                 </p>
+            </div>
+
+            <div class="data-table__pagination" id="nominaDocPagination">
+                <button type="button" class="cliente-btn-ghost" id="nominaDocPrevPage">← Anterior</button>
+                <span class="data-table__pagination-info" id="nominaDocPageInfo">Página 1 de 1</span>
+                <button type="button" class="cliente-btn-ghost" id="nominaDocNextPage">Siguiente →</button>
             </div>
         </div>
     </div>
@@ -232,17 +249,20 @@
                 <h3 class="slide-over__section-title">Pago</h3>
                 <div class="slide-over__field"><span>Período</span><strong id="docNominaSlideOverPeriodo">—</strong></div>
                 <div class="slide-over__field"><span>Fecha de pago</span><strong id="docNominaSlideOverFechaPago">—</strong></div>
+                <div class="slide-over__field"><span>Método de pago</span><strong id="docNominaSlideOverMetodo">—</strong></div>
                 <div class="slide-over__field" style="margin-top:12px; padding-top:12px; border-top:1px solid var(--color-border-06);">
                     <span>Monto pagado</span>
                     <strong id="docNominaSlideOverMonto">—</strong>
                 </div>
             </section>
 
-            <section class="slide-over__section">
-                <h3 class="slide-over__section-title">Verificación DIAN</h3>
-                <p class="slide-over__label" style="font-size:11px; color:var(--color-mist); margin-bottom:6px;">CUNE</p>
-                <div class="cufe-block" id="docNominaSlideOverCune"></div>
-            </section>
+            @if ($tieneFacturacion)
+                <section class="slide-over__section">
+                    <h3 class="slide-over__section-title">Verificación DIAN</h3>
+                    <p class="slide-over__label" style="font-size:11px; color:var(--color-mist); margin-bottom:6px;">CUNE</p>
+                    <div class="cufe-block" id="docNominaSlideOverCune"></div>
+                </section>
+            @endif
 
             <section class="slide-over__section">
                 <a href="#" class="cliente-btn-primary" id="docNominaDescargarBtn" target="_blank"
@@ -254,7 +274,7 @@
             <section class="slide-over__section" id="docNominaAnularSection">
                 <button type="button" class="cliente-btn-ghost cliente-btn-ghost--peligro" id="docNominaAnularBtn"
                         style="width:100%;">
-                    Anular documento
+                    Cancelar Pago
                 </button>
             </section>
         </div>
@@ -390,11 +410,24 @@
                 <span>Total a pagar</span>
                 <strong id="pagoTotalSeleccionado">$0</strong>
             </div>
+
+            <label class="cliente-label" style="margin-top:14px;">Método de pago</label>
+            <div class="venta-payment-toggle">
+                <button type="button" class="venta-payment-btn is-active" id="pagoNominaBtnEfectivo">Efectivo</button>
+                <button type="button" class="venta-payment-btn" id="pagoNominaBtnDigital">Digital</button>
+            </div>
+
+            <label class="cliente-label">¿Salió de la caja de hoy o de lo que el negocio ya tenía guardado?</label>
+            <div class="venta-payment-toggle">
+                <button type="button" class="venta-payment-btn is-active" id="pagoNominaBtnOrigenHoy">De caja</button>
+                <button type="button" class="venta-payment-btn" id="pagoNominaBtnOrigenExterno">Fuera de caja</button>
+            </div>
+            <p class="compra-metodo-hint" id="pagoNominaMetodoHint">Sacaste la plata física de la caja del negocio -se descuenta del cierre de caja de hoy.</p>
         </div>
 
         <div class="modal__footer">
             <button type="button" class="cliente-btn-ghost" id="pagarNominaCancelar">Cancelar</button>
-            <button type="button" class="cliente-btn-primary" id="pagarNominaEmitir" disabled>Emitir a la DIAN</button>
+            <button type="button" class="cliente-btn-primary" id="pagarNominaEmitir" disabled>{{ $tieneFacturacion ? 'Emitir a la DIAN' : 'Registrar pago' }}</button>
         </div>
     </div>
 
@@ -402,6 +435,7 @@
         <link rel="stylesheet" href="{{ asset_v('assets/css/cliente/facturacion.css') }}">
         <link rel="stylesheet" href="{{ asset_v('assets/css/cliente/proveedores.css') }}">
         <link rel="stylesheet" href="{{ asset_v('assets/css/cliente/nomina.css') }}">
+        <link rel="stylesheet" href="{{ asset_v('assets/css/cliente/nueva-venta-modal.css') }}">
     @endpush
 
     @push('scripts')

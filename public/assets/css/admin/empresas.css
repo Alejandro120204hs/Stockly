@@ -2,11 +2,51 @@
    Stockly — Panel de Super Admin: vista Empresas
    Lo compartido (tabla, pills, panel lateral, buscador/filtros de tabla)
    vive en admin/layout.css -el buscador (.empresas-toolbar*) lo usan
-   también Pagos, así que se promovió allá. Acá solo el switch de
-   módulos que se usa dentro del panel lateral de cada empresa.
+   también Pagos, así que se promovió allá. Acá solo el formulario de
+   "activar suscripción" del panel lateral.
    ========================================================================== */
 
-/* ---------- Switch de módulos (dentro del panel lateral) ---------- */
+.slide-over__hint {
+    margin: 14px 0 0;
+    font-size: 0.84rem;
+    color: var(--color-mist);
+}
+
+.admin-form-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-slate);
+}
+
+.admin-form-input,
+.admin-form-select {
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(30, 45, 61, 0.14);
+    background-color: var(--color-background);
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--color-slate);
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.admin-form-input:focus,
+.admin-form-select:focus {
+    outline: none;
+    border-color: var(--color-sage);
+    background-color: var(--color-surface);
+}
+
+.admin-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+/* ---------- Switch de módulos (Facturación electrónica / Nómina) ---------- */
 .module-toggle-row {
     display: flex;
     align-items: center;

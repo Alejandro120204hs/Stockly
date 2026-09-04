@@ -159,13 +159,13 @@ class ReportesController extends Controller
             ->filter(fn ($g) => $g->fechaTurno() >= $desdeStr && $g->fechaTurno() <= $hastaStr)
             ->values();
 
-        // Los pagos de Nómina viven en su propia tabla (no son un Gasto) y
-        // no están ligados a ninguna caja -son plata que sale igual, así
-        // que Reportes sí los resta de la ganancia neta (el Dashboard no,
-        // porque "hoy" ahí es específicamente lo que pasó por la caja).
-        $nominaPagada = (float) NominaDocumento::whereBetween('fecha_pago', [$desdeStr, $hastaStr])
+        // Los pagos de Nómina viven en su propia tabla (no son un Gasto),
+        // así que Reportes sí los resta de la ganancia neta (el Dashboard
+        // no, porque "hoy" ahí es específicamente lo que pasó por la caja).
+        $nomina = NominaDocumento::whereBetween('fecha_pago', [$desdeStr, $hastaStr])
             ->whereNull('anulada_en')
-            ->sum('monto_pagado');
+            ->get();
+        $nominaPagada = (float) $nomina->sum('monto_pagado');
 
         // Ganancia bruta: usa los precios HISTÓRICOS congelados en venta_detalle
         // (no el precio_costo actual del producto — puede haber cambiado).
@@ -178,6 +178,23 @@ class ReportesController extends Controller
 
         $pagoEfectivo = (float) $ventas->where('metodo_pago', 'efectivo')->sum('total');
         $pagoDigital  = (float) $ventas->where('metodo_pago', 'digital')->sum('total');
+
+        // "Cuánto tengo en cada lado": ganancia neta separada entre lo que
+        // se movió en efectivo y lo que se movió en digital -junta y
+        // resta lo _externo con lo de hoy (el punto acá es si la plata es
+        // física o digital, no si pasó por la caja de hoy; ESE detalle ya
+        // vive aparte en Caja::calcularTotales()).
+        $gananciaBrutaEfectivo = (float) $ventas->where('metodo_pago', 'efectivo')->sum(fn ($v) => $v->gananciaBruta());
+        $gananciaBrutaDigital  = (float) $ventas->where('metodo_pago', 'digital')->sum(fn ($v) => $v->gananciaBruta());
+
+        $gastosEfectivo = (float) $gastos->whereIn('metodo_pago', ['efectivo', 'efectivo_externo'])->sum('monto');
+        $gastosDigital  = (float) $gastos->whereIn('metodo_pago', ['digital', 'digital_externo'])->sum('monto');
+
+        $nominaEfectivo = (float) $nomina->whereIn('metodo_pago', ['efectivo', 'efectivo_externo'])->sum('monto_pagado');
+        $nominaDigital  = (float) $nomina->whereIn('metodo_pago', ['digital', 'digital_externo'])->sum('monto_pagado');
+
+        $gananciaNetaEfectivo = $gananciaBrutaEfectivo - $gastosEfectivo - $nominaEfectivo;
+        $gananciaNetaDigital  = $gananciaBrutaDigital - $gastosDigital - $nominaDigital;
 
         $topProductos = $ventas->flatMap(fn ($v) => $v->detalles)
             ->groupBy('producto_id')
@@ -204,6 +221,8 @@ class ReportesController extends Controller
             'gananciaBruta'    => $gananciaBruta,
             'gastos'           => $totalGastos,
             'gananciaNeta'     => $gananciaNeta,
+            'gananciaNetaEfectivo' => $gananciaNetaEfectivo,
+            'gananciaNetaDigital'  => $gananciaNetaDigital,
             'cantidadVentas'   => $ventas->count(),
             'pagoEfectivo'     => $pagoEfectivo,
             'pagoDigital'      => $pagoDigital,

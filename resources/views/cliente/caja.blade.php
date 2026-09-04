@@ -130,6 +130,10 @@
                     <span>− Compras pagadas en efectivo</span>
                     <strong id="reciboCompras">{{ isset($cajaAbierta) ? '$'.number_format($cajaAbierta['comprasEfectivo'], 0, ',', '.') : '$0' }}</strong>
                 </div>
+                <div class="caja-recibo__row caja-recibo__row--resta">
+                    <span>− Nómina pagada en efectivo</span>
+                    <strong id="reciboNomina">{{ isset($cajaAbierta) ? '$'.number_format($cajaAbierta['nominaEfectivo'], 0, ',', '.') : '$0' }}</strong>
+                </div>
                 <div class="caja-recibo__divider"></div>
                 <div class="caja-recibo__row caja-recibo__row--total">
                     <span>= Total esperado en caja</span>
@@ -147,6 +151,10 @@
                 <div class="caja-recibo__row caja-recibo__row--resta">
                     <span>− Compras pagadas en digital</span>
                     <strong id="reciboComprasDigital">{{ isset($cajaAbierta) ? '$'.number_format($cajaAbierta['comprasDigital'], 0, ',', '.') : '$0' }}</strong>
+                </div>
+                <div class="caja-recibo__row caja-recibo__row--resta">
+                    <span>− Nómina pagada en digital</span>
+                    <strong id="reciboNominaDigital">{{ isset($cajaAbierta) ? '$'.number_format($cajaAbierta['nominaDigital'], 0, ',', '.') : '$0' }}</strong>
                 </div>
                 <div class="caja-recibo__row caja-recibo__row--total">
                     <span>= Total esperado en digital</span>
@@ -272,9 +280,11 @@
                 <div class="slide-over__field"><span>Ventas en efectivo</span><strong id="cierreSlideOverVentasEfectivo">—</strong></div>
                 <div class="slide-over__field"><span>Gastos en efectivo</span><strong id="cierreSlideOverGastos">—</strong></div>
                 <div class="slide-over__field"><span>Compras en efectivo</span><strong id="cierreSlideOverCompras">—</strong></div>
+                <div class="slide-over__field"><span>Nómina en efectivo</span><strong id="cierreSlideOverNomina">—</strong></div>
                 <div class="slide-over__field"><span>Ventas digitales</span><strong id="cierreSlideOverVentasDigital">—</strong></div>
                 <div class="slide-over__field"><span>Gastos digitales</span><strong id="cierreSlideOverGastosDigital">—</strong></div>
                 <div class="slide-over__field"><span>Compras pagadas en digital</span><strong id="cierreSlideOverComprasDigital">—</strong></div>
+                <div class="slide-over__field"><span>Nómina pagada en digital</span><strong id="cierreSlideOverNominaDigital">—</strong></div>
             </section>
 
             <section class="slide-over__section">

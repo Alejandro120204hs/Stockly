@@ -127,7 +127,13 @@ class CajaCrudTest extends TestCase
         $response->assertStatus(422);
     }
 
-    public function test_se_puede_registrar_venta_digital_sin_caja_abierta(): void
+    /**
+     * Mismo criterio que Compras/Gastos: una venta digital SÍ descuenta del
+     * cierre de la caja actual (ver CajaController::calcularTotales()), así
+     * que también necesita una abierta -si no, quedaría con caja_id null y
+     * ese dinero nunca aparecería en ningún cierre.
+     */
+    public function test_no_se_puede_registrar_venta_digital_sin_caja_abierta(): void
     {
         $this->crearUsuarioCliente();
         $this->postJson('/cliente/caja/abrir', ['base_inicial' => 0])->assertOk();
@@ -140,9 +146,8 @@ class CajaCrudTest extends TestCase
             'lineas' => [['producto_id' => $producto->id, 'cantidad' => 1]],
         ]);
 
-        $response->assertOk();
-        $this->assertSame(1, Venta::count());
-        $this->assertNull(Venta::firstOrFail()->caja_id);
+        $response->assertStatus(422);
+        $this->assertSame(0, Venta::count());
     }
 
     public function test_cerrar_caja_calcula_esperado_y_diferencia_exacta_sobrante_y_faltante(): void
@@ -276,6 +281,113 @@ class CajaCrudTest extends TestCase
         $response->assertJsonPath('cierre.totalEsperadoDigital', 3000);
         $response->assertJsonPath('cierre.totalEsperado', -50000);
         $response->assertJsonPath('cierre.totalGeneral', -47000);
+    }
+
+    /** Mismo criterio que Compras/Gastos: "efectivo"/"digital" (plata de HOY) exigen caja abierta -las variantes "_externo" no. */
+    public function test_no_se_puede_pagar_nomina_en_efectivo_sin_caja_abierta(): void
+    {
+        $this->crearUsuarioCliente();
+        $empleado = \App\Models\Cliente\Empleado::create([
+            'nombres' => 'Juan', 'apellidos' => 'Pérez', 'tipo_documento' => 'CC', 'numero_documento' => '123',
+        ]);
+
+        $response = $this->postJson('/cliente/nomina/documentos', [
+            'periodo' => 'Septiembre 2026',
+            'fecha_pago' => now()->toDateString(),
+            'metodo_pago' => 'efectivo',
+            'pagos' => [['empleado_id' => $empleado->id, 'monto_pagado' => 30000]],
+        ]);
+
+        $response->assertStatus(422);
+        $this->assertSame(0, \App\Models\Cliente\NominaDocumento::count());
+    }
+
+    public function test_nomina_en_efectivo_descuenta_del_total_esperado_de_la_caja(): void
+    {
+        $this->crearUsuarioCliente();
+        $this->postJson('/cliente/caja/abrir', ['base_inicial' => 100000])->assertOk();
+        $caja = Caja::firstOrFail();
+        $empleado = \App\Models\Cliente\Empleado::create([
+            'nombres' => 'Juan', 'apellidos' => 'Pérez', 'tipo_documento' => 'CC', 'numero_documento' => '123',
+        ]);
+
+        $this->postJson('/cliente/nomina/documentos', [
+            'periodo' => 'Septiembre 2026',
+            'fecha_pago' => now()->toDateString(),
+            'metodo_pago' => 'efectivo',
+            'pagos' => [['empleado_id' => $empleado->id, 'monto_pagado' => 30000]],
+        ])->assertOk();
+
+        $this->assertSame($caja->id, \App\Models\Cliente\NominaDocumento::firstOrFail()->caja_id);
+
+        $response = $this->postJson("/cliente/caja/{$caja->id}/cerrar", ['conteo_fisico' => 70000, 'conteo_digital' => 0]);
+
+        $response->assertOk();
+        $response->assertJsonPath('cierre.nominaEfectivo', 30000);
+        $response->assertJsonPath('cierre.totalEsperado', 70000);
+        $response->assertJsonPath('cierre.diferencia', 0);
+    }
+
+    public function test_nomina_con_efectivo_externo_no_descuenta_de_la_caja(): void
+    {
+        $this->crearUsuarioCliente();
+        $this->postJson('/cliente/caja/abrir', ['base_inicial' => 100000])->assertOk();
+        $caja = Caja::firstOrFail();
+        $empleado = \App\Models\Cliente\Empleado::create([
+            'nombres' => 'Juan', 'apellidos' => 'Pérez', 'tipo_documento' => 'CC', 'numero_documento' => '123',
+        ]);
+
+        // Pagado con plata que nunca estuvo en la caja -no debe restar del
+        // total esperado, y ni siquiera necesita caja abierta para pasar.
+        $this->postJson('/cliente/nomina/documentos', [
+            'periodo' => 'Septiembre 2026',
+            'fecha_pago' => now()->toDateString(),
+            'metodo_pago' => 'efectivo_externo',
+            'pagos' => [['empleado_id' => $empleado->id, 'monto_pagado' => 30000]],
+        ])->assertOk();
+
+        $this->assertNull(\App\Models\Cliente\NominaDocumento::firstOrFail()->caja_id);
+
+        $response = $this->postJson("/cliente/caja/{$caja->id}/cerrar", ['conteo_fisico' => 100000, 'conteo_digital' => 0]);
+
+        $response->assertOk();
+        $response->assertJsonPath('cierre.nominaEfectivo', 0);
+        $response->assertJsonPath('cierre.totalEsperado', 100000);
+        $response->assertJsonPath('cierre.diferencia', 0);
+    }
+
+    public function test_nomina_en_digital_descuenta_del_total_esperado_digital(): void
+    {
+        $this->crearUsuarioCliente();
+        $this->postJson('/cliente/caja/abrir', ['base_inicial' => 0])->assertOk();
+        $caja = Caja::firstOrFail();
+        $producto = $this->crearProductoConStockEnVitrina(10, precioCosto: 5000, precioVenta: 8000);
+        $empleado = \App\Models\Cliente\Empleado::create([
+            'nombres' => 'Juan', 'apellidos' => 'Pérez', 'tipo_documento' => 'CC', 'numero_documento' => '123',
+        ]);
+
+        // Vender 1 en digital confirmada (+8.000 al ledger digital).
+        $this->postJson('/cliente/ventas', [
+            'metodo_pago' => 'digital',
+            'pago_confirmado' => true,
+            'lineas' => [['producto_id' => $producto->id, 'cantidad' => 1]],
+        ])->assertOk();
+
+        // Pagarle al empleado con esa misma plata digital de hoy (-3.000).
+        $this->postJson('/cliente/nomina/documentos', [
+            'periodo' => 'Septiembre 2026',
+            'fecha_pago' => now()->toDateString(),
+            'metodo_pago' => 'digital',
+            'pagos' => [['empleado_id' => $empleado->id, 'monto_pagado' => 3000]],
+        ])->assertOk();
+
+        $response = $this->postJson("/cliente/caja/{$caja->id}/cerrar", ['conteo_fisico' => 0, 'conteo_digital' => 5000]);
+
+        $response->assertOk();
+        $response->assertJsonPath('cierre.ventasDigital', 8000);
+        $response->assertJsonPath('cierre.nominaDigital', 3000);
+        $response->assertJsonPath('cierre.totalEsperadoDigital', 5000);
+        $response->assertJsonPath('cierre.diferenciaDigital', 0);
     }
 
     public function test_cerrar_caja_calcula_la_diferencia_digital_por_separado_de_la_de_efectivo(): void

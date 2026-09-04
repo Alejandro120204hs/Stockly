@@ -1,7 +1,7 @@
 /**
  * Stockly — Panel de Super Admin: vista Módulos (vanilla JS)
- * Depende de admin/layout.js (formatNumber, e initModuleBars ya anima las
- * barras internas de cada tarjeta con solo que existan en el DOM).
+ * Depende de admin/layout.js (initModuleBars ya anima las barras internas
+ * de cada tarjeta con solo que existan en el DOM).
  */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -26,20 +26,20 @@ function initModulosPanel() {
     var slideOver = document.getElementById('moduloSlideOver');
     var closeBtn = document.getElementById('moduloSlideOverClose');
 
-    function renderLista(container, empresas, inactiva) {
+    function renderLista(container, empresas) {
         container.innerHTML = '';
 
         if (empresas.length === 0) {
             var empty = document.createElement('p');
             empty.className = 'modulo-empresa-list__empty';
-            empty.textContent = inactiva ? 'Todas las empresas lo tienen activo.' : 'Ninguna empresa lo tiene activo todavía.';
+            empty.textContent = 'Ninguna empresa está en este grupo todavía.';
             container.appendChild(empty);
             return;
         }
 
         empresas.forEach(function (empresa) {
             var row = document.createElement('div');
-            row.className = 'modulo-empresa-row' + (inactiva ? ' modulo-empresa-row--inactiva' : '');
+            row.className = 'modulo-empresa-row';
             row.textContent = empresa.nombre;
             container.appendChild(row);
         });
@@ -52,15 +52,11 @@ function initModulosPanel() {
         }
 
         document.getElementById('moduloSlideOverNombre').textContent = modulo.nombre;
-        document.getElementById('moduloSlideOverPrecio').innerHTML = '$' + formatNumber(modulo.precio, 0) + '<small>/mes</small>';
-        document.getElementById('moduloSlideOverActivas').textContent = modulo.activas + '/' + modulo.total + ' · ' + modulo.pct + '%';
-        document.getElementById('moduloSlideOverIngreso').textContent = '$' + formatNumber(modulo.ingreso, 0);
+        document.getElementById('moduloSlideOverResumen').textContent = modulo.activas + '/' + modulo.total + ' empresas · ' + modulo.pct + '%';
 
         var activas = modulo.empresas.filter(function (e) { return e.activo; });
-        var inactivas = modulo.empresas.filter(function (e) { return !e.activo; });
 
-        renderLista(document.getElementById('moduloSlideOverActivasList'), activas, false);
-        renderLista(document.getElementById('moduloSlideOverInactivasList'), inactivas, true);
+        renderLista(document.getElementById('moduloSlideOverActivasList'), activas);
 
         slideOver.classList.add('is-open');
         slideOver.setAttribute('aria-hidden', 'false');

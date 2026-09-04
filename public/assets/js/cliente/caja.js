@@ -413,9 +413,11 @@ function initCierreSlideOver() {
         document.getElementById('cierreSlideOverVentasEfectivo').textContent = formatCOP(cierre.ventasEfectivo);
         document.getElementById('cierreSlideOverGastos').textContent = formatCOP(cierre.gastosEfectivo);
         document.getElementById('cierreSlideOverCompras').textContent = formatCOP(cierre.comprasEfectivo);
+        document.getElementById('cierreSlideOverNomina').textContent = formatCOP(cierre.nominaEfectivo);
         document.getElementById('cierreSlideOverVentasDigital').textContent = formatCOP(cierre.ventasDigital);
         document.getElementById('cierreSlideOverGastosDigital').textContent = formatCOP(cierre.gastosDigital);
         document.getElementById('cierreSlideOverComprasDigital').textContent = formatCOP(cierre.comprasDigital);
+        document.getElementById('cierreSlideOverNominaDigital').textContent = formatCOP(cierre.nominaDigital);
         document.getElementById('cierreSlideOverEsperado').textContent = formatCOP(cierre.totalEsperado);
         document.getElementById('cierreSlideOverEsperadoDigital').textContent = formatCOP(cierre.totalEsperadoDigital);
         document.getElementById('cierreSlideOverGeneral').textContent = formatCOP(cierre.totalGeneral);
@@ -485,10 +487,12 @@ function initCajaFlow() {
         document.getElementById('reciboVentasEfectivo').textContent = formatCOP(caja.ventasEfectivo);
         document.getElementById('reciboGastos').textContent = formatCOP(caja.gastosEfectivo);
         document.getElementById('reciboCompras').textContent = formatCOP(caja.comprasEfectivo);
+        document.getElementById('reciboNomina').textContent = formatCOP(caja.nominaEfectivo);
         document.getElementById('reciboTotalEsperado').textContent = formatCOP(caja.totalEsperado);
         document.getElementById('reciboVentasDigital').textContent = formatCOP(caja.ventasDigital);
         document.getElementById('reciboGastosDigital').textContent = formatCOP(caja.gastosDigital);
         document.getElementById('reciboComprasDigital').textContent = formatCOP(caja.comprasDigital);
+        document.getElementById('reciboNominaDigital').textContent = formatCOP(caja.nominaDigital);
         document.getElementById('reciboTotalEsperadoDigital').textContent = formatCOP(caja.totalEsperadoDigital);
         document.getElementById('reciboTotalGeneral').textContent = formatCOP(caja.totalGeneral);
         document.getElementById('cajaHoraApertura').textContent = caja.horaApertura;

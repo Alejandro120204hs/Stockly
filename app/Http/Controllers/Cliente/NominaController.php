@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Cliente;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cliente\Caja;
 use App\Models\Cliente\Empleado;
 use App\Models\Cliente\NominaDocumento;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -47,6 +48,10 @@ class NominaController extends Controller
             'empleados'  => $empleados,
             'documentos' => $documentos,
             'stats'      => $stats,
+            // Sin Factus, este mismo módulo se muestra como "Pagar nómina"
+            // -un pago normal con PDF, sin ningún rastro de CUNE/DIAN (ver
+            // nomina.blade.php y nomina-pdf.blade.php).
+            'tieneFacturacion' => auth()->user()->empresa->tiene_facturacion,
         ]);
     }
 
@@ -90,6 +95,7 @@ class NominaController extends Controller
         $validated = $request->validate([
             'periodo'                 => ['required', 'string', 'max:100'],
             'fecha_pago'               => ['required', 'date'],
+            'metodo_pago'              => ['required', 'in:efectivo,efectivo_externo,digital,digital_externo'],
             'pagos'                    => ['required', 'array', 'min:1'],
             'pagos.*.empleado_id'      => ['required', 'integer', 'exists:empleados,id'],
             'pagos.*.monto_pagado'     => ['required', 'numeric', 'min:0'],
@@ -113,16 +119,29 @@ class NominaController extends Controller
             return response()->json(['message' => 'Uno o más empleados seleccionados no son válidos.'], 422);
         }
 
-        $documentos = DB::transaction(function () use ($pagos, $empresaId, $validated) {
-            return $pagos->map(function ($pago) use ($empresaId, $validated) {
+        // Mismo criterio que Compras/Gastos: "efectivo"/"digital" (plata de
+        // HOY) descuentan del cierre de la caja actual y necesitan una
+        // abierta; las variantes "_externo" son plata que nunca fue parte
+        // de esta caja -pueden registrarse sin caja abierta.
+        $requiereCaja = in_array($validated['metodo_pago'], ['efectivo', 'digital'], true);
+        $cajaAbierta = $requiereCaja ? Caja::whereNull('cierre_en')->first() : null;
+
+        if ($requiereCaja && ! $cajaAbierta) {
+            return response()->json(['message' => 'Debes abrir la caja antes de pagar nómina con plata de hoy.'], 422);
+        }
+
+        $documentos = DB::transaction(function () use ($pagos, $empresaId, $validated, $cajaAbierta) {
+            return $pagos->map(function ($pago) use ($empresaId, $validated, $cajaAbierta) {
                 return NominaDocumento::create([
                     'empresa_id'    => $empresaId,
                     'empleado_id'   => $pago['empleado_id'],
+                    'caja_id'       => $cajaAbierta?->id,
                     'numero'        => NominaDocumento::generarNumero($empresaId),
                     // CUNE simulado: en producción vendría de la API DIAN/Factus.
                     'cune'          => hash('sha384', uniqid('cune_', true)),
                     'periodo'       => $validated['periodo'],
                     'monto_pagado'  => $pago['monto_pagado'],
+                    'metodo_pago'   => $validated['metodo_pago'],
                     'fecha_pago'    => $validated['fecha_pago'],
                     'fecha_emision' => now(),
                 ]);

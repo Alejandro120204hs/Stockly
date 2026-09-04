@@ -52,16 +52,10 @@
 .modulo-card__icon--box { background-color: var(--color-sage-soft); color: var(--color-sage-dark); }
 .modulo-card__icon--card { background-color: var(--color-sand-soft); color: #8A6F3F; }
 
-.modulo-card__price {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--color-slate);
-}
-
-.modulo-card__price small {
-    font-weight: 500;
+.slide-over__subtitle {
+    display: inline-block;
+    font-size: 0.85rem;
     color: var(--color-mist);
-    font-size: 0.78rem;
 }
 
 .modulo-card__name {
@@ -94,19 +88,6 @@
     color: var(--color-slate);
 }
 
-.modulo-card__stat-row--revenue {
-    margin-top: 16px;
-    margin-bottom: 0;
-    padding-top: 14px;
-    border-top: 1px dashed rgba(30, 45, 61, 0.1);
-}
-
-.modulo-card__stat-row--revenue strong {
-    font-family: var(--font-display);
-    font-size: 1.05rem;
-    color: var(--color-sage-dark);
-}
-
 .modulo-empresa-list {
     display: flex;
     flex-direction: column;
@@ -135,32 +116,10 @@
     background-color: var(--color-sage);
 }
 
-.modulo-empresa-row--inactiva::before {
-    background-color: var(--color-mist);
-}
-
-.modulo-empresa-row--inactiva {
-    color: var(--color-mist);
-}
-
 .modulo-empresa-list__empty {
     font-size: 0.84rem;
     color: var(--color-mist);
     padding: 6px 4px;
-}
-
-.modulo-upsell-tag {
-    display: inline-block;
-    margin-left: 8px;
-    padding: 2px 8px;
-    border-radius: 999px;
-    background-color: var(--color-sand-soft);
-    color: #8A6F3F;
-    font-size: 0.66rem;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    text-transform: none;
-    vertical-align: middle;
 }
 
 @media (prefers-reduced-motion: reduce) {

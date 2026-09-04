@@ -114,6 +114,7 @@ class NominaTest extends TestCase
         $this->postJson('/cliente/nomina/documentos', [
             'periodo'    => 'Enero 2026',
             'fecha_pago' => now()->toDateString(),
+            'metodo_pago' => 'efectivo_externo',
             'pagos'      => [['empleado_id' => $empleado->id, 'monto_pagado' => 1300000]],
         ])->assertOk();
 
@@ -132,6 +133,7 @@ class NominaTest extends TestCase
         $response = $this->postJson('/cliente/nomina/documentos', [
             'periodo'    => 'Enero 2026',
             'fecha_pago' => now()->toDateString(),
+            'metodo_pago' => 'efectivo_externo',
             'pagos'      => [
                 ['empleado_id' => $empleado1->id, 'monto_pagado' => 1500000],
                 // Monto en 0 -no debe generar documento para este.
@@ -160,6 +162,7 @@ class NominaTest extends TestCase
         $this->postJson('/cliente/nomina/documentos', [
             'periodo'    => 'Enero 2026',
             'fecha_pago' => now()->toDateString(),
+            'metodo_pago' => 'efectivo_externo',
             'pagos'      => [
                 ['empleado_id' => $empleado1->id, 'monto_pagado' => 400000],
                 ['empleado_id' => $empleado2->id, 'monto_pagado' => 3000000],
@@ -178,6 +181,7 @@ class NominaTest extends TestCase
         $response = $this->postJson('/cliente/nomina/documentos', [
             'periodo'    => 'Enero 2026',
             'fecha_pago' => now()->toDateString(),
+            'metodo_pago' => 'efectivo_externo',
             'pagos'      => [['empleado_id' => $empleado->id, 'monto_pagado' => 0]],
         ]);
 
@@ -193,6 +197,7 @@ class NominaTest extends TestCase
         $response = $this->postJson('/cliente/nomina/documentos', [
             'periodo'    => 'Enero 2026',
             'fecha_pago' => now()->toDateString(),
+            'metodo_pago' => 'efectivo_externo',
             'pagos'      => [['empleado_id' => $empleadoAjeno->id, 'monto_pagado' => 500000]],
         ]);
 
@@ -206,6 +211,7 @@ class NominaTest extends TestCase
         $this->postJson('/cliente/nomina/documentos', [
             'periodo'    => 'Enero 2026',
             'fecha_pago' => now()->toDateString(),
+            'metodo_pago' => 'efectivo_externo',
             'pagos'      => [['empleado_id' => $empleado->id, 'monto_pagado' => 1300000]],
         ])->assertOk();
         $documento = NominaDocumento::firstOrFail();
@@ -215,6 +221,41 @@ class NominaTest extends TestCase
         $this->assertNotNull($documento->fresh()->anulada_en);
     }
 
+    /**
+     * El front usa estos campos para dos cosas: el filtro por mes del
+     * historial (mesKey/mesLabel) y el aviso de "ya le pagaste este mismo
+     * día" en el modal de pago (fechaPagoISO, comparable contra el
+     * <input type="date">).
+     */
+    public function test_el_index_expone_fecha_iso_y_mes_para_el_filtro_y_el_aviso_de_duplicado(): void
+    {
+        $this->travelTo('2026-03-10 09:00:00');
+        $this->crearUsuarioCliente();
+        $empleado = $this->crearEmpleado();
+        $this->postJson('/cliente/nomina/documentos', [
+            'periodo'    => 'Marzo 2026',
+            'fecha_pago' => '2026-03-10',
+            'metodo_pago' => 'efectivo_externo',
+            'pagos'      => [['empleado_id' => $empleado->id, 'monto_pagado' => 50000]],
+        ])->assertOk();
+
+        $html = $this->get('/cliente/nomina')->assertOk()->getContent();
+        preg_match('/id="nominaDocumentosData"[^>]*>(.*?)<\/script>/s', $html, $m);
+        $documentos = json_decode($m[1], true);
+
+        $this->assertSame('2026-03-10', $documentos[0]['fechaPagoISO']);
+        $this->assertSame('2026-03', $documentos[0]['mesKey']);
+        $this->assertSame('Marzo 2026', $documentos[0]['mesLabel']);
+        $this->assertSame('data-mes-key="2026-03"', $this->extraerAtributoFila($html, 'data-mes-key'));
+    }
+
+    private function extraerAtributoFila(string $html, string $atributo): ?string
+    {
+        preg_match('/'.$atributo.'="[^"]*"/', $html, $m);
+
+        return $m[0] ?? null;
+    }
+
     public function test_el_pdf_del_documento_de_nomina_se_descarga_para_uno_propio(): void
     {
         $this->crearUsuarioCliente();
@@ -222,6 +263,7 @@ class NominaTest extends TestCase
         $this->postJson('/cliente/nomina/documentos', [
             'periodo'    => 'Enero 2026',
             'fecha_pago' => now()->toDateString(),
+            'metodo_pago' => 'efectivo_externo',
             'pagos'      => [['empleado_id' => $empleado->id, 'monto_pagado' => 1300000]],
         ])->assertOk();
         $documento = NominaDocumento::firstOrFail();
@@ -239,6 +281,7 @@ class NominaTest extends TestCase
         $this->postJson('/cliente/nomina/documentos', [
             'periodo'    => 'Enero 2026',
             'fecha_pago' => now()->toDateString(),
+            'metodo_pago' => 'efectivo_externo',
             'pagos'      => [['empleado_id' => $empleado->id, 'monto_pagado' => 1300000]],
         ])->assertOk();
         $documento = NominaDocumento::firstOrFail();

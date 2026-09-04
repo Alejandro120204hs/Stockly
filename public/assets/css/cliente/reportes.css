@@ -143,6 +143,21 @@
 #statGananciaNeta.is-negativo { border-top: 3px solid var(--color-error); }
 #statGananciaNeta.is-negativo .stat-card__value { color: var(--color-error); }
 
+/* ——— Desglose efectivo/digital de la ganancia neta -"cuánto tengo en
+   cada lado", debajo de la leyenda de la tarjeta. ——— */
+.stat-card__split {
+    display: flex;
+    gap: 14px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--color-border-08);
+    font-size: 0.78rem;
+    color: var(--color-mist);
+}
+
+.stat-card__split strong {
+    color: var(--color-slate);
+    font-weight: 600;
 /* Ícono de Ganancia neta: color dinámico igual que la card */
 #statGananciaNeta.is-positivo .stat-card__icon {
     border-color: var(--color-sage);

@@ -1,18 +1,17 @@
 /**
  * Stockly — Panel de Super Admin: vista Dashboard (vanilla JS)
  * Depende de admin/layout.js (formatNumber) ya cargado antes que este.
+ * Datos reales (App\Http\Controllers\Admin\DashboardController) -acá solo
+ * se animan, no se calculan.
  *
  * Módulos:
- *   1. initCountUp        -> anima los números de las stat cards desde 0
- *   2. initBarChart        -> anima el crecimiento de las barras del gráfico
- *   3. initActivarButtons -> feedback visual del botón "Activar" (demo,
- *      no persiste nada todavía: no hay backend conectado)
+ *   1. initCountUp  -> anima los números de las stat cards desde 0
+ *   2. initBarChart -> anima el crecimiento de las barras del gráfico
  */
 
 document.addEventListener('DOMContentLoaded', function () {
     initCountUp();
     initBarChart();
-    initActivarButtons();
 });
 
 /* --------------------------------------------------------------------
@@ -80,40 +79,4 @@ function initBarChart() {
             }, index * 60); // escalonado, una barra tras otra
         });
     }, 150);
-}
-
-/* --------------------------------------------------------------------
- * 3. Botón "Activar" en la cola de pagos pendientes
- *
- * Nota: esto es solo feedback visual del lado del cliente. Todavía no
- * hay backend conectado, así que no activa nada de verdad ni persiste
- * al recargar la página -es una demostración de la interacción.
- * ------------------------------------------------------------------ */
-function initActivarButtons() {
-    var buttons = document.querySelectorAll('.activar-btn');
-
-    buttons.forEach(function (button) {
-        button.addEventListener('click', function () {
-            if (button.disabled) {
-                return;
-            }
-
-            var row = button.closest('.payment-row');
-            var label = button.querySelector('.activar-btn__label');
-            button.disabled = true;
-
-            if (label) {
-                label.textContent = 'Activando...';
-            }
-
-            window.setTimeout(function () {
-                if (label) {
-                    label.textContent = 'Activado';
-                }
-                if (row) {
-                    row.classList.add('is-done');
-                }
-            }, 700);
-        });
-    });
 }

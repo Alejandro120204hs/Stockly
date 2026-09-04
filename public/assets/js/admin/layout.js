@@ -36,6 +36,44 @@ function normalizarTexto(texto) {
     return texto.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 }
 
+/**
+ * Formatea un input de dinero con puntos de miles MIENTRAS se escribe
+ * (1.000, 10.000...) -mismo helper que ya usa el lado cliente
+ * (cliente/layout.js), copiado acá porque el panel admin carga su propio
+ * layout.js aparte. El input debe ser type="text" -un type="number" nunca
+ * deja escribir el punto de miles.
+ */
+function formatearInputDinero(input) {
+    input.setAttribute('inputmode', 'numeric');
+    input.setAttribute('autocomplete', 'off');
+
+    input.addEventListener('input', function () {
+        var valorAnterior = input.value;
+        var cursorPos = input.selectionStart;
+        var digitosAntesDelCursor = valorAnterior.slice(0, cursorPos).replace(/\D/g, '').length;
+
+        var soloDigitos = valorAnterior.replace(/\D/g, '');
+        input.value = soloDigitos ? parseInt(soloDigitos, 10).toLocaleString('es-CO') : '';
+
+        var nuevaPos = 0;
+        var digitosContados = 0;
+        while (nuevaPos < input.value.length && digitosContados < digitosAntesDelCursor) {
+            if (/\d/.test(input.value[nuevaPos])) {
+                digitosContados++;
+            }
+            nuevaPos++;
+        }
+        input.setSelectionRange(nuevaPos, nuevaPos);
+    });
+}
+
+/** Valor numérico real de un input formateado con formatearInputDinero -para
+ * mandar al servidor, nunca parseFloat() directo (rompería "6.000"
+ * convirtiéndolo en 6). */
+function valorDineroInput(input) {
+    return parseInt(input.value.replace(/\D/g, ''), 10) || 0;
+}
+
 /* --------------------------------------------------------------------
  * 1. Sidebar en móvil
  * ------------------------------------------------------------------ */

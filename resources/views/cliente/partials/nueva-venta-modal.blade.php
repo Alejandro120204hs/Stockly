@@ -32,9 +32,13 @@
             <strong id="ventaTotal">$0</strong>
         </div>
 
+        {{-- El texto cambia según el módulo de Facturación, pero los mismos
+             datos sirven para las dos cosas: con Factus, quedan listos para
+             emitir la factura DIAN desde /cliente/facturacion; sin Factus,
+             solo personalizan el recibo normal (que no depende de Factus). --}}
         <label class="venta-factura-toggle">
             <input type="checkbox" id="ventaQuiereFactura">
-            <span>¿El cliente necesita factura a su nombre?</span>
+            <span>{{ auth()->user()->empresa->tiene_facturacion ? '¿El cliente necesita factura a su nombre?' : '¿Poner el nombre del cliente en el recibo?' }}</span>
         </label>
 
         <div class="venta-factura-panel" id="ventaFacturaPanel" hidden>
@@ -52,7 +56,7 @@
                 </div>
             </div>
             <label for="ventaCompradorNombre" class="cliente-label">Nombre completo</label>
-            <input type="text" id="ventaCompradorNombre" class="cliente-input" placeholder="Nombre de quien recibe la factura" autocomplete="off">
+            <input type="text" id="ventaCompradorNombre" class="cliente-input" placeholder="{{ auth()->user()->empresa->tiene_facturacion ? 'Nombre de quien recibe la factura' : 'Nombre de quien recibe el recibo' }}" autocomplete="off">
         </div>
 
         <label class="cliente-label">Método de pago</label>

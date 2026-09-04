@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initEmpleadosTable();
     initEmpleadoModal();
     initDocumentosTable();
+    initNominaMesFilter();
     initPagarNominaModal();
 });
 
@@ -50,6 +51,7 @@ function initCountUp() {
  * ------------------------------------------------------------------ */
 var empleadosById = {};
 var nominaDocsById = {};
+var NOMINA_METODO_LABELS = { efectivo: 'Efectivo (caja)', efectivo_externo: 'Efectivo (aparte)', digital: 'Digital (de hoy)', digital_externo: 'Digital (aparte)' };
 
 function cargarNominaData() {
     var empEl = document.getElementById('empleadosData');
@@ -104,6 +106,13 @@ function initTabs() {
 
     btnEmpleados.addEventListener('click', function () { activar('empleados'); });
     btnDocumentos.addEventListener('click', function () { activar('documentos'); });
+
+    // Después de pagar nómina o anular un documento, el reload debe volver
+    // a "Pagar nómina" -no tiene sentido que te bote a Empleados justo
+    // cuando quieres ver el pago que acabas de hacer.
+    if (window.location.hash === '#documentos') {
+        activar('documentos');
+    }
 }
 
 /* --------------------------------------------------------------------
@@ -247,6 +256,7 @@ function eliminarEmpleado(id) {
                 var row = document.querySelector('#empleadosTable .data-table__row[data-empleado-id="' + id + '"]');
                 if (row) row.remove();
                 delete empleadosById[id];
+                eliminarOptionEmpleado(id);
 
                 renderEmpleadosPagina();
                 cerrarEmpleadoSlideOver();
@@ -304,6 +314,46 @@ function actualizarFilaEmpleado(empleado) {
     var pill = row.cells[4].querySelector('.status-pill');
     pill.className = 'status-pill ' + (empleado.activo ? 'status-pill--pagada' : 'status-pill--error');
     pill.textContent = empleado.activo ? 'Activo' : 'Retirado';
+}
+
+/**
+ * El <option> del select de "Pagar nómina" trae nombre/documento/salario
+ * grabados en atributos data-* al cargar la página (ver nomina.blade.php)
+ * -si no se sincronizan acá después de crear/editar/eliminar un empleado,
+ * ese modal sigue usando datos viejos hasta que alguien recargue la
+ * página (justo el bug reportado: editar el salario y que "Pagar nómina"
+ * siguiera sugiriendo el monto anterior).
+ */
+function sincronizarOptionEmpleado(empleado) {
+    var select = document.getElementById('pagoEmpleadoSelect');
+    if (!select) return;
+
+    var option = select.querySelector('option[value="' + empleado.id + '"]');
+
+    if (!empleado.activo) {
+        if (option) option.remove();
+        return;
+    }
+
+    if (!option) {
+        option = document.createElement('option');
+        option.value = String(empleado.id);
+        var placeholderVacio = select.querySelector('option[value=""]:not([selected])');
+        if (placeholderVacio) placeholderVacio.remove();
+        select.appendChild(option);
+    }
+
+    option.dataset.nombre = empleado.nombreCompleto;
+    option.dataset.doc = empleado.tipoDocumento + ' ' + empleado.numeroDocumento;
+    option.dataset.salarioDia = String(empleado.salario || 0);
+    option.textContent = empleado.nombreCompleto + ' — ' + empleado.tipoDocumento + ' ' + empleado.numeroDocumento;
+}
+
+function eliminarOptionEmpleado(id) {
+    var select = document.getElementById('pagoEmpleadoSelect');
+    if (!select) return;
+    var option = select.querySelector('option[value="' + id + '"]');
+    if (option) option.remove();
 }
 
 /* --------------------------------------------------------------------
@@ -427,6 +477,7 @@ function initEmpleadoModal() {
                     if (tbody) tbody.appendChild(crearFilaEmpleado(empleado));
                     renderEmpleadosPagina();
                 }
+                sincronizarOptionEmpleado(empleado);
 
                 closeModal();
             })
@@ -466,6 +517,92 @@ function initDocumentosTable() {
     });
 }
 
+/**
+ * Filtro por mes + paginación (4 por página) del historial de pagos
+ * -mismo patrón que Caja (poblarFiltroMeses()/renderHistorialCierres()):
+ * el filtro decide qué filas cuentan, la paginación decide cuáles de esas
+ * se muestran.
+ */
+var NOMINA_DOC_PAGE_SIZE = 4;
+var nominaDocPaginaActual = 1;
+
+function initNominaMesFilter() {
+    var table = document.getElementById('nominaDocumentosTable');
+    var filtro = document.getElementById('nominaDocMesFilter');
+    var emptyState = document.getElementById('nominaDocumentosEmpty');
+    var paginationEl = document.getElementById('nominaDocPagination');
+    var pageInfoEl = document.getElementById('nominaDocPageInfo');
+    var prevBtn = document.getElementById('nominaDocPrevPage');
+    var nextBtn = document.getElementById('nominaDocNextPage');
+    if (!table || !filtro) return;
+
+    var filas = table.querySelectorAll('.data-table__row');
+    if (filas.length === 0) {
+        if (paginationEl) paginationEl.hidden = true;
+        return;
+    }
+
+    var vistos = {};
+    filas.forEach(function (row) {
+        var mesKey = row.getAttribute('data-mes-key');
+        if (!mesKey || vistos[mesKey]) return;
+        vistos[mesKey] = true;
+
+        var doc = nominaDocsById[row.getAttribute('data-doc-nomina-id')];
+        var option = document.createElement('option');
+        option.value = mesKey;
+        option.textContent = doc ? doc.mesLabel : mesKey;
+        filtro.appendChild(option);
+    });
+
+    function render() {
+        var mesElegido = filtro.value;
+        var totalCoincidencias = 0;
+        filas.forEach(function (row) {
+            if (!mesElegido || row.getAttribute('data-mes-key') === mesElegido) totalCoincidencias++;
+        });
+
+        var totalPaginas = Math.max(1, Math.ceil(totalCoincidencias / NOMINA_DOC_PAGE_SIZE));
+        nominaDocPaginaActual = Math.min(nominaDocPaginaActual, totalPaginas);
+        var desde = (nominaDocPaginaActual - 1) * NOMINA_DOC_PAGE_SIZE;
+        var hasta = desde + NOMINA_DOC_PAGE_SIZE;
+
+        var indice = -1;
+        filas.forEach(function (row) {
+            var coincide = !mesElegido || row.getAttribute('data-mes-key') === mesElegido;
+            if (!coincide) {
+                row.hidden = true;
+                return;
+            }
+            indice++;
+            row.hidden = indice < desde || indice >= hasta;
+        });
+
+        if (emptyState) emptyState.hidden = totalCoincidencias !== 0;
+        if (paginationEl) paginationEl.hidden = totalCoincidencias === 0;
+        if (pageInfoEl) pageInfoEl.textContent = 'Página ' + nominaDocPaginaActual + ' de ' + totalPaginas;
+        if (prevBtn) prevBtn.disabled = nominaDocPaginaActual <= 1;
+        if (nextBtn) nextBtn.disabled = nominaDocPaginaActual >= totalPaginas;
+    }
+
+    filtro.addEventListener('change', function () {
+        nominaDocPaginaActual = 1;
+        render();
+    });
+    prevBtn?.addEventListener('click', function () {
+        if (nominaDocPaginaActual > 1) {
+            nominaDocPaginaActual--;
+            render();
+        }
+    });
+    nextBtn?.addEventListener('click', function () {
+        nominaDocPaginaActual++;
+        render();
+    });
+
+    render();
+}
+
 function abrirDocNominaSlideOver(id) {
     var doc = nominaDocsById[id];
     var overlay = document.getElementById('docNominaSlideOverOverlay');
@@ -484,8 +621,13 @@ function abrirDocNominaSlideOver(id) {
     document.getElementById('docNominaSlideOverDocumentoEmpleado').textContent = doc.empleado.numDoc;
     document.getElementById('docNominaSlideOverPeriodo').textContent = doc.periodo;
     document.getElementById('docNominaSlideOverFechaPago').textContent = doc.fechaPago;
+    document.getElementById('docNominaSlideOverMetodo').textContent = NOMINA_METODO_LABELS[doc.metodoPago] || '—';
     document.getElementById('docNominaSlideOverMonto').textContent = formatCOP(doc.montoPagado);
-    document.getElementById('docNominaSlideOverCune').textContent = doc.cune;
+
+    // La sección "Verificación DIAN" ni se renderiza sin el módulo de
+    // Facturación (ver nomina.blade.php) -el elemento no existe en el DOM.
+    var cuneEl = document.getElementById('docNominaSlideOverCune');
+    if (cuneEl) cuneEl.textContent = doc.cune;
 
     var descargarBtn = document.getElementById('docNominaDescargarBtn');
     if (descargarBtn) descargarBtn.href = '/cliente/nomina/documentos/' + doc.id + '/pdf';
@@ -516,6 +658,7 @@ function anularDocumentoNomina(id) {
         nominaApiRequest('POST', '/cliente/nomina/documentos/' + id + '/anular', {})
             .then(function () {
                 cerrarDocNominaSlideOver();
+                window.location.hash = 'documentos';
                 window.location.reload();
             })
             .catch(function (error) { mostrarError(error.message); });
@@ -547,6 +690,52 @@ function initPagarNominaModal() {
     var listaHead = document.getElementById('pagoEmpleadosHead');
     var listaVacia = document.getElementById('pagoEmpleadosVacio');
 
+    var btnMetodoEfectivo = document.getElementById('pagoNominaBtnEfectivo');
+    var btnMetodoDigital = document.getElementById('pagoNominaBtnDigital');
+    var btnOrigenHoy = document.getElementById('pagoNominaBtnOrigenHoy');
+    var btnOrigenExterno = document.getElementById('pagoNominaBtnOrigenExterno');
+    var metodoHint = document.getElementById('pagoNominaMetodoHint');
+
+    var metodo = 'efectivo';
+    var origen = 'hoy';
+
+    // Mismo criterio que Gastos: las cuatro opciones son siempre plata DEL
+    // NEGOCIO -la diferencia es solo si salió del cajón/lo digital de HOY
+    // (afecta el cierre de caja) o de lo que el negocio ya tenía guardado.
+    var METODO_HINTS = {
+        efectivo_hoy: 'Sacaste la plata física de la caja del negocio -se descuenta del cierre de caja de hoy.',
+        efectivo_externo: 'Plata del negocio, pero no del cajón de hoy -sigue siendo un pago real, solo que no afecta el cierre de caja de hoy.',
+        digital_hoy: 'Pagaste con la plata digital que el negocio recibió hoy (Wompi/transferencia) -se descuenta del total esperado en digital de hoy.',
+        digital_externo: 'Pagaste por transferencia desde la cuenta del negocio, pero no con lo digital de hoy -sigue siendo un pago real, solo que no afecta el cierre de caja de hoy.'
+    };
+
+    function metodoPagoFinal() {
+        return origen === 'hoy' ? metodo : metodo + '_externo';
+    }
+
+    function actualizarHint() {
+        metodoHint.textContent = METODO_HINTS[metodo + '_' + origen];
+    }
+
+    function setMetodo(nuevo) {
+        metodo = nuevo;
+        btnMetodoEfectivo.classList.toggle('is-active', nuevo === 'efectivo');
+        btnMetodoDigital.classList.toggle('is-active', nuevo === 'digital');
+        actualizarHint();
+    }
+
+    function setOrigen(nuevo) {
+        origen = nuevo;
+        btnOrigenHoy.classList.toggle('is-active', nuevo === 'hoy');
+        btnOrigenExterno.classList.toggle('is-active', nuevo === 'externo');
+        actualizarHint();
+    }
+
+    btnMetodoEfectivo.addEventListener('click', function () { setMetodo('efectivo'); });
+    btnMetodoDigital.addEventListener('click', function () { setMetodo('digital'); });
+    btnOrigenHoy.addEventListener('click', function () { setOrigen('hoy'); });
+    btnOrigenExterno.addEventListener('click', function () { setOrigen('externo'); });
+
     function recalcularTotal() {
         var total = 0;
         lista.querySelectorAll('.pago-empleado-monto').forEach(function (input) {
@@ -575,6 +764,45 @@ function initPagarNominaModal() {
         svg.appendChild(path);
         return svg;
     }
+
+    /**
+     * "El 4 le pagué a un empleado, el 5 le pagué también" -pagar al MISMO
+     * empleado varias veces en el MISMO período (mes) es normal, así que
+     * el aviso no se fija en el período sino en la fecha exacta: ¿ya
+     * existe un pago (no anulado) para este empleado ese mismo día?
+     */
+    function empleadoTieneMismoDia(empleadoId, fechaISO) {
+        if (!fechaISO) return false;
+        return Object.keys(nominaDocsById).some(function (id) {
+            var doc = nominaDocsById[id];
+            return String(doc.empleado.id) === String(empleadoId)
+                && doc.fechaPagoISO === fechaISO
+                && doc.estado !== 'anulada';
+        });
+    }
+
+    function actualizarAvisosDuplicado() {
+        var fechaISO = fechaInput.value;
+        lista.querySelectorAll('.pago-empleado-row').forEach(function (row) {
+            var duplicado = empleadoTieneMismoDia(row.dataset.empleadoId, fechaISO);
+            row.dataset.duplicado = duplicado ? '1' : '0';
+
+            var info = row.querySelector('.pago-empleado-row__info');
+            var aviso = info.querySelector('.pago-empleado-row__aviso');
+            if (duplicado && !aviso) {
+                // <div>, no <span> -así no le pega la regla CSS genérica
+                // de "span:last-child" pensada para nombre/documento.
+                aviso = document.createElement('div');
+                aviso.className = 'pago-empleado-row__aviso';
+                aviso.textContent = 'Ya le pagaste a esta persona este mismo día';
+                info.appendChild(aviso);
+            } else if (!duplicado && aviso) {
+                aviso.remove();
+            }
+        });
+    }
+
+    fechaInput.addEventListener('change', actualizarAvisosDuplicado);
 
     function agregarFila(option) {
         var empleadoId = option.value;
@@ -646,6 +874,7 @@ function initPagarNominaModal() {
 
         actualizarVisibilidadLista();
         recalcularTotal();
+        actualizarAvisosDuplicado();
     }
 
     // Elegir un empleado en el select ya lo agrega -sin botón aparte. Si
@@ -665,6 +894,8 @@ function initPagarNominaModal() {
         select.value = '';
         periodoMesSelect.selectedIndex = new Date().getMonth();
         periodoAnioSelect.value = String(new Date().getFullYear());
+        setMetodo('efectivo');
+        setOrigen('hoy');
         actualizarVisibilidadLista();
         recalcularTotal();
         modal.classList.add('is-open');
@@ -686,7 +917,13 @@ function initPagarNominaModal() {
         if (event.key === 'Escape' && modal.classList.contains('is-open')) closeModal();
     });
 
-    emitirBtn.addEventListener('click', function () {
+    function hayFilasDuplicadas() {
+        return Array.prototype.some.call(lista.querySelectorAll('.pago-empleado-row'), function (row) {
+            return row.dataset.duplicado === '1';
+        });
+    }
+
+    function enviarPago() {
         var pagos = [];
         lista.querySelectorAll('.pago-empleado-row').forEach(function (row) {
             var montoInput = row.querySelector('.pago-empleado-monto');
@@ -705,10 +942,12 @@ function initPagarNominaModal() {
         nominaApiRequest('POST', '/cliente/nomina/documentos', {
             periodo: periodoTexto(),
             fecha_pago: fechaInput.value,
+            metodo_pago: metodoPagoFinal(),
             pagos: pagos
         })
             .then(function () {
                 closeModal();
+                window.location.hash = 'documentos';
                 window.location.reload();
             })
             .catch(function (error) {
@@ -716,5 +955,20 @@ function initPagarNominaModal() {
                 emitirBtn.textContent = originalText;
                 mostrarError(error.message);
             });
+    }
+
+    emitirBtn.addEventListener('click', function () {
+        if (!hayFilasDuplicadas()) {
+            enviarPago();
+            return;
+        }
+
+        confirmarAccion({
+            titulo: '¿Pagar de todos modos?',
+            texto: 'Ya le pagaste a uno o más de estos empleados el mismo día que elegiste -si es un adelanto u otro pago aparte, puedes seguir.',
+            textoConfirmar: 'Sí, registrar el pago'
+        }).then(function (confirmado) {
+            if (confirmado) enviarPago();
+        });
     });
 }

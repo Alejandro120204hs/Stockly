@@ -120,13 +120,15 @@ class CajaController extends Controller
      * Dos ledgers paralelos, uno por cada "cajón": el físico (efectivo) y
      * el digital (lo que entró por Wompi/transferencia hoy).
      *   esperado efectivo = base inicial + ventas efectivo − gastos
-     *     efectivo − compras pagadas en efectivo (del cajón físico).
+     *     efectivo − compras pagadas en efectivo − nómina pagada en
+     *     efectivo (todo del cajón físico).
      *   esperado digital = ventas digitales confirmadas − gastos digitales
-     *     − compras pagadas con digital de hoy.
+     *     − compras pagadas con digital de hoy − nómina pagada con
+     *     digital de hoy.
      *   total general = esperado efectivo + esperado digital.
      * Las variantes "_externo" (efectivo_externo/digital_externo) son
      * plata que nunca fue parte de esta caja -no descuentan de ningún lado,
-     * tanto en compras como en gastos.
+     * tanto en compras como en gastos y nómina.
      */
     private function calcularTotales(Caja $caja): array
     {
@@ -136,9 +138,11 @@ class CajaController extends Controller
         $comprasDigital = (float) $caja->compras()->where('metodo_pago', 'digital')->sum('total');
         $gastosEfectivo = (float) $caja->gastos()->where('metodo_pago', 'efectivo')->sum('monto');
         $gastosDigital = (float) $caja->gastos()->where('metodo_pago', 'digital')->sum('monto');
+        $nominaEfectivo = (float) $caja->nominaDocumentos()->whereNull('anulada_en')->where('metodo_pago', 'efectivo')->sum('monto_pagado');
+        $nominaDigital = (float) $caja->nominaDocumentos()->whereNull('anulada_en')->where('metodo_pago', 'digital')->sum('monto_pagado');
 
-        $totalEsperado = (float) $caja->base_inicial + $ventasEfectivo - $gastosEfectivo - $comprasEfectivo;
-        $totalEsperadoDigital = $ventasDigital - $gastosDigital - $comprasDigital;
+        $totalEsperado = (float) $caja->base_inicial + $ventasEfectivo - $gastosEfectivo - $comprasEfectivo - $nominaEfectivo;
+        $totalEsperadoDigital = $ventasDigital - $gastosDigital - $comprasDigital - $nominaDigital;
 
         return [
             'ventasEfectivo' => $ventasEfectivo,
@@ -147,6 +151,8 @@ class CajaController extends Controller
             'gastosDigital' => $gastosDigital,
             'comprasEfectivo' => $comprasEfectivo,
             'comprasDigital' => $comprasDigital,
+            'nominaEfectivo' => $nominaEfectivo,
+            'nominaDigital' => $nominaDigital,
             'totalEsperado' => $totalEsperado,
             'totalEsperadoDigital' => $totalEsperadoDigital,
             'totalGeneral' => $totalEsperado + $totalEsperadoDigital,

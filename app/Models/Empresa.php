@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 class Empresa extends Model
 {
@@ -27,18 +28,85 @@ class Empresa extends Model
         'ciudad',
         'estado_suscripcion',
         'fecha_vencimiento',
+        'tiene_facturacion',
     ];
 
     protected function casts(): array
     {
         return [
-            'fecha_vencimiento' => 'date',
+            // Formato explícito -sin esto, Eloquent guarda con hora
+            // incluida en algunos motores, rompiendo comparaciones de
+            // fecha (mismo caso que NominaDocumento::fecha_pago).
+            'fecha_vencimiento' => 'date:Y-m-d',
+            'tiene_facturacion' => 'boolean',
         ];
     }
 
     public function usuarios(): HasMany
     {
         return $this->hasMany(User::class, 'empresa_id');
+    }
+
+    public function pagosSuscripcion(): HasMany
+    {
+        return $this->hasMany(PagoSuscripcion::class);
+    }
+
+    /**
+     * `telefono_contacto` quedó vacío para toda empresa que se registró
+     * antes de que el registro público empezara a copiarlo (el teléfono
+     * se pedía, pero solo se guardaba en el usuario) -acá se cae al
+     * teléfono del primer usuario de la empresa como respaldo, para no
+     * mostrar vacío algo que el cliente sí escribió.
+     */
+    public function telefonoContacto(): ?string
+    {
+        return $this->telefono_contacto
+            ?: $this->usuarios()->whereNotNull('telefono')->value('telefono');
+    }
+
+    /**
+     * Estado real de la licencia, calculado al vuelo contra la fecha de
+     * hoy -nunca queda desactualizado porque no depende de ningún job
+     * programado. "Suspendido" es la única bandera manual (el admin la
+     * prende/apaga sin importar la fecha de vencimiento).
+     */
+    public function estadoEfectivo(): string
+    {
+        if ($this->estado_suscripcion === 'suspendido') {
+            return 'suspendido';
+        }
+
+        if (! $this->fecha_vencimiento || $this->fecha_vencimiento->isPast()) {
+            return 'vencido';
+        }
+
+        // OJO con el orden: fecha_vencimiento->diffInDays(now()) da NEGATIVO
+        // cuando la fecha es futura (Carbon resta "hacia atrás") -desde
+        // now() hacia la fecha sí da positivo cuando falta tiempo.
+        if (now()->diffInDays($this->fecha_vencimiento) <= 7) {
+            return 'por_vencer';
+        }
+
+        return 'activo';
+    }
+
+    /**
+     * Fecha de vencimiento que le quedaría a la empresa si se le activa
+     * este plan AHORA MISMO -si todavía le quedaban días pagados
+     * (fecha_vencimiento en el futuro), extiende desde ahí para no
+     * hacerle perder esos días; si no, extiende desde hoy. Usado tanto
+     * por la activación manual del admin (Admin\EmpresaController) como
+     * por la aprobación de un pago reportado por el cliente
+     * (Admin\PagoController::aprobar()).
+     */
+    public function calcularNuevoVencimiento(string $plan): Carbon
+    {
+        $base = ($this->fecha_vencimiento && $this->fecha_vencimiento->isFuture())
+            ? $this->fecha_vencimiento
+            : now();
+
+        return $base->copy()->addMonths(PagoSuscripcion::PLANES[$plan]['meses']);
     }
 
     /**

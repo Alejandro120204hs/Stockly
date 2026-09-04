@@ -73,9 +73,11 @@ class RegisteredUserController extends Controller
                 'logo_path' => $request->hasFile('logo') ? $request->file('logo')->store('empresas/logos', 'public') : null,
                 'tipo_negocio' => $tipoNegocio,
                 'nit' => $request->nit,
-                // El correo de contacto de la empresa es el mismo correo
-                // personal de quien se registra -no se pide uno aparte.
+                // El correo y el teléfono de contacto de la empresa son
+                // los mismos personales de quien se registra -no se piden
+                // aparte.
                 'correo_contacto' => $request->email,
+                'telefono_contacto' => $request->phone,
                 'departamento' => $request->department,
                 'ciudad' => $request->city,
             ]);

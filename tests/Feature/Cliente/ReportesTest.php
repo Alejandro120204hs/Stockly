@@ -107,6 +107,7 @@ class ReportesTest extends TestCase
         $this->postJson('/cliente/nomina/documentos', [
             'periodo'    => 'Agosto 2026',
             'fecha_pago' => now()->toDateString(),
+            'metodo_pago' => 'efectivo_externo',
             'pagos'      => [['empleado_id' => $empleadoB->id, 'monto_pagado' => 900000]],
         ])->assertOk();
 
@@ -218,6 +219,7 @@ class ReportesTest extends TestCase
         $this->postJson('/cliente/nomina/documentos', [
             'periodo'    => 'Agosto 2026',
             'fecha_pago' => now()->toDateString(),
+            'metodo_pago' => 'efectivo_externo',
             'pagos'      => [['empleado_id' => $empleado->id, 'monto_pagado' => 700000]],
         ])->assertOk();
 
@@ -226,6 +228,72 @@ class ReportesTest extends TestCase
         $this->assertEquals(700000, $data['gastos']);
         $this->assertEquals(700000, $data['gastosCategorias']['nomina']);
         $this->assertEquals(-700000, $data['gananciaNeta']);
+    }
+
+    /**
+     * "Cuánto tengo en cada lado": la ganancia neta se separa entre lo
+     * físico y lo digital, agrupando cada método con su variante "_externo"
+     * (el punto acá es si la plata es física o digital, no si pasó por la
+     * caja de hoy -eso ya vive aparte en Caja::calcularTotales()).
+     */
+    public function test_ganancia_neta_se_separa_por_metodo_de_pago_efectivo_y_digital(): void
+    {
+        $this->travelTo('2026-08-15 09:00:00');
+        $this->crearUsuarioCliente();
+        $this->postJson('/cliente/caja/abrir', ['base_inicial' => 0])->assertOk();
+
+        $this->postJson('/cliente/inventario/productos', [
+            'nombre' => 'Ron', 'categoria' => 'Licores',
+            'precio_costo' => 5000, 'precio_venta' => 8000, 'unidad_medida' => 'Botella',
+        ])->assertOk();
+        $producto = Producto::where('nombre', 'Ron')->firstOrFail();
+        $this->postJson('/cliente/inventario/compras', [
+            'tipo' => 'informal', 'factura_validada' => false, 'metodo_pago' => 'efectivo',
+            'lineas' => [['producto_id' => $producto->id, 'cantidad' => 2, 'costo' => 5000]],
+        ])->assertOk();
+        $this->postJson('/cliente/inventario/transferencias', ['producto_id' => $producto->id, 'cantidad' => 2])->assertOk();
+
+        // Ganancia bruta efectivo: 8.000 − 5.000 = 3.000.
+        $this->postJson('/cliente/ventas', [
+            'metodo_pago' => 'efectivo', 'monto_recibido' => 8000,
+            'lineas' => [['producto_id' => $producto->id, 'cantidad' => 1]],
+        ])->assertOk();
+        // Ganancia bruta digital: 8.000 − 5.000 = 3.000.
+        $this->postJson('/cliente/ventas', [
+            'metodo_pago' => 'digital', 'pago_confirmado' => true,
+            'lineas' => [['producto_id' => $producto->id, 'cantidad' => 1]],
+        ])->assertOk();
+
+        $this->postJson('/cliente/gastos', [
+            'categoria' => 'otros', 'descripcion' => 'Bolsas', 'monto' => 1000, 'metodo_pago' => 'efectivo',
+        ])->assertOk();
+        $this->postJson('/cliente/gastos', [
+            'categoria' => 'otros', 'descripcion' => 'Dominio web', 'monto' => 500, 'metodo_pago' => 'digital',
+        ])->assertOk();
+
+        $this->postJson('/cliente/nomina/empleados', [
+            'nombres' => 'Ana', 'apellidos' => 'Ruiz', 'tipo_documento' => 'CC', 'numero_documento' => '111',
+        ])->assertOk();
+        $empleado = \App\Models\Cliente\Empleado::firstOrFail();
+        $this->postJson('/cliente/nomina/documentos', [
+            'periodo' => 'Agosto 2026', 'fecha_pago' => now()->toDateString(),
+            'metodo_pago' => 'efectivo_externo',
+            'pagos' => [['empleado_id' => $empleado->id, 'monto_pagado' => 800]],
+        ])->assertOk();
+        $this->postJson('/cliente/nomina/documentos', [
+            'periodo' => 'Agosto 2026', 'fecha_pago' => now()->toDateString(),
+            'metodo_pago' => 'digital_externo',
+            'pagos' => [['empleado_id' => $empleado->id, 'monto_pagado' => 400]],
+        ])->assertOk();
+
+        $data = $this->reportesData('mes');
+
+        // Efectivo: 3.000 (bruta) − 1.000 (gasto) − 800 (nómina) = 1.200.
+        $this->assertEquals(1200, $data['gananciaNetaEfectivo']);
+        // Digital: 3.000 (bruta) − 500 (gasto) − 400 (nómina) = 2.100.
+        $this->assertEquals(2100, $data['gananciaNetaDigital']);
+        // La suma de ambos lados sigue cuadrando con la ganancia neta total.
+        $this->assertEquals($data['gananciaNetaEfectivo'] + $data['gananciaNetaDigital'], $data['gananciaNeta']);
     }
 
     public function test_un_documento_de_nomina_anulado_no_resta_en_reportes(): void
@@ -242,6 +310,7 @@ class ReportesTest extends TestCase
         $this->postJson('/cliente/nomina/documentos', [
             'periodo'    => 'Agosto 2026',
             'fecha_pago' => now()->toDateString(),
+            'metodo_pago' => 'efectivo_externo',
             'pagos'      => [['empleado_id' => $empleado->id, 'monto_pagado' => 700000]],
         ])->assertOk();
         $documento = \App\Models\Cliente\NominaDocumento::firstOrFail();

@@ -3,7 +3,7 @@
     <div class="cliente-page-header cliente-reveal cliente-reveal-1" style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;">
         <div>
             <p class="cliente-page-header__eyebrow">Tu negocio</p>
-            <h1 class="cliente-page-header__title">Reportes</h1>
+            <h1 class="cliente-page-header__title">Balance del negocio</h1>
             <p class="cliente-page-header__date">Análisis de ingresos, gastos y ventas</p>
         </div>
 
@@ -14,7 +14,7 @@
                      puntual cualquiera, o un mes puntual cualquiera (no
                      solo "Este mes", que siempre es el actual). Tener dos
                      calendarios lado a lado confundía cuál era cuál. --}}
-                <label class="reporte-tab reporte-tab--dia" role="tab" id="reporteFechaTab" aria-selected="false">
+                <label class="reporte-tab reporte-tab--dia is-active" role="tab" id="reporteFechaTab" aria-selected="true">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="14" height="14">
                         <rect x="3" y="4.5" width="18" height="16" rx="2"/>
                         <path d="M8 2.5v4M16 2.5v4M3 9.5h18"/>
@@ -25,11 +25,11 @@
                     </span>
                     <input type="date" id="reporteFechaInput" class="reporte-dia-input" value="{{ now()->toDateString() }}" max="{{ now()->toDateString() }}" aria-label="Elegir un día">
                 </label>
-                <button type="button" class="reporte-tab is-active" role="tab" data-periodo="semana" aria-selected="true">Esta semana</button>
+                <button type="button" class="reporte-tab" role="tab" data-periodo="semana">Esta semana</button>
                 <button type="button" class="reporte-tab" role="tab" data-periodo="mes">Este mes</button>
                 <button type="button" class="reporte-tab" role="tab" data-periodo="anio">Este año</button>
             </div>
-            <a href="{{ route('cliente.reportes.pdf') }}?periodo=semana" id="reportePdfBtn" class="cliente-btn-ghost reporte-pdf-btn" target="_blank">
+            <a href="{{ route('cliente.reportes.pdf') }}?fecha={{ now()->toDateString() }}" id="reportePdfBtn" class="cliente-btn-ghost reporte-pdf-btn" target="_blank">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                     <polyline points="7 10 12 15 17 10"/>
@@ -75,6 +75,10 @@
             <span class="stat-card__value" id="statGanancia" data-prefix="$">$0</span>
             <span class="stat-card__label">Ganancia neta</span>
             <span class="stat-card__meta">Ganancia bruta menos todos los gastos</span>
+            <div class="stat-card__split">
+                <span>Efectivo <strong id="statGananciaEfectivo">$0</strong></span>
+                <span>Digital <strong id="statGananciaDigital">$0</strong></span>
+            </div>
         </div>
 
         <div class="stat-card">

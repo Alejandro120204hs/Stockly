@@ -91,13 +91,15 @@ class VentasController extends Controller
         }
 
         // La caja es una SESIÓN (abrir -> cerrar), no un día calendario -si
-        // no hay una abierta ahora mismo, no hay dónde contar el efectivo
-        // de esta venta. Una venta digital sí puede pasar sin caja abierta
-        // -no mueve efectivo físico, solo no queda asociada a ninguna caja.
+        // no hay una abierta ahora mismo, no hay dónde contar esta venta.
+        // Mismo criterio que Compras/Gastos: tanto "efectivo" como "digital"
+        // (lo digital de HOY) descuentan del cierre de la caja actual, así
+        // que los dos necesitan una abierta -si no, la venta digital queda
+        // con caja_id null y ese dinero nunca aparece en ningún cierre.
         $cajaAbierta = Caja::whereNull('cierre_en')->first();
 
-        if ($validated['metodo_pago'] === 'efectivo' && ! $cajaAbierta) {
-            return response()->json(['message' => 'Debes abrir la caja antes de registrar una venta en efectivo.'], 422);
+        if (! $cajaAbierta) {
+            return response()->json(['message' => 'Debes abrir la caja antes de registrar una venta.'], 422);
         }
 
         $confirmado = $validated['metodo_pago'] === 'efectivo' || (bool) ($validated['pago_confirmado'] ?? false);
@@ -131,7 +133,7 @@ class VentasController extends Controller
 
             $venta = Venta::create([
                 'usuario_id' => auth()->id(),
-                'caja_id' => $cajaAbierta?->id,
+                'caja_id' => $cajaAbierta->id,
                 'comprador_id' => $comprador?->id,
                 'total' => $total,
                 'metodo_pago' => $validated['metodo_pago'],
