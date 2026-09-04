@@ -180,8 +180,11 @@ function initGastosTable() {
     metodoFilter.addEventListener('change', applyFilters);
     fechaFilter.addEventListener('change', applyFilters);
 
+    var resetGastosFechaPicker = null;
+
     verTodosBtn.addEventListener('click', function () {
         fechaFilter.value = '';
+        if (resetGastosFechaPicker) resetGastosFechaPicker();
         applyFilters();
     });
 
@@ -271,6 +274,8 @@ function initGastosTable() {
     };
 
     render();
+
+    resetGastosFechaPicker = initGastosFechaPicker();
 }
 
 /* --------------------------------------------------------------------
@@ -460,4 +465,124 @@ function initGastoSlideOver() {
             cerrar();
         }
     });
+}
+
+/* --------------------------------------------------------------------
+ * 4. Date picker personalizado para el filtro de fecha
+ *    Mismo comportamiento que el de Ventas: right:0 alinea el borde
+ *    derecho del calendario con el borde del botón; si desborda por la
+ *    izquierda, cambia a left:0 automáticamente.
+ * ------------------------------------------------------------------ */
+function initGastosFechaPicker() {
+    var wrap  = document.getElementById('gastosFechaPickerWrap');
+    if (!wrap) return null;
+
+    var btn   = document.getElementById('gastosFechaBtn');
+    var lbl   = document.getElementById('gastosFechaLabel');
+    var input = document.getElementById('gastosFechaFilter');
+    var cal   = document.getElementById('gastosFechaCal');
+
+    var MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio',
+                 'Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    var DIAS  = ['Do','Lu','Ma','Mi','Ju','Vi','Sa'];
+    var viewY, viewM;
+
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+    function toISO(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+    function parseISO(s) { var p = s.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+    function fmtLabel(s) {
+        if (!s) return 'Cualquier fecha';
+        var p = s.split('-'); return p[2] + '/' + p[1] + '/' + p[0];
+    }
+
+    lbl.textContent = fmtLabel(input.value);
+
+    function render() {
+        var todayStr = toISO(new Date());
+        var selStr   = input.value;
+        var now      = new Date();
+        var firstDow    = new Date(viewY, viewM, 1).getDay();
+        var daysInMonth = new Date(viewY, viewM + 1, 0).getDate();
+        var canNext     = !(viewY > now.getFullYear() ||
+                           (viewY === now.getFullYear() && viewM >= now.getMonth()));
+
+        var h = '<div class="vf-cal__header">' +
+            '<button type="button" class="vf-cal__nav" data-dir="-1" aria-label="Mes anterior">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>' +
+            '<span class="vf-cal__title">' + MESES[viewM] + ' ' + viewY + '</span>' +
+            '<button type="button" class="vf-cal__nav" data-dir="1" aria-label="Mes siguiente"' + (canNext ? '' : ' disabled') + '>' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>' +
+            '</div><div class="vf-cal__grid">';
+
+        DIAS.forEach(function (d) { h += '<span class="vf-cal__dow">' + d + '</span>'; });
+        for (var i = 0; i < firstDow; i++) { h += '<span class="vf-cal__empty"></span>'; }
+        for (var day = 1; day <= daysInMonth; day++) {
+            var ds  = viewY + '-' + pad(viewM + 1) + '-' + pad(day);
+            var cls = 'vf-cal__day';
+            var fut = ds > todayStr;
+            if (fut)             cls += ' vf-cal__day--future';
+            if (ds === todayStr) cls += ' vf-cal__day--today';
+            if (ds === selStr)   cls += ' vf-cal__day--selected';
+            h += '<button type="button" class="' + cls + '" data-date="' + ds + '"' + (fut ? ' disabled' : '') + '>' + day + '</button>';
+        }
+        h += '</div>';
+        cal.innerHTML = h;
+
+        cal.querySelectorAll('.vf-cal__nav').forEach(function (nb) {
+            nb.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var dir = parseInt(this.getAttribute('data-dir'));
+                viewM += dir;
+                if (viewM < 0)  { viewM = 11; viewY--; }
+                if (viewM > 11) { viewM = 0;  viewY++; }
+                render();
+            });
+        });
+        cal.querySelectorAll('.vf-cal__day:not([disabled])').forEach(function (db) {
+            db.addEventListener('click', function (e) {
+                e.stopPropagation();
+                pick(this.getAttribute('data-date'));
+            });
+        });
+    }
+
+    function pick(ds) {
+        input.value = ds;
+        lbl.textContent = fmtLabel(ds);
+        close();
+        input.dispatchEvent(new Event('change'));
+    }
+
+    function open() {
+        var base = input.value ? parseISO(input.value) : new Date();
+        viewY = base.getFullYear();
+        viewM = base.getMonth();
+        render();
+        cal.style.right = '0';
+        cal.style.left  = '';
+        cal.hidden = false;
+        btn.setAttribute('aria-expanded', 'true');
+        if (cal.getBoundingClientRect().left < 8) {
+            cal.style.right = '';
+            cal.style.left  = '0';
+        }
+    }
+
+    function close() {
+        cal.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+    }
+
+    btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        cal.hidden ? open() : close();
+    });
+    document.addEventListener('click', close);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+    cal.addEventListener('click', function (e) { e.stopPropagation(); });
+
+    return function resetPicker() {
+        input.value = '';
+        lbl.textContent = 'Cualquier fecha';
+    };
 }

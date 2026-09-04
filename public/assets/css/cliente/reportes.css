@@ -158,6 +158,23 @@
 .stat-card__split strong {
     color: var(--color-slate);
     font-weight: 600;
+/* Ícono de Ganancia neta: color dinámico igual que la card */
+#statGananciaNeta.is-positivo .stat-card__icon {
+    border-color: var(--color-sage);
+    background-color: var(--color-sage-soft);
+    color: var(--color-sage-dark);
+}
+#statGananciaNeta.is-negativo .stat-card__icon {
+    border-color: var(--color-error);
+    background-color: rgba(220, 38, 38, 0.08);
+    color: var(--color-error);
+}
+
+/* Ícono de Ventas: color slate neutro */
+.stat-grid--reportes .stat-card:last-child .stat-card__icon {
+    border-color: var(--color-slate);
+    background-color: rgba(51, 65, 85, 0.06);
+    color: var(--color-slate);
 }
 
 /* ——— Títulos de sección dentro del panel ——— */
@@ -319,6 +336,57 @@
     color: var(--color-slate);
     white-space: nowrap;
     text-align: right;
+}
+
+/* ——— RESPONSIVE ——— */
+
+/* Tablet: reducir valor de stat cards */
+@media (max-width: 900px) {
+    .stat-grid--reportes .stat-card__value {
+        font-size: 1.65rem;
+    }
+}
+
+@media (max-width: 560px) {
+    /* El toolbar toma todo el ancho y apila sus hijos */
+    .reporte-toolbar {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    /* El grupo de pestañas se envuelve en varias filas */
+    .reporte-tabs {
+        flex-wrap: wrap;
+        padding: 4px;
+        gap: 4px;
+    }
+
+    /* Selector de fecha (ícono + Día/Mes + input): fila propia y centrado */
+    .reporte-tab--dia {
+        flex: 1 1 100%;
+        justify-content: center;
+    }
+
+    /* Botones de período rápido: los 3 comparten la segunda fila igual */
+    .reporte-tab:not(.reporte-tab--dia) {
+        flex: 1 1 0%;
+        justify-content: center;
+        padding: 6px 4px;
+        font-size: 12px;
+    }
+
+    /* Botón PDF: fila completa, centrado */
+    .reporte-pdf-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Stat cards: valores más compactos */
+    .stat-grid--reportes .stat-card__value {
+        font-size: 1.3rem;
+    }
 }
 
 /* ——— Estado vacío ——— */

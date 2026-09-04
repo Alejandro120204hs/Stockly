@@ -375,6 +375,97 @@
 }
 
 /* --------------------------------------------------------------------------
+   Barra de acción (DEE/POS · Consolidada · + Nueva factura)
+   -------------------------------------------------------------------------- */
+.facturacion-action-bar {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+/* --------------------------------------------------------------------------
+   RESPONSIVE
+   -------------------------------------------------------------------------- */
+
+/* Tablet: ghost buttons a la izquierda, primary a la derecha */
+@media (min-width: 561px) and (max-width: 900px) {
+    .facturacion-action-bar {
+        justify-content: flex-start;
+    }
+
+    .facturacion-action-bar .cliente-btn-primary {
+        margin-left: auto;
+    }
+}
+
+/* Stat card valores: reducir en tablet */
+@media (max-width: 900px) {
+    .stat-grid--facturacion .stat-card__value,
+    .stat-grid--facturacion-gastos .stat-card__value {
+        font-size: 1.65rem;
+    }
+}
+
+@media (max-width: 560px) {
+    /* 5.ª card (Sin facturar) ocupa fila completa y centra contenido */
+    .stat-grid--facturacion .stat-card:last-child {
+        grid-column: 1 / -1;
+        align-items: center;
+        text-align: center;
+    }
+
+    /* 3.ª card (Sin reportar) igual en gastos de facturación */
+    .stat-grid--facturacion-gastos .stat-card:last-child {
+        grid-column: 1 / -1;
+        align-items: center;
+        text-align: center;
+    }
+
+    /* Stat card valores más pequeños en mobile */
+    .stat-grid--facturacion .stat-card__value,
+    .stat-grid--facturacion-gastos .stat-card__value {
+        font-size: 1.3rem;
+    }
+
+    /* Barra de acción: ghost buttons al 50/50, primary al 100% */
+    .facturacion-action-bar {
+        gap: 8px;
+    }
+
+    .facturacion-action-bar .cliente-btn-ghost {
+        flex: 1 1 calc(50% - 4px);
+        text-align: center;
+        justify-content: center;
+    }
+
+    .facturacion-action-bar .cliente-btn-primary {
+        flex: 1 1 100%;
+        text-align: center;
+        justify-content: center;
+    }
+
+    /* Toolbar de filtros: búsqueda fila entera, selects 50/50 */
+    .cliente-toolbar {
+        gap: 8px;
+    }
+
+    .cliente-toolbar__search {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+
+    .cliente-toolbar__select {
+        flex: 1 1 calc(50% - 4px);
+        min-width: 0;
+        font-size: 0.82rem;
+        padding: 9px 10px;
+    }
+}
+
+/* --------------------------------------------------------------------------
    Formulario helper
    -------------------------------------------------------------------------- */
 .form-group {

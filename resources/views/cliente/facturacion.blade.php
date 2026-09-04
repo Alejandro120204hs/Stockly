@@ -51,7 +51,7 @@
          PESTAÑA: VENTAS (lo que ya existía)
          ================================================================ --}}
     <div id="tabPanelVentas">
-        <div style="display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap; margin-bottom:18px;">
+        <div class="facturacion-action-bar">
             <button type="button" class="cliente-btn-ghost" id="nuevaDeePosBtn">DEE / POS</button>
             <button type="button" class="cliente-btn-ghost" id="nuevaConsolidadaBtn">Consolidada</button>
             <button type="button" class="cliente-btn-primary" id="nuevaIndividualBtn">+ Nueva factura</button>

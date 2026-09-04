@@ -1,6 +1,43 @@
 /* ==========================================================================
    Stockly — Panel del negocio cliente: vista Gastos
-   Todo lo visual (panel, stat cards, tabla, pills, modal, toggle de método
-   de pago) ya vive en cliente/layout.css y cliente/nueva-venta-modal.css
-   -esta vista no necesita nada propio todavía.
+   Todo lo visual (panel, stat cards, tabla, pills, modal, date picker
+   .vf-picker) ya vive en cliente/layout.css. Acá solo el responsive del
+   toolbar de filtros de esta vista.
    ========================================================================== */
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+
+/* Mismo patrón que Ventas:
+   - Buscador: fila propia
+   - Categoría + Método: 50/50 en la misma fila
+   - Date picker: fila propia (el calendario se auto-ajusta izq/der en JS)
+   - "Ver todos": fila propia o junto al picker según espacio */
+@media (max-width: 560px) {
+    .cliente-toolbar {
+        gap: 8px;
+    }
+
+    .cliente-toolbar__search {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+
+    .cliente-toolbar__select {
+        flex: 1 1 calc(50% - 4px);
+        min-width: 0;
+        font-size: 0.82rem;
+        padding: 9px 10px;
+    }
+
+    .vf-picker {
+        flex: 1 1 100%;
+    }
+
+    .vf-picker__btn {
+        width: 100%;
+        font-size: 0.82rem;
+        padding: 9px 10px;
+    }
+}
