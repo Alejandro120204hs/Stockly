@@ -73,6 +73,12 @@
     color: var(--color-mist);
 }
 
+.pago-empleado-row__aviso {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-error);
+}
+
 .pago-empleado-dias {
     width: 84px;
     flex-shrink: 0;

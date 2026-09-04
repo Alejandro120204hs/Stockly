@@ -14,6 +14,12 @@
         <p class="cliente-page-header__date">{{ now()->locale('es')->translatedFormat('l, d \d\e F \d\e Y') }}</p>
     </div>
 
+    @if (session('status') === 'facturacion-bloqueada')
+        <div class="cliente-form-banner cliente-form-banner--warning cliente-reveal cliente-reveal-1">
+            Tu plan no incluye facturación electrónica. Si la necesitas, escríbenos para activarla.
+        </div>
+    @endif
+
     <div class="quick-actions cliente-reveal cliente-reveal-2">
         <button type="button" class="quick-action" id="nuevaVentaBtn">
             <span class="quick-action__icon">

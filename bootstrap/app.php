@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureFacturacionActiva;
 use App\Http\Middleware\EnsureRol;
 use App\Http\Middleware\EnsureSuscripcionActiva;
 use Illuminate\Foundation\Application;
@@ -16,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'rol' => EnsureRol::class,
             'suscripcion' => EnsureSuscripcionActiva::class,
+            'facturacion' => EnsureFacturacionActiva::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

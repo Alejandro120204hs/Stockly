@@ -111,7 +111,7 @@ class EmpresaController extends Controller
             'tipoPersona'   => $empresa->tipo_persona === 'juridica' ? 'Jurídica' : 'Natural',
             'regimen'       => $empresa->regimen_fiscal,
             'correo'        => $empresa->correo_contacto,
-            'telefono'      => $empresa->telefono_contacto,
+            'telefono'      => $empresa->telefonoContacto(),
             'direccion'     => $empresa->direccion,
             'departamento'  => $empresa->departamento,
             'ciudad'        => $empresa->ciudad,

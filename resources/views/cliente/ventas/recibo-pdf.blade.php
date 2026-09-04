@@ -376,8 +376,8 @@
 
         <div class="pie">
             <p class="pie__gracias">¡Gracias por tu compra!</p>
-            @if ($venta->empresa->telefono_contacto)
-                <p class="pie__contacto">{{ $venta->empresa->telefono_contacto }}</p>
+            @if ($venta->empresa->telefonoContacto())
+                <p class="pie__contacto">{{ $venta->empresa->telefonoContacto() }}</p>
             @endif
             <p class="pie__legal">Este recibo es un comprobante interno de {{ $venta->empresa->nombre_negocio }} y no tiene validez fiscal ante la DIAN.</p>
         </div>

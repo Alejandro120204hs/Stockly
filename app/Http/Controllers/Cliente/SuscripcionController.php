@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Cliente;
 
 use App\Http\Controllers\Controller;
+use App\Mail\PagoReportado;
 use App\Models\PagoSuscripcion;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -36,6 +39,27 @@ class SuscripcionController extends Controller
             ->latest('fecha_activacion')
             ->first();
 
+        $diasRestantes = $empresa->fecha_vencimiento ? now()->startOfDay()->diffInDays($empresa->fecha_vencimiento) : null;
+
+        $estadoLabels = [
+            'activado' => 'Activado',
+            'pago_recibido' => 'Pendiente',
+            'rechazado' => 'Rechazado',
+        ];
+
+        $historial = PagoSuscripcion::where('empresa_id', $empresa->id)
+            ->orderByDesc('fecha_pago')
+            ->get()
+            ->map(fn (PagoSuscripcion $p) => [
+                'id' => $p->id,
+                'plan' => PagoSuscripcion::PLANES[$p->plan]['label'] ?? $p->plan,
+                'monto' => $p->monto !== null ? (float) $p->monto : null,
+                'metodo' => $p->metodo,
+                'fecha' => $p->fecha_pago->locale('es')->translatedFormat('d M Y'),
+                'estado' => $p->estado,
+                'estadoLabel' => $estadoLabels[$p->estado] ?? $p->estado,
+            ]);
+
         return view('cliente.suscripcion', [
             'empresa' => $empresa,
             'estado' => $empresa->estadoEfectivo(),
@@ -43,7 +67,8 @@ class SuscripcionController extends Controller
             'motivoRechazo' => $ultimoPago?->estado === 'rechazado' ? $ultimoPago->motivo_rechazo : null,
             'planes' => PagoSuscripcion::PLANES,
             'planActual' => $planActual,
-            'diasRestantes' => $empresa->fecha_vencimiento ? now()->startOfDay()->diffInDays($empresa->fecha_vencimiento) : null,
+            'diasRestantes' => $diasRestantes,
+            'historial' => $historial,
         ]);
     }
 
@@ -64,7 +89,7 @@ class SuscripcionController extends Controller
             'comprobante' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],
         ]);
 
-        PagoSuscripcion::create([
+        $pago = PagoSuscripcion::create([
             'empresa_id' => $empresa->id,
             'plan' => $validated['plan'],
             'monto' => PagoSuscripcion::PLANES[$validated['plan']]['precio'],
@@ -74,6 +99,25 @@ class SuscripcionController extends Controller
             'fecha_pago' => now(),
         ]);
 
+        $this->avisarAdmins($pago);
+
         return back()->with('status', 'pago-reportado');
+    }
+
+    /**
+     * El aviso por correo es un extra, no el objetivo -si el SMTP falla,
+     * el pago ya reportado por el cliente NO debe perderse por eso.
+     */
+    private function avisarAdmins(PagoSuscripcion $pago): void
+    {
+        try {
+            $admins = User::whereHas('rol', fn ($q) => $q->where('nombre', 'admin'))->get();
+
+            foreach ($admins as $admin) {
+                Mail::to($admin->correo)->send(new PagoReportado($pago));
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 }

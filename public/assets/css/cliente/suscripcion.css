@@ -26,6 +26,114 @@
     margin: 0;
 }
 
+.suscripcion-stats-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.suscripcion-stats-header .panel__title {
+    margin: 0;
+}
+
+/* Falta este único tono en cliente/layout.css -.status-pill--pagada/
+   --pendiente/--sin-facturar ya existen ahí, pero ninguno es de error
+   (rechazado necesita leerse como advertencia real, no neutro). */
+.status-pill--rechazada {
+    background-color: var(--color-error-soft);
+    color: var(--color-error);
+}
+
+/* ---------- Estado del plan -tres stat-card independientes en fila, el
+   MISMO lenguaje visual que ya usa el Dashboard admin (icono en círculo
+   de color + valor en Fraunces + etiqueta, ver .stat-card en
+   admin/dashboard.css), portado al lado cliente. Tres tarjetas sueltas en
+   vez de una sola tarjeta con todo apilado -mismo sistema, otra
+   composición. ---------- */
+.suscripcion-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.stat-card {
+    position: relative;
+    background-color: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: 22px 22px 20px;
+    box-shadow: 0 12px 30px -22px rgba(30, 45, 61, 0.35);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 36px -20px rgba(30, 45, 61, 0.4);
+}
+
+.stat-card__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.stat-card__icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.stat-card--sage .stat-card__icon { background-color: var(--color-sage-soft); color: var(--color-sage-dark); }
+.stat-card--sand .stat-card__icon { background-color: var(--color-sand-soft); color: var(--color-sand-dark); }
+.stat-card--mist .stat-card__icon { background-color: var(--color-mist-soft); color: var(--color-mist); }
+
+.stat-card__value {
+    font-family: var(--font-display);
+    font-size: 1.7rem;
+    font-weight: 600;
+    line-height: 1.15;
+    display: block;
+}
+
+.stat-card__label {
+    display: block;
+    margin-top: 6px;
+    color: var(--color-mist);
+    font-size: 0.86rem;
+}
+
+@media (max-width: 720px) {
+    .suscripcion-stats {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ---------- Historial de pagos -filas más compactas que el data-table
+   genérico (ver layout.css): acá solo 4 por página, pero igual conviene
+   que la tarjeta quepa sin forzar scroll de la página completa. ---------- */
+#suscripcionHistorialTable th {
+    padding: 6px 14px;
+}
+
+#suscripcionHistorialTable .data-table__row td {
+    padding: 7px 14px;
+}
+
+#suscripcionHistorialTable .data-table__title,
+#suscripcionHistorialTable .data-table__meta {
+    font-size: 0.82rem;
+}
+
+#suscripcionHistorialTable .status-pill {
+    padding: 3px 10px;
+    font-size: 0.78rem;
+}
+
 .suscripcion-rechazo {
     border-left: 3px solid var(--color-error);
 }

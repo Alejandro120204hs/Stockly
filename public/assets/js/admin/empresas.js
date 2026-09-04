@@ -93,6 +93,8 @@ function initEmpresasPanel() {
     var closeBtn = document.getElementById('slideOverClose');
     var activarBtn = document.getElementById('slideOverActivar');
     var suspenderBtn = document.getElementById('slideOverSuspender');
+    var activarSection = document.getElementById('activarSection');
+    var activarHint = document.getElementById('activarHint');
     var planSelect = document.getElementById('activarPlanSelect');
     var montoInput = document.getElementById('activarMontoInput');
     var metodoInput = document.getElementById('activarMetodoInput');
@@ -142,6 +144,13 @@ function initEmpresasPanel() {
 
     function updateActionButtons(empresa) {
         suspenderBtn.disabled = empresa.estado === 'suspendido';
+
+        // Ya está al día -no tiene sentido "activar" una suscripción que
+        // no venció ni está por vencer (el cliente ya puede renovar antes
+        // de tiempo por su cuenta desde /cliente/suscripcion).
+        var yaActiva = empresa.estado === 'activo';
+        activarSection.hidden = yaActiva;
+        activarHint.hidden = !yaActiva;
     }
 
     function openEmpresa(id) {

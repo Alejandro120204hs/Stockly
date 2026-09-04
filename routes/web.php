@@ -93,15 +93,6 @@ Route::middleware(['auth', 'rol:cliente', 'suscripcion'])->group(function () {
     Route::post('/cliente/caja/{caja}/cerrar', [CajaController::class, 'cerrar'])->name('cliente.caja.cerrar');
     Route::post('/cliente/caja/{caja}/reabrir', [CajaController::class, 'reabrir'])->name('cliente.caja.reabrir');
 
-    Route::get('/cliente/facturacion', [FacturacionController::class, 'index'])->name('cliente.facturacion');
-    Route::post('/cliente/facturacion', [FacturacionController::class, 'store'])->name('cliente.facturacion.store');
-    Route::get('/cliente/facturacion/{documento}/pdf', [FacturacionController::class, 'pdf'])->name('cliente.facturacion.pdf');
-    Route::post('/cliente/facturacion/{documento}/anular', [FacturacionController::class, 'anular'])->name('cliente.facturacion.anular');
-
-    Route::post('/cliente/facturacion/gastos', [FacturacionController::class, 'storeGasto'])->name('cliente.facturacion.gastos.store');
-    Route::get('/cliente/facturacion/gastos/{documento}/pdf', [FacturacionController::class, 'pdfGasto'])->name('cliente.facturacion.gastos.pdf');
-    Route::post('/cliente/facturacion/gastos/{documento}/anular', [FacturacionController::class, 'anularGasto'])->name('cliente.facturacion.gastos.anular');
-
     Route::get('/cliente/nomina', [NominaController::class, 'index'])->name('cliente.nomina');
     Route::post('/cliente/nomina/empleados', [NominaController::class, 'storeEmpleado'])->name('cliente.nomina.empleados.store');
     Route::put('/cliente/nomina/empleados/{empleado}', [NominaController::class, 'updateEmpleado'])->name('cliente.nomina.empleados.update');
@@ -122,6 +113,21 @@ Route::middleware(['auth', 'rol:cliente', 'suscripcion'])->group(function () {
     Route::patch('/cliente/perfil', [ClienteProfileController::class, 'updateInfo'])->name('cliente.perfil.update');
     Route::put('/cliente/perfil/password', [ClienteProfileController::class, 'updatePassword'])->name('cliente.perfil.password');
     Route::post('/cliente/perfil/logo', [ClienteProfileController::class, 'updateLogo'])->name('cliente.perfil.logo');
+});
+
+// Facturación electrónica es el ÚNICO módulo que depende de
+// Empresa::tiene_facturacion -el resto de "Administración" (Ventas, Caja,
+// Inventario, Gastos, Nómina, Reportes...) lo tienen todas las empresas
+// (ver App\Http\Middleware\EnsureFacturacionActiva).
+Route::middleware(['auth', 'rol:cliente', 'suscripcion', 'facturacion'])->group(function () {
+    Route::get('/cliente/facturacion', [FacturacionController::class, 'index'])->name('cliente.facturacion');
+    Route::post('/cliente/facturacion', [FacturacionController::class, 'store'])->name('cliente.facturacion.store');
+    Route::get('/cliente/facturacion/{documento}/pdf', [FacturacionController::class, 'pdf'])->name('cliente.facturacion.pdf');
+    Route::post('/cliente/facturacion/{documento}/anular', [FacturacionController::class, 'anular'])->name('cliente.facturacion.anular');
+
+    Route::post('/cliente/facturacion/gastos', [FacturacionController::class, 'storeGasto'])->name('cliente.facturacion.gastos.store');
+    Route::get('/cliente/facturacion/gastos/{documento}/pdf', [FacturacionController::class, 'pdfGasto'])->name('cliente.facturacion.gastos.pdf');
+    Route::post('/cliente/facturacion/gastos/{documento}/anular', [FacturacionController::class, 'anularGasto'])->name('cliente.facturacion.gastos.anular');
 });
 
 Route::middleware('auth')->group(function () {

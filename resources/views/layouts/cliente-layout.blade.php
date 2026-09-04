@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+anson <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8">
@@ -93,14 +93,19 @@
 
                
 
-                <a href="{{ url('/cliente/facturacion') }}" class="cliente-nav-item {{ request()->is('cliente/facturacion') ? 'is-active' : '' }}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
-                        <path d="M14 3v5h5"/>
-                        <path d="M9 13h6M9 17h6M9 9h1"/>
-                    </svg>
-                    <span class="cliente-nav-item__label">Facturación</span>
-                </a>
+                {{-- Solo empresas con facturación electrónica prendida ven
+                     este ítem -las demás ni lo ven ni pueden entrar por URL
+                     directa (ver App\Http\Middleware\EnsureFacturacionActiva). --}}
+                @if ($empresa?->tiene_facturacion)
+                    <a href="{{ url('/cliente/facturacion') }}" class="cliente-nav-item {{ request()->is('cliente/facturacion') ? 'is-active' : '' }}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
+                            <path d="M14 3v5h5"/>
+                            <path d="M9 13h6M9 17h6M9 9h1"/>
+                        </svg>
+                        <span class="cliente-nav-item__label">Facturación</span>
+                    </a>
+                @endif
 
                 <a href="{{ url('/cliente/nomina') }}" class="cliente-nav-item {{ request()->is('cliente/nomina') ? 'is-active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -119,6 +124,14 @@
                     <span class="cliente-nav-item__label">Reportes</span>
                 </a>
 
+                  <a href="{{ url('/cliente/suscripcion') }}" class="cliente-nav-item {{ request()->is('cliente/suscripcion') ? 'is-active' : '' }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 3v3M12 18v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M3 12h3M18 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>
+                        <circle cx="12" cy="12" r="4.5"/>
+                    </svg>
+                    <span class="cliente-nav-item__label">Suscripción</span>
+                </a>
+
                 <a href="{{ url('/cliente/perfil') }}" class="cliente-nav-item {{ request()->is('cliente/perfil') ? 'is-active' : '' }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <circle cx="12" cy="12" r="3"/>
@@ -127,13 +140,7 @@
                     <span class="cliente-nav-item__label">Mi perfil</span>
                 </a>
 
-                <a href="{{ url('/cliente/suscripcion') }}" class="cliente-nav-item {{ request()->is('cliente/suscripcion') ? 'is-active' : '' }}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M12 3v3M12 18v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M3 12h3M18 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>
-                        <circle cx="12" cy="12" r="4.5"/>
-                    </svg>
-                    <span class="cliente-nav-item__label">Suscripción</span>
-                </a>
+              
             </nav>
 
             <div class="cliente-sidebar__footer">

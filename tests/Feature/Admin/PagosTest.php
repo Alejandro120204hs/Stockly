@@ -204,6 +204,39 @@ class PagosTest extends TestCase
         $this->postJson("/admin/pagos/{$pago->id}/rechazar", [])->assertStatus(422);
     }
 
+    public function test_el_detalle_incluye_correo_y_telefono_de_la_empresa(): void
+    {
+        $this->crearAdmin();
+        $empresa = Empresa::factory()->create([
+            'correo_contacto' => 'contacto@licorera.test',
+            'telefono_contacto' => '3001112233',
+        ]);
+        PagoSuscripcion::factory()->create(['empresa_id' => $empresa->id, 'estado' => 'pago_recibido', 'fecha_activacion' => null, 'vencimiento_nuevo' => null]);
+
+        $response = $this->get('/admin/pagos');
+
+        $response->assertOk();
+        $response->assertSee('contacto@licorera.test');
+        $response->assertSee('3001112233');
+    }
+
+    public function test_si_la_empresa_no_tiene_telefono_propio_usa_el_del_usuario_como_respaldo(): void
+    {
+        $this->crearAdmin();
+        // Sin telefono_contacto -pasaba con toda empresa registrada antes
+        // de que el registro público empezara a copiarlo (ver
+        // RegistrationTest::test_new_users_can_register).
+        $empresa = Empresa::factory()->create(['telefono_contacto' => null]);
+        $rolCliente = Rol::firstOrCreate(['nombre' => 'cliente']);
+        User::factory()->create(['rol_id' => $rolCliente->id, 'empresa_id' => $empresa->id, 'telefono' => '3009998877']);
+        PagoSuscripcion::factory()->create(['empresa_id' => $empresa->id, 'estado' => 'pago_recibido', 'fecha_activacion' => null, 'vencimiento_nuevo' => null]);
+
+        $response = $this->get('/admin/pagos');
+
+        $response->assertOk();
+        $response->assertSee('3009998877');
+    }
+
     public function test_un_cliente_no_puede_aprobar_ni_rechazar_pagos(): void
     {
         $rol = Rol::firstOrCreate(['nombre' => 'cliente']);

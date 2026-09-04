@@ -30,8 +30,15 @@
         }
 
         initTabs();
-        initFechaTab();
-        renderPeriodo(periodoActual);
+        const activarHoyPorDefecto = initFechaTab();
+
+        // Por defecto se abre en "Día" (hoy), no en "Esta semana" -es el
+        // dato que alguien quiere ver primero al entrar a Reportes.
+        if (activarHoyPorDefecto) {
+            activarHoyPorDefecto();
+        } else {
+            renderPeriodo(periodoActual);
+        }
     });
 
     /* ------------------------------------------------------------------ */
@@ -84,7 +91,7 @@
         const input = document.getElementById('reporteFechaInput');
         const btnDia = document.getElementById('reporteModoDia');
         const btnMes = document.getElementById('reporteModoMes');
-        if (!tab || !input || !btnDia || !btnMes) return;
+        if (!tab || !input || !btnDia || !btnMes) return null;
 
         const hoy = new Date();
         const hoyStr = input.value; // ya viene con la fecha de hoy desde el servidor
@@ -173,6 +180,10 @@
             if (periodoActual === (modo === 'dia' ? 'dia' : 'mes-elegido')) return;
             activar(input.value);
         });
+
+        return function activarPorDefecto() {
+            activar(input.value);
+        };
     }
 
     /* ------------------------------------------------------------------ */
@@ -209,6 +220,11 @@
             cardGan.classList.toggle('is-positivo', d.gananciaNeta >= 0);
             cardGan.classList.toggle('is-negativo', d.gananciaNeta <  0);
         }
+
+        const elGanEf = document.getElementById('statGananciaEfectivo');
+        const elGanDig = document.getElementById('statGananciaDigital');
+        if (elGanEf) elGanEf.textContent = (d.gananciaNetaEfectivo < 0 ? '-' : '') + '$' + formatNum(d.gananciaNetaEfectivo, true);
+        if (elGanDig) elGanDig.textContent = (d.gananciaNetaDigital < 0 ? '-' : '') + '$' + formatNum(d.gananciaNetaDigital, true);
     }
 
     function countUp(el, from, to, esMoney) {

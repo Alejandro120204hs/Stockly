@@ -258,21 +258,30 @@
     </div>
 
     <div class="cierre">
-        <div class="dian">
-            <h3>Verificación DIAN</h3>
-            <p class="dian__cufe">CUNE: {{ $documento->cune }}</p>
-        </div>
+        @if ($empresa->tiene_facturacion)
+            <div class="dian">
+                <h3>Verificación DIAN</h3>
+                <p class="dian__cufe">CUNE: {{ $documento->cune }}</p>
+            </div>
 
-        <div class="pie">
-            {{-- Mismo criterio de honestidad que el resto de Facturación:
-                 este comprobante refleja lo que el negocio decidió pagar
-                 -no calcula salud, pensión ni retención, y el CUNE es
-                 simulado hasta que se conecte Factus de verdad. --}}
-            <p class="pie__legal">
-                Documento generado por Stockly. La integración con la DIAN (Factus) está pendiente de conexión
-                -el CUNE mostrado es simulado y este documento todavía no tiene validez fiscal ante la DIAN.
-            </p>
-        </div>
+            <div class="pie">
+                {{-- Mismo criterio de honestidad que el resto de Facturación:
+                     este comprobante refleja lo que el negocio decidió pagar
+                     -no calcula salud, pensión ni retención, y el CUNE es
+                     simulado hasta que se conecte Factus de verdad. --}}
+                <p class="pie__legal">
+                    Documento generado por Stockly. La integración con la DIAN (Factus) está pendiente de conexión
+                    -el CUNE mostrado es simulado y este documento todavía no tiene validez fiscal ante la DIAN.
+                </p>
+            </div>
+        @else
+            {{-- Sin el módulo de Facturación, este es un comprobante de pago
+                 normal -sin ninguna mención a la DIAN ni a un documento
+                 electrónico que esta empresa no puede emitir. --}}
+            <div class="pie">
+                <p class="pie__legal">Comprobante de pago generado por Stockly.</p>
+            </div>
+        @endif
     </div>
 </body>
 </html>

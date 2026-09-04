@@ -6,6 +6,12 @@
    "activar suscripción" del panel lateral.
    ========================================================================== */
 
+.slide-over__hint {
+    margin: 14px 0 0;
+    font-size: 0.84rem;
+    color: var(--color-mist);
+}
+
 .admin-form-label {
     display: block;
     margin-bottom: 6px;

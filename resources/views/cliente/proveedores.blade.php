@@ -11,7 +11,7 @@
     <div class="cliente-page-header cliente-reveal cliente-reveal-1" style="display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap;">
         <div>
             <p class="cliente-page-header__eyebrow">Tu negocio</p>
-            <h1 class="cliente-page-header__title">Proveedores</h1>
+            <h1 class="cliente-page-header__title">Tus proveedores</h1>
             <p class="cliente-page-header__date">{{ count($proveedores) }} proveedores registrados</p>
         </div>
         <div style="display:flex; gap:10px;">

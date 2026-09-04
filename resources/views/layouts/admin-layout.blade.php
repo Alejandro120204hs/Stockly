@@ -58,6 +58,9 @@
                         <path d="M8.5 9h7M8.5 12.5h7M8.5 16h4"/>
                     </svg>
                     <span class="admin-nav-item__label">Pagos y suscripciones</span>
+                    @if ($pagosPendientes > 0)
+                        <span class="admin-nav-item__badge">{{ $pagosPendientes }}</span>
+                    @endif
                 </a>
 
                 <a href="{{ url('/admin/modulos') }}" class="admin-nav-item {{ request()->is('admin/modulos') ? 'is-active' : '' }}">

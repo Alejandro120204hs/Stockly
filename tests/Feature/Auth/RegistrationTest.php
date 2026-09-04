@@ -50,6 +50,13 @@ class RegistrationTest extends TestCase
         $response->assertRedirect(route('cliente.dashboard', absolute: false));
 
         $user = User::where('correo', 'test@example.com')->firstOrFail();
-        $this->assertSame('Licorera de Prueba', Empresa::find($user->empresa_id)->nombre_negocio);
+        $empresa = Empresa::find($user->empresa_id);
+        $this->assertSame('Licorera de Prueba', $empresa->nombre_negocio);
+
+        // El teléfono que se pide en "Datos personales" también debe
+        // quedar en la empresa -antes solo se guardaba en el usuario, y
+        // por eso "Teléfono" salía vacío en el panel admin y en los
+        // recibos para cualquier empresa registrada así.
+        $this->assertSame('3000000000', $empresa->telefono_contacto);
     }
 }

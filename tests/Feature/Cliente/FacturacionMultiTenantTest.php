@@ -25,7 +25,7 @@ class FacturacionMultiTenantTest extends TestCase
 
         $usuario = User::factory()->create([
             'rol_id'     => $rol->id,
-            'empresa_id' => Empresa::factory()->create()->id,
+            'empresa_id' => Empresa::factory()->create(['tiene_facturacion' => true])->id,
         ]);
 
         $this->actingAs($usuario);

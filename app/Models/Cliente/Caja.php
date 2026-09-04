@@ -88,6 +88,11 @@ class Caja extends Model
         return $this->hasMany(Gasto::class, 'caja_id');
     }
 
+    public function nominaDocumentos(): HasMany
+    {
+        return $this->hasMany(NominaDocumento::class, 'caja_id');
+    }
+
     /**
      * "Hoy" para Dashboard/Ventas/Gastos no es medianoche real -es desde
      * que abriste tu turno actual. Si el negocio cierra pasada la

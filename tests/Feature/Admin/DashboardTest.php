@@ -139,4 +139,34 @@ class DashboardTest extends TestCase
 
         $this->get('/admin/dashboard')->assertForbidden();
     }
+
+    /**
+     * El badge de "pagos pendientes" en el sidebar se calcula en
+     * App\View\Components\AdminLayout::render() -por eso aparece en
+     * CUALQUIER página del panel admin, no solo en /admin/pagos.
+     */
+    public function test_el_badge_de_pagos_pendientes_aparece_en_cualquier_pagina_admin(): void
+    {
+        $this->crearAdmin();
+        $empresa = Empresa::factory()->create();
+        PagoSuscripcion::factory()->count(2)->create([
+            'empresa_id' => $empresa->id, 'estado' => 'pago_recibido', 'fecha_activacion' => null, 'vencimiento_nuevo' => null,
+        ]);
+
+        $response = $this->get('/admin/dashboard');
+
+        $response->assertOk();
+        $response->assertSee('admin-nav-item__badge', false);
+        $response->assertSee('>2<', false);
+    }
+
+    public function test_sin_pagos_pendientes_no_aparece_el_badge(): void
+    {
+        $this->crearAdmin();
+
+        $response = $this->get('/admin/dashboard');
+
+        $response->assertOk();
+        $response->assertDontSee('admin-nav-item__badge', false);
+    }
 }

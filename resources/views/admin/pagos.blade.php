@@ -141,6 +141,12 @@
                 <div class="slide-over__field" id="pagoSlideOverActivadoPorRow"><span>Activado por</span><strong id="pagoSlideOverActivadoPor">—</strong></div>
             </section>
 
+            <section class="slide-over__section">
+                <h3 class="slide-over__section-title">Contacto de la empresa</h3>
+                <div class="slide-over__field"><span>Correo</span><strong id="pagoSlideOverCorreo">—</strong></div>
+                <div class="slide-over__field"><span>Teléfono</span><strong id="pagoSlideOverTelefono">—</strong></div>
+            </section>
+
             <section class="slide-over__section" id="pagoSlideOverComprobanteSection" hidden>
                 <h3 class="slide-over__section-title">Comprobante</h3>
                 <a href="#" id="pagoSlideOverComprobanteLink" target="_blank" rel="noopener" class="slide-over__btn slide-over__btn--activar">Ver comprobante</a>

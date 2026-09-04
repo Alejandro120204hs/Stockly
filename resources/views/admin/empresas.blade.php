@@ -123,29 +123,40 @@
                 <h3 class="slide-over__section-title">Suscripción</h3>
                 <div class="slide-over__field"><span>Vence</span><strong id="slideOverVencimiento">—</strong></div>
 
-                <label class="admin-form-label" for="activarPlanSelect" style="margin-top:14px;">Plan que pagó</label>
-                <select id="activarPlanSelect" class="admin-form-select">
-                    <option value="mensual">Mensual (1 mes)</option>
-                    <option value="trimestral">Trimestral (3 meses)</option>
-                    <option value="semestral">Semestral (6 meses)</option>
-                    <option value="anual">Anual (12 meses)</option>
-                </select>
+                {{-- Solo tiene sentido activar/renovar manualmente cuando la
+                     empresa NO está activa de sobra -si ya está al día, el
+                     cliente mismo puede renovar antes de tiempo desde su
+                     panel (ver Cliente\SuscripcionController). --}}
+                <p class="slide-over__hint" id="activarHint" hidden>Ya está activa -no hace falta reactivarla.</p>
 
-                <div class="admin-form-row" style="margin-top:10px;">
-                    <div>
-                        <label class="admin-form-label" for="activarMontoInput">Monto pagado (opcional)</label>
-                        <input type="text" inputmode="numeric" id="activarMontoInput" class="admin-form-input" placeholder="0">
+                <div id="activarSection">
+                    <label class="admin-form-label" for="activarPlanSelect" style="margin-top:14px;">Plan que pagó</label>
+                    <select id="activarPlanSelect" class="admin-form-select">
+                        <option value="mensual">Mensual (1 mes)</option>
+                        <option value="trimestral">Trimestral (3 meses)</option>
+                        <option value="semestral">Semestral (6 meses)</option>
+                        <option value="anual">Anual (12 meses)</option>
+                    </select>
+
+                    <div class="admin-form-row" style="margin-top:10px;">
+                        <div>
+                            <label class="admin-form-label" for="activarMontoInput">Monto pagado (opcional)</label>
+                            <input type="text" inputmode="numeric" id="activarMontoInput" class="admin-form-input" placeholder="0">
+                        </div>
+                        <div>
+                            <label class="admin-form-label" for="activarMetodoInput">Método (opcional)</label>
+                            <input type="text" id="activarMetodoInput" class="admin-form-input" placeholder="Nequi, transferencia...">
+                        </div>
                     </div>
-                    <div>
-                        <label class="admin-form-label" for="activarMetodoInput">Método (opcional)</label>
-                        <input type="text" id="activarMetodoInput" class="admin-form-input" placeholder="Nequi, transferencia...">
+
+                    <div class="slide-over__actions" style="margin-top:14px;">
+                        <button type="button" class="slide-over__btn slide-over__btn--activar" id="slideOverActivar">
+                            Activar suscripción
+                        </button>
                     </div>
                 </div>
 
                 <div class="slide-over__actions" style="margin-top:14px;">
-                    <button type="button" class="slide-over__btn slide-over__btn--activar" id="slideOverActivar">
-                        Activar suscripción
-                    </button>
                     <button type="button" class="slide-over__btn slide-over__btn--suspender" id="slideOverSuspender">
                         Suspender empresa
                     </button>

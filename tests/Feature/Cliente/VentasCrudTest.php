@@ -225,7 +225,8 @@ class VentasCrudTest extends TestCase
 
     public function test_una_venta_con_comprador_aparece_en_facturacion_con_esos_datos_precargados(): void
     {
-        $this->crearUsuarioCliente();
+        $usuario = $this->crearUsuarioCliente();
+        $usuario->empresa->update(['tiene_facturacion' => true]);
         $producto = $this->crearProductoConStockEnVitrina(5);
 
         $this->postJson('/cliente/ventas', [

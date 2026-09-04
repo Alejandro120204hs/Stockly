@@ -105,6 +105,8 @@ class PagoController extends Controller
         return [
             'id'                  => $p->id,
             'empresa'             => $p->empresa?->nombre_negocio ?? '—',
+            'correo'              => $p->empresa?->correo_contacto,
+            'telefono'            => $p->empresa?->telefonoContacto(),
             'plan'                => PagoSuscripcion::PLANES[$p->plan]['label'] ?? $p->plan,
             'monto'               => $p->monto !== null ? (float) $p->monto : null,
             'metodo'              => $p->metodo,

@@ -6,6 +6,10 @@
  *      el plan primero).
  *   2. Copiar el número de Nequi / la llave con un clic -evita que alguien
  *      tenga que transcribirlo a mano desde el celular.
+ *   3. "Renovar antes de tiempo" -cuando la suscripción sigue activa, el
+ *      formulario de pago existe en el HTML pero arranca oculto (atributo
+ *      hidden); este botón solo lo destapa, no hay nada que pedirle al
+ *      servidor todavía.
  */
 document.addEventListener('DOMContentLoaded', function () {
     var input = document.getElementById('suscripcionComprobante');
@@ -16,6 +20,18 @@ document.addEventListener('DOMContentLoaded', function () {
             nombre.textContent = input.files.length > 0 ? input.files[0].name : 'Ningún archivo elegido';
         });
     }
+
+    var renovarBtn = document.getElementById('renovarAntesBtn');
+    var formPanel = document.getElementById('suscripcionFormPanel');
+
+    if (renovarBtn && formPanel) {
+        renovarBtn.addEventListener('click', function () {
+            formPanel.hidden = false;
+            formPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    }
+
+    initHistorialPagos();
 
     /**
      * document.execCommand primero -es síncrono y funciona en más casos
@@ -67,3 +83,63 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
+
+/* ------------------------------------------------------------------
+ * Historial de pagos: paginación (4 por página) -mismo patrón exacto
+ * que el historial de cierres de Caja (ver caja.js
+ * initHistorialCierres()/renderHistorialCierres()), simplificado acá
+ * porque no hay filtro de mes: todo el historial ya vino en el HTML,
+ * el JS solo decide qué filas mostrar.
+ * ------------------------------------------------------------------ */
+var SUSCRIPCION_HISTORIAL_PAGE_SIZE = 4;
+var suscripcionHistorialPagina = 1;
+
+function initHistorialPagos() {
+    var table = document.getElementById('suscripcionHistorialTable');
+    if (!table) {
+        return;
+    }
+
+    document.getElementById('suscripcionHistorialPrevPage')?.addEventListener('click', function () {
+        if (suscripcionHistorialPagina > 1) {
+            suscripcionHistorialPagina--;
+            renderHistorialPagos();
+        }
+    });
+    document.getElementById('suscripcionHistorialNextPage')?.addEventListener('click', function () {
+        suscripcionHistorialPagina++;
+        renderHistorialPagos();
+    });
+
+    renderHistorialPagos();
+}
+
+function renderHistorialPagos() {
+    var table = document.getElementById('suscripcionHistorialTable');
+    var pageInfoEl = document.getElementById('suscripcionHistorialPageInfo');
+    var prevBtn = document.getElementById('suscripcionHistorialPrevPage');
+    var nextBtn = document.getElementById('suscripcionHistorialNextPage');
+    if (!table) {
+        return;
+    }
+
+    var filas = table.querySelectorAll('.data-table__row');
+    var totalPaginas = Math.max(1, Math.ceil(filas.length / SUSCRIPCION_HISTORIAL_PAGE_SIZE));
+    suscripcionHistorialPagina = Math.min(suscripcionHistorialPagina, totalPaginas);
+    var desde = (suscripcionHistorialPagina - 1) * SUSCRIPCION_HISTORIAL_PAGE_SIZE;
+    var hasta = desde + SUSCRIPCION_HISTORIAL_PAGE_SIZE;
+
+    filas.forEach(function (row, indice) {
+        row.hidden = indice < desde || indice >= hasta;
+    });
+
+    if (pageInfoEl) {
+        pageInfoEl.textContent = 'Página ' + suscripcionHistorialPagina + ' de ' + totalPaginas;
+    }
+    if (prevBtn) {
+        prevBtn.disabled = suscripcionHistorialPagina <= 1;
+    }
+    if (nextBtn) {
+        nextBtn.disabled = suscripcionHistorialPagina >= totalPaginas;
+    }
+}

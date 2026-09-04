@@ -2,12 +2,14 @@
 
 namespace Tests\Feature\Cliente;
 
+use App\Mail\PagoReportado;
 use App\Models\Empresa;
 use App\Models\PagoSuscripcion;
 use App\Models\Rol;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -137,7 +139,12 @@ class SuscripcionTest extends TestCase
         $this->assertDatabaseHas('pagos_suscripcion', ['empresa_id' => $usuario->empresa_id, 'estado' => 'pago_recibido']);
     }
 
-    public function test_activa_de_sobra_muestra_solo_el_resumen_sin_formulario(): void
+    /**
+     * Activa de sobra -el formulario sigue en el HTML (con "Renovar antes
+     * de tiempo" el cliente puede desplegarlo sin recargar la página) pero
+     * arranca oculto con el atributo hidden.
+     */
+    public function test_activa_de_sobra_muestra_el_resumen_con_formulario_oculto(): void
     {
         $usuario = $this->crearUsuarioCliente(['fecha_vencimiento' => now()->addMonth()]);
 
@@ -145,11 +152,12 @@ class SuscripcionTest extends TestCase
             'empresa_id' => $usuario->empresa_id, 'plan' => 'anual', 'estado' => 'activado', 'fecha_activacion' => now(),
         ]);
 
-        $this->get('/cliente/suscripcion')
-            ->assertOk()
-            ->assertSee('Anual')
-            ->assertDontSee('Elige tu plan')
-            ->assertDontSee('Enviar comprobante');
+        $response = $this->get('/cliente/suscripcion');
+
+        $response->assertOk();
+        $response->assertSee('Anual');
+        $response->assertSee('Renovar antes de tiempo');
+        $response->assertSee('id="suscripcionFormPanel" hidden', false);
     }
 
     public function test_por_vencer_muestra_el_resumen_y_el_formulario_para_renovar(): void
@@ -163,7 +171,41 @@ class SuscripcionTest extends TestCase
         $this->get('/cliente/suscripcion')
             ->assertOk()
             ->assertSee('Elige tu plan')
-            ->assertSee('Enviar comprobante');
+            ->assertSee('Enviar comprobante')
+            // Por vencer el formulario ya está abierto -no hace falta el
+            // botón de "renovar antes" que sí existe cuando está 100% activa.
+            ->assertDontSee('Renovar antes de tiempo');
+    }
+
+    public function test_el_historial_muestra_los_pagos_propios_de_la_empresa(): void
+    {
+        $usuario = $this->crearUsuarioCliente(['fecha_vencimiento' => now()->addMonth()]);
+        $otraEmpresa = Empresa::factory()->create();
+
+        PagoSuscripcion::factory()->create([
+            'empresa_id' => $usuario->empresa_id, 'plan' => 'mensual', 'monto' => 150000, 'estado' => 'activado', 'fecha_activacion' => now(),
+        ]);
+        PagoSuscripcion::factory()->create([
+            // Monto distinto a cualquiera de los 4 precios fijos del
+            // selector de planes (que sí aparece siempre, oculto, en el
+            // mismo HTML) -si no, un simple assertDontSee daría un falso
+            // positivo de "fuga" contra el precio del plan Anual.
+            'empresa_id' => $otraEmpresa->id, 'plan' => 'anual', 'monto' => 999999, 'estado' => 'activado', 'fecha_activacion' => now(),
+        ]);
+
+        $response = $this->get('/cliente/suscripcion');
+
+        $response->assertOk();
+        $response->assertSee('Historial de pagos');
+        $response->assertSee('150.000');
+        $response->assertDontSee('999.999');
+    }
+
+    public function test_sin_ningun_pago_no_muestra_la_seccion_de_historial(): void
+    {
+        $this->crearUsuarioCliente(['fecha_vencimiento' => now()->subDay()]);
+
+        $this->get('/cliente/suscripcion')->assertDontSee('Historial de pagos');
     }
 
     public function test_no_se_puede_reportar_un_segundo_pago_mientras_el_primero_sigue_pendiente(): void
@@ -182,6 +224,57 @@ class SuscripcionTest extends TestCase
         ]);
 
         $this->assertSame(1, PagoSuscripcion::where('empresa_id', $usuario->empresa_id)->count());
+    }
+
+    public function test_reportar_un_pago_avisa_por_correo_a_los_admins(): void
+    {
+        Storage::fake('public');
+        Mail::fake();
+        $rolAdmin = Rol::firstOrCreate(['nombre' => 'admin']);
+        $admin = User::factory()->create(['rol_id' => $rolAdmin->id, 'empresa_id' => null, 'correo' => 'admin1@test.com']);
+
+        $usuario = $this->crearUsuarioCliente(['fecha_vencimiento' => now()->subDay()]);
+
+        $this->post('/cliente/suscripcion', [
+            'plan' => 'mensual',
+            'comprobante' => UploadedFile::fake()->image('comprobante.jpg'),
+        ]);
+
+        Mail::assertSent(PagoReportado::class, function (PagoReportado $mail) use ($admin, $usuario) {
+            return $mail->hasTo($admin->correo)
+                && $mail->pago->empresa_id === $usuario->empresa_id;
+        });
+    }
+
+    public function test_reportar_un_pago_avisa_a_todos_los_admins_no_solo_al_primero(): void
+    {
+        Storage::fake('public');
+        Mail::fake();
+        $rolAdmin = Rol::firstOrCreate(['nombre' => 'admin']);
+        User::factory()->create(['rol_id' => $rolAdmin->id, 'empresa_id' => null, 'correo' => 'admin1@test.com']);
+        User::factory()->create(['rol_id' => $rolAdmin->id, 'empresa_id' => null, 'correo' => 'admin2@test.com']);
+
+        $this->crearUsuarioCliente(['fecha_vencimiento' => now()->subDay()]);
+
+        $this->post('/cliente/suscripcion', [
+            'plan' => 'mensual',
+            'comprobante' => UploadedFile::fake()->image('comprobante.jpg'),
+        ]);
+
+        Mail::assertSent(PagoReportado::class, 2);
+    }
+
+    public function test_activar_manualmente_no_dispara_el_correo_de_pago_reportado(): void
+    {
+        Mail::fake();
+        $rolAdmin = Rol::firstOrCreate(['nombre' => 'admin']);
+        $admin = User::factory()->create(['rol_id' => $rolAdmin->id, 'empresa_id' => null]);
+        $this->actingAs($admin);
+        $empresa = Empresa::factory()->create();
+
+        $this->postJson("/admin/empresas/{$empresa->id}/activar", ['plan' => 'mensual']);
+
+        Mail::assertNotSent(PagoReportado::class);
     }
 
     public function test_un_admin_sin_empresa_no_se_ve_afectado_por_el_bloqueo(): void

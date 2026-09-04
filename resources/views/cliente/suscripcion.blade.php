@@ -7,10 +7,12 @@
          empresa está bloqueada (vencida o suspendida) -ver
          App\Http\Middleware\EnsureSuscripcionActiva.
 
-         Tres estados posibles (sin contar un pago pendiente de validar):
-         activa de sobra -> solo resumen, nada de formulario; por vencer
-         -> resumen + formulario para renovar; vencida/suspendida ->
-         mensaje del motivo + formulario para activarla. --}}
+         Estados posibles (sin contar un pago pendiente de validar):
+         activa de sobra -> resumen + botón opcional "Renovar antes" que
+         despliega el formulario (empieza oculto); por vencer -> resumen +
+         formulario ya abierto; vencida/suspendida -> mensaje del motivo +
+         formulario ya abierto. El historial de pagos se ve siempre que
+         haya alguno, sin importar el estado. --}}
     @php
         $mensajeEstado = match (true) {
             $estado === 'suspendido' => 'Tu cuenta fue suspendida. Puedes reportar un pago para que el administrador la reactive.',
@@ -20,7 +22,9 @@
             default => 'Estás al día.',
         };
         $bloqueada = in_array($estado, ['vencido', 'suspendido'], true);
-        $muestraFormulario = ! $pagoPendiente && in_array($estado, ['por_vencer', 'vencido', 'suspendido'], true);
+        $puedeRenovarAntes = ! $pagoPendiente && $estado === 'activo';
+        $formularioAbierto = ! $pagoPendiente && in_array($estado, ['por_vencer', 'vencido', 'suspendido'], true);
+        $muestraFormulario = $formularioAbierto || $puedeRenovarAntes;
     @endphp
 
     <div class="cliente-page-header cliente-reveal cliente-reveal-1">
@@ -51,14 +55,15 @@
                 <div class="slide-over__field"><span>Fecha del reporte</span><strong>{{ $pagoPendiente->fecha_pago->locale('es')->translatedFormat('d M Y, g:i a') }}</strong></div>
             </div>
         </div>
-    @elseif ($estado === 'activo')
-        <div class="panel cliente-reveal cliente-reveal-3">
-            <h2 class="panel__title" style="margin-bottom: 18px;">Tu suscripción</h2>
-            <div class="cliente-form-grid">
-                <div class="slide-over__field"><span>Plan actual</span><strong>{{ $planActual ? ($planes[$planActual->plan]['label'] ?? $planActual->plan) : '—' }}</strong></div>
-                <div class="slide-over__field"><span>Vence el</span><strong>{{ $empresa->fecha_vencimiento->format('d/m/Y') }}</strong></div>
-                <div class="slide-over__field"><span>Días restantes</span><strong>{{ $diasRestantes }}</strong></div>
-            </div>
+    @elseif (in_array($estado, ['activo', 'por_vencer'], true))
+        <div class="suscripcion-stats-header cliente-reveal cliente-reveal-3">
+            <h2 class="panel__title">Tu suscripción</h2>
+            @if ($puedeRenovarAntes)
+                <button type="button" class="cliente-btn-ghost" id="renovarAntesBtn">Renovar antes de tiempo</button>
+            @endif
+        </div>
+        <div class="cliente-reveal cliente-reveal-3">
+            @include('cliente.partials.suscripcion-resumen')
         </div>
     @endif
 
@@ -71,18 +76,7 @@
             </div>
         @endif
 
-        @if ($estado === 'por_vencer' && $planActual)
-            <div class="panel cliente-reveal cliente-reveal-3">
-                <h2 class="panel__title" style="margin-bottom: 18px;">Tu suscripción</h2>
-                <div class="cliente-form-grid">
-                    <div class="slide-over__field"><span>Plan actual</span><strong>{{ $planes[$planActual->plan]['label'] ?? $planActual->plan }}</strong></div>
-                    <div class="slide-over__field"><span>Vence el</span><strong>{{ $empresa->fecha_vencimiento->format('d/m/Y') }}</strong></div>
-                    <div class="slide-over__field"><span>Días restantes</span><strong>{{ $diasRestantes }}</strong></div>
-                </div>
-            </div>
-        @endif
-
-        <div class="panel cliente-reveal cliente-reveal-4">
+        <div class="panel cliente-reveal cliente-reveal-4" id="suscripcionFormPanel" {{ $puedeRenovarAntes ? 'hidden' : '' }}>
             <h2 class="panel__title" style="margin-bottom: 18px;">1. Elige tu plan</h2>
 
             <form method="POST" action="{{ route('cliente.suscripcion.store') }}" enctype="multipart/form-data" id="suscripcionForm">
@@ -161,6 +155,8 @@
             </form>
         </div>
     @endif
+
+    @include('cliente.partials.suscripcion-historial')
 
     @push('styles')
         <link rel="stylesheet" href="{{ asset_v('assets/css/cliente/suscripcion.css') }}">

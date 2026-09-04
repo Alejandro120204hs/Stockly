@@ -21,10 +21,12 @@ class NominaDocumento extends Model
     protected $fillable = [
         'empresa_id',
         'empleado_id',
+        'caja_id',
         'numero',
         'cune',
         'periodo',
         'monto_pagado',
+        'metodo_pago',
         'fecha_pago',
         'fecha_emision',
         'anulada_en',
@@ -47,6 +49,11 @@ class NominaDocumento extends Model
     public function empleado(): BelongsTo
     {
         return $this->belongsTo(Empleado::class);
+    }
+
+    public function caja(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Cliente\Caja::class);
     }
 
     public function estaAnulado(): bool
@@ -78,7 +85,14 @@ class NominaDocumento extends Model
             'cune'        => $this->cune,
             'periodo'     => $this->periodo,
             'montoPagado' => (float) $this->monto_pagado,
+            'metodoPago'  => $this->metodo_pago,
             'fechaPago'   => $this->fecha_pago->format('d/m/Y'),
+            // ISO -para comparar con el <input type="date"> del modal de
+            // pago (aviso de "ya le pagaste este mismo día") y para el
+            // filtro por mes, sin depender del formato d/m/Y legible.
+            'fechaPagoISO' => $this->fecha_pago->toDateString(),
+            'mesKey'      => $this->fecha_pago->format('Y-m'),
+            'mesLabel'    => ucfirst($this->fecha_pago->locale('es')->translatedFormat('F Y')),
             'fecha'       => $this->fecha_emision->format('d/m/Y'),
             'estado'      => $this->estado(),
             'empleado'    => [

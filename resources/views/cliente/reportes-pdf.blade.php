@@ -151,6 +151,23 @@
                         </tr>
                     </tbody>
                 </table>
+
+                <div class="section-title" style="margin-top:10px;">Ganancia neta por método</div>
+                <table class="data-table">
+                    <thead>
+                        <tr><th>Método</th><th class="num">Ganancia neta</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Efectivo</td>
+                            <td class="num">{{ $data['gananciaNetaEfectivo'] < 0 ? '-' : '' }}${{ number_format(abs($data['gananciaNetaEfectivo']), 0, ',', '.') }}</td>
+                        </tr>
+                        <tr>
+                            <td>Digital</td>
+                            <td class="num">{{ $data['gananciaNetaDigital'] < 0 ? '-' : '' }}${{ number_format(abs($data['gananciaNetaDigital']), 0, ',', '.') }}</td>
+                        </tr>
+                    </tbody>
+                </table>
             </td>
             <td>
                 <div class="section-title">Gastos por categoría</div>

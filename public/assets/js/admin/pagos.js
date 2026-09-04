@@ -107,6 +107,8 @@ function initPagosPanel() {
 
         if (currentId === pago.id) {
             document.getElementById('pagoSlideOverEmpresa').textContent = pago.empresa;
+            document.getElementById('pagoSlideOverCorreo').textContent = pago.correo || '—';
+            document.getElementById('pagoSlideOverTelefono').textContent = pago.telefono || '—';
             document.getElementById('pagoSlideOverPlan').textContent = pago.plan;
             document.getElementById('pagoSlideOverMonto').textContent = pago.monto !== null ? '$' + formatNumber(pago.monto, 0) : '—';
             document.getElementById('pagoSlideOverMetodo').textContent = pago.metodo || '—';

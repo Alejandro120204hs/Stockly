@@ -53,6 +53,19 @@ class Empresa extends Model
     }
 
     /**
+     * `telefono_contacto` quedó vacío para toda empresa que se registró
+     * antes de que el registro público empezara a copiarlo (el teléfono
+     * se pedía, pero solo se guardaba en el usuario) -acá se cae al
+     * teléfono del primer usuario de la empresa como respaldo, para no
+     * mostrar vacío algo que el cliente sí escribió.
+     */
+    public function telefonoContacto(): ?string
+    {
+        return $this->telefono_contacto
+            ?: $this->usuarios()->whereNotNull('telefono')->value('telefono');
+    }
+
+    /**
      * Estado real de la licencia, calculado al vuelo contra la fecha de
      * hoy -nunca queda desactualizado porque no depende de ningún job
      * programado. "Suspendido" es la única bandera manual (el admin la
