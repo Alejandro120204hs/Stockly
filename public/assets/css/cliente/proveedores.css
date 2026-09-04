@@ -43,3 +43,30 @@
 .venta-detalle-item--clicable:focus-visible {
     background-color: var(--color-background);
 }
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+
+/* En tablet, Teléfono ocupa espacio sin agregar valor real — con NIT y
+   el nombre del proveedor ya es suficiente para identificar al proveedor. */
+@media (max-width: 900px) {
+    #proveedoresTable th:nth-child(3),
+    #proveedoresTable td:nth-child(3) {
+        display: none;
+    }
+}
+
+/* En mobile se queda sin espacio para NIT también. Solo Proveedor,
+   Compras y Total comprado. El 3er stat card (115 Compras) queda solo
+   en su fila; se estira a ancho completo para que no se vea desbalanceado. */
+@media (max-width: 560px) {
+    .stat-grid--3 .stat-card:nth-child(3) {
+        grid-column: 1 / -1;
+    }
+
+    #proveedoresTable th:nth-child(2),
+    #proveedoresTable td:nth-child(2) {
+        display: none;
+    }
+}
